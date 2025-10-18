@@ -1,0 +1,37 @@
+# Dependencias
+node_modules/
+package-lock.json
+
+# Variables de entorno
+.env
+.env_local
+.env_supabase
+*.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Respaldos de base de datos local
+*.backup
+backupnormalizado.backup
+*.rar
+*.zip
+
+# Archivos de respaldo local
+*_local.js
+*_supabase.js

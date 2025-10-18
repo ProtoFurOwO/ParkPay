@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkPay - Seleccionar Lugar</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚗 ParkPay</h1>
+            <div class="user-info">
+                <span id="userName"></span>
+                <button onclick="logout()" class="btn-logout">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Panel lateral con información -->
+            <div class="side-panel">
+                <div class="vehicle-info">
+                    <h3>Tu Vehículo</h3>
+                    <div id="vehicleDetails"></div>
+                </div>
+
+                <div class="booking-form" id="bookingForm" style="display: none;">
+                    <h3>Detalles de Reserva</h3>
+                    <div class="selected-spot-info" id="selectedSpotInfo"></div>
+                    
+                    <div class="form-group">
+                        <label for="hoursInput">Horas Estimadas</label>
+                        <input type="number" id="hoursInput" min="1" max="24" value="2" onchange="calculateCost()">
+                    </div>
+
+                    <div class="cost-summary">
+                        <div class="cost-row">
+                            <span>Costo por hora:</span>
+                            <span id="costPerHour">$25.00</span>
+                        </div>
+                        <div class="cost-row">
+                            <span>Horas:</span>
+                            <span id="totalHours">2</span>
+                        </div>
+                        <div class="cost-row total">
+                            <span><strong>Total Estimado:</strong></span>
+                            <span id="totalCost"><strong>$50.00</strong></span>
+                        </div>
+                    </div>
+
+                    <button onclick="confirmBooking()" class="btn btn-success">
+                        💳 Pagar y Ocupar Lugar
+                    </button>
+                    <button onclick="cancelBooking()" class="btn btn-secondary">
+                        Cancelar
+                    </button>
+                </div>
+
+                <div class="legend">
+                    <h4>Leyenda</h4>
+                    <div class="legend-item">
+                        <span class="spot-legend available"></span>
+                        <span>Disponible para ti</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="spot-legend occupied"></span>
+                        <span>Ocupado</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="spot-legend selected"></span>
+                        <span>Seleccionado</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="spot-legend incompatible"></span>
+                        <span>No compatible con tu vehículo</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mapa del estacionamiento -->
+            <div class="parking-map">
+                <div class="floor-section">
+                    <h2>Piso A</h2>
+                    <div class="spots-grid" id="pisoA"></div>
+                </div>
+
+                <div class="floor-section">
+                    <h2>Piso B</h2>
+                    <div class="spots-grid" id="pisoB"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="messageBox" class="message-box"></div>
+
+    <script src="js/parking.js"></script>
+</body>
+</html>

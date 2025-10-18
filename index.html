@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkPay - Inicio de Sesión</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="auth-box">
+            <h1>🚗 ParkPay</h1>
+            <p class="subtitle">Sistema de Estacionamiento Inteligente</p>
+
+            <!-- Formulario de Login -->
+            <div id="loginForm" class="form-container active">
+                <h2>Iniciar Sesión</h2>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" required placeholder="ejemplo@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Contraseña</label>
+                        <input type="password" id="loginPassword" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Ingresar</button>
+                    <p class="switch-form">
+                        ¿No tienes cuenta? <a href="#" onclick="showRegisterForm()">Regístrate aquí</a>
+                    </p>
+                </form>
+            </div>
+
+            <!-- Formulario de Registro -->
+            <div id="registerForm" class="form-container">
+                <h2>Crear Cuenta</h2>
+                <form onsubmit="handleRegister(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="regNombre">Nombre</label>
+                            <input type="text" id="regNombre" required placeholder="Juan">
+                        </div>
+                        <div class="form-group">
+                            <label for="regApellido">Apellido</label>
+                            <input type="text" id="regApellido" required placeholder="Pérez">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="regEmail">Email</label>
+                        <input type="email" id="regEmail" required placeholder="ejemplo@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Contraseña</label>
+                        <input type="password" id="regPassword" required placeholder="Mínimo 6 caracteres">
+                    </div>
+                    
+                    <hr>
+                    <h3>Datos de tu Vehículo</h3>
+                    
+                    <div class="form-group">
+                        <label for="regTipoVehiculo">Tipo de Vehículo *</label>
+                        <select id="regTipoVehiculo" required class="form-select">
+                            <option value="">Selecciona el tipo</option>
+                            <option value="Automóvil">🚗 Automóvil</option>
+                            <option value="Motocicleta">🏍️ Motocicleta</option>
+                            <option value="Eléctrico">⚡ Eléctrico</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="regPlaca">Placa *</label>
+                        <input type="text" id="regPlaca" required placeholder="ABC-123" style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="regMarca">Marca</label>
+                            <input type="text" id="regMarca" placeholder="Toyota">
+                        </div>
+                        <div class="form-group">
+                            <label for="regModelo">Modelo</label>
+                            <input type="text" id="regModelo" placeholder="Corolla">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="regColor">Color</label>
+                        <input type="text" id="regColor" placeholder="Blanco">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Registrarse</button>
+                    <p class="switch-form">
+                        ¿Ya tienes cuenta? <a href="#" onclick="showLoginForm()">Inicia sesión aquí</a>
+                    </p>
+                </form>
+            </div>
+
+            <div id="messageBox" class="message-box"></div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+</body>
+</html>

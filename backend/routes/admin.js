@@ -1,0 +1,657 @@
+const express = require('express');
+const router = express.Router();
+const bcrypt = require('bcryptjs');
+const pool = require('../config/database');
+
+// ═══════════════════════════════════════════════════════════════
+// AUTENTICACIÓN DE ADMINISTRADOR (usando tabla Usuarios)
+// ═══════════════════════════════════════════════════════════════
+
+// Verificar si ya existe un administrador
+router.get('/check-admin', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT COUNT(*) as total FROM Usuarios WHERE es_admin = TRUE');
+    const hayAdmin = parseInt(result.rows[0].total) > 0;
+    
+    res.json({ 
+      existe_admin: hayAdmin,
+      mensaje: hayAdmin ? 'Ya existe un administrador' : 'No hay administradores, debe registrarse'
+    });
+  } catch (error) {
+    console.error('Error al verificar admin:', error);
+    res.status(500).json({ error: 'Error al verificar administrador' });
+  }
+});
+
+// Registro de administrador (solo si no existe ninguno)
+router.post('/register', async (req, res) => {
+  try {
+    const { username, password, nombre_completo } = req.body;
+
+    if (!username || !password || !nombre_completo) {
+      return res.status(400).json({ error: 'Todos los campos son requeridos' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+
+    // Verificar que no exista ya un admin
+    const checkAdmin = await pool.query('SELECT COUNT(*) as total FROM Usuarios WHERE es_admin = TRUE');
+    if (parseInt(checkAdmin.rows[0].total) > 0) {
+      return res.status(403).json({ error: 'Ya existe un administrador registrado' });
+    }
+
+    // Hashear contraseña
+    const password_hash = await bcrypt.hash(password, 10);
+    
+    // Separar nombre y apellido
+    const nombres = nombre_completo.split(' ');
+    const nombre = nombres[0];
+    const apellido = nombres.slice(1).join(' ') || 'Admin';
+    
+    // Usar el username como email (formato: username@parkpay.com)
+    const email = `${username}@parkpay.com`;
+
+    // Insertar administrador como usuario con es_admin = TRUE
+    const result = await pool.query(
+      `INSERT INTO Usuarios (nombre, apellido, email, password_hash, es_admin) 
+       VALUES ($1, $2, $3, $4, TRUE) 
+       RETURNING id_usuario, nombre, apellido, email, fecha_registro, es_admin`,
+      [nombre, apellido, email, password_hash]
+    );
+
+    res.status(201).json({
+      message: 'Administrador registrado exitosamente',
+      admin: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Error en registro de admin:', error);
+    if (error.code === '23505') { // Violación de unique constraint
+      res.status(400).json({ error: 'El correo electrónico ya existe' });
+    } else {
+      res.status(500).json({ error: 'Error al registrar administrador' });
+    }
+  }
+});
+
+// Login de administrador
+router.post('/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Usuario y contraseña requeridos' });
+    }
+
+    // Buscar admin por email (usando username@parkpay.com)
+    const email = `${username}@parkpay.com`;
+    const result = await pool.query(
+      'SELECT * FROM Usuarios WHERE email = $1 AND es_admin = TRUE',
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Credenciales inválidas o no es administrador' });
+    }
+
+    const admin = result.rows[0];
+
+    // Verificar contraseña
+    const passwordValida = await bcrypt.compare(password, admin.password_hash);
+
+    if (!passwordValida) {
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+    }
+
+    // Retornar datos sin contraseña
+    const { password_hash, ...adminData } = admin;
+
+    res.json({
+      message: 'Login exitoso',
+      admin: adminData
+    });
+
+  } catch (error) {
+    console.error('Error en login:', error);
+    res.status(500).json({ error: 'Error al iniciar sesión' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// ESTADÍSTICAS DEL DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+router.get('/stats', async (req, res) => {
+  try {
+    // Total usuarios (sin contar admins)
+    const usuarios = await pool.query('SELECT COUNT(*) as total FROM Usuarios WHERE es_admin = FALSE OR es_admin IS NULL');
+    
+    // Total vehículos
+    const vehiculos = await pool.query('SELECT COUNT(*) as total FROM Vehiculos');
+    
+    // Cajones ocupados
+    const cajonesOcupados = await pool.query("SELECT COUNT(*) as total FROM CajonesEstacionamiento WHERE estado = 'Ocupado'");
+    
+    // Tickets activos
+    const ticketsActivos = await pool.query("SELECT COUNT(*) as total FROM TicketsEstancia WHERE estado = 'ACTIVO'");
+    
+    // Total recaudado
+    const recaudado = await pool.query("SELECT COALESCE(SUM(monto_cobrado), 0) as total FROM TicketsEstancia WHERE estado = 'FINALIZADO'");
+
+    res.json({
+      total_usuarios: parseInt(usuarios.rows[0].total),
+      total_vehiculos: parseInt(vehiculos.rows[0].total),
+      cajones_ocupados: parseInt(cajonesOcupados.rows[0].total),
+      tickets_activos: parseInt(ticketsActivos.rows[0].total),
+      total_recaudado: parseFloat(recaudado.rows[0].total)
+    });
+
+  } catch (error) {
+    console.error('Error al obtener estadísticas:', error);
+    res.status(500).json({ error: 'Error al obtener estadísticas' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CRUD USUARIOS
+// ═══════════════════════════════════════════════════════════════
+
+// Obtener todos los usuarios (sin admins)
+router.get('/usuarios', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        u.id_usuario,
+        u.nombre,
+        u.apellido,
+        u.email,
+        u.fecha_registro,
+        COUNT(v.id_vehiculo) as total_vehiculos
+      FROM Usuarios u
+      LEFT JOIN Vehiculos v ON u.id_usuario = v.id_usuario
+      WHERE u.es_admin = FALSE OR u.es_admin IS NULL
+      GROUP BY u.id_usuario
+      ORDER BY u.fecha_registro DESC
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener usuarios:', error);
+    res.status(500).json({ error: 'Error al obtener usuarios' });
+  }
+});
+
+// Crear usuario
+router.post('/usuarios', async (req, res) => {
+  try {
+    const { nombre, apellido, email, password } = req.body;
+
+    if (!nombre || !apellido || !email || !password) {
+      return res.status(400).json({ error: 'Todos los campos son requeridos' });
+    }
+
+    // Hashear contraseña
+    const password_hash = await bcrypt.hash(password, 10);
+
+    const result = await pool.query(
+      `INSERT INTO Usuarios (nombre, apellido, email, password_hash, es_admin)
+       VALUES ($1, $2, $3, $4, FALSE)
+       RETURNING id_usuario, nombre, apellido, email, fecha_registro`,
+      [nombre, apellido, email, password_hash]
+    );
+
+    res.status(201).json({
+      message: 'Usuario creado exitosamente',
+      usuario: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Error al crear usuario:', error);
+    if (error.code === '23505') {
+      res.status(400).json({ error: 'El correo electrónico ya existe' });
+    } else {
+      res.status(500).json({ error: 'Error al crear usuario' });
+    }
+  }
+});
+
+// Eliminar usuario
+router.delete('/usuarios/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Verificar que no sea admin
+    const checkAdmin = await pool.query('SELECT es_admin FROM Usuarios WHERE id_usuario = $1', [id]);
+    if (checkAdmin.rows.length > 0 && checkAdmin.rows[0].es_admin) {
+      return res.status(403).json({ error: 'No se puede eliminar un administrador' });
+    }
+
+    // Eliminar usuario (cascade eliminará sus vehículos)
+    const result = await pool.query(
+      'DELETE FROM Usuarios WHERE id_usuario = $1 RETURNING email',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    res.json({ 
+      message: 'Usuario eliminado exitosamente',
+      usuario_eliminado: result.rows[0].email
+    });
+
+  } catch (error) {
+    console.error('Error al eliminar usuario:', error);
+    res.status(500).json({ error: 'Error al eliminar usuario' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CRUD VEHÍCULOS
+// ═══════════════════════════════════════════════════════════════
+
+// Obtener todos los vehículos
+router.get('/vehiculos', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        v.id_vehiculo,
+        v.placa,
+        v.marca,
+        v.modelo,
+        v.color,
+        v.id_usuario,
+        u.email,
+        u.nombre || ' ' || u.apellido as propietario
+      FROM Vehiculos v
+      JOIN Usuarios u ON v.id_usuario = u.id_usuario
+      ORDER BY v.id_vehiculo DESC
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener vehículos:', error);
+    res.status(500).json({ error: 'Error al obtener vehículos' });
+  }
+});
+
+// Eliminar vehículo
+router.delete('/vehiculos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM Vehiculos WHERE id_vehiculo = $1 RETURNING placa',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Vehículo no encontrado' });
+    }
+
+    res.json({ 
+      message: 'Vehículo eliminado exitosamente',
+      placa: result.rows[0].placa
+    });
+
+  } catch (error) {
+    console.error('Error al eliminar vehículo:', error);
+    res.status(500).json({ error: 'Error al eliminar vehículo' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CRUD CAJONES
+// ═══════════════════════════════════════════════════════════════
+
+// Obtener todos los cajones
+router.get('/cajones', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        c.id_cajon,
+        c.numero_cajon,
+        c.ubicacion_piso,
+        c.tipo,
+        c.estado,
+        c.id_tarifa,
+        t.descripcion as tarifa_descripcion,
+        t.costo_por_hora
+      FROM CajonesEstacionamiento c
+      LEFT JOIN Tarifas t ON c.id_tarifa = t.id_tarifa
+      ORDER BY c.ubicacion_piso, c.numero_cajon
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener cajones:', error);
+    res.status(500).json({ error: 'Error al obtener cajones' });
+  }
+});
+
+// Cambiar estado de cajón
+router.patch('/cajones/:id/estado', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estado } = req.body;
+
+    const estadosValidos = ['Disponible', 'Ocupado', 'Mantenimiento', 'Reservado'];
+    if (!estadosValidos.includes(estado)) {
+      return res.status(400).json({ error: 'Estado inválido' });
+    }
+
+    const result = await pool.query(
+      `UPDATE CajonesEstacionamiento 
+       SET estado = $1 
+       WHERE id_cajon = $2 
+       RETURNING numero_cajon, estado`,
+      [estado, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Cajón no encontrado' });
+    }
+
+    res.json({
+      message: 'Estado actualizado exitosamente',
+      cajon: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Error al actualizar estado:', error);
+    res.status(500).json({ error: 'Error al actualizar estado' });
+  }
+});
+
+// Editar cajón completo (tipo y tarifa)
+router.put('/cajones/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tipo, id_tarifa } = req.body;
+
+    const tiposValidos = ['Normal', 'Discapacitado', 'Eléctrico', 'Moto'];
+    if (tipo && !tiposValidos.includes(tipo)) {
+      return res.status(400).json({ error: 'Tipo de cajón inválido' });
+    }
+
+    // Verificar que la tarifa existe
+    if (id_tarifa) {
+      const checkTarifa = await pool.query(
+        'SELECT id_tarifa FROM Tarifas WHERE id_tarifa = $1',
+        [id_tarifa]
+      );
+      
+      if (checkTarifa.rows.length === 0) {
+        return res.status(404).json({ error: 'La tarifa especificada no existe' });
+      }
+    }
+
+    const result = await pool.query(
+      `UPDATE CajonesEstacionamiento 
+       SET tipo = COALESCE($1, tipo),
+           id_tarifa = COALESCE($2, id_tarifa)
+       WHERE id_cajon = $3 
+       RETURNING *`,
+      [tipo, id_tarifa, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Cajón no encontrado' });
+    }
+
+    res.json({
+      message: 'Cajón actualizado exitosamente',
+      cajon: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Error al actualizar cajón:', error);
+    res.status(500).json({ error: 'Error al actualizar cajón' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CRUD TICKETS
+// ═══════════════════════════════════════════════════════════════
+
+// Obtener todos los tickets
+router.get('/tickets', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        t.id_ticket,
+        t.codigo_acceso,
+        t.fecha_hora_entrada,
+        t.fecha_hora_salida,
+        t.monto_cobrado,
+        t.estado,
+        v.placa,
+        v.marca,
+        v.modelo,
+        u.nombre || ' ' || u.apellido as cliente,
+        c.numero_cajon
+      FROM TicketsEstancia t
+      JOIN Vehiculos v ON t.id_vehiculo = v.id_vehiculo
+      JOIN Usuarios u ON v.id_usuario = u.id_usuario
+      JOIN CajonesEstacionamiento c ON t.id_cajon = c.id_cajon
+      ORDER BY t.fecha_hora_entrada DESC
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener tickets:', error);
+    res.status(500).json({ error: 'Error al obtener tickets' });
+  }
+});
+
+// Finalizar ticket manualmente
+router.patch('/tickets/:id/finalizar', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { id } = req.params;
+    const { monto_cobrado } = req.body;
+
+    await client.query('BEGIN');
+
+    // Actualizar ticket
+    const ticketResult = await client.query(
+      `UPDATE TicketsEstancia 
+       SET fecha_hora_salida = CURRENT_TIMESTAMP,
+           monto_cobrado = $1,
+           estado = 'FINALIZADO'
+       WHERE id_ticket = $2 AND estado = 'ACTIVO'
+       RETURNING id_cajon`,
+      [monto_cobrado, id]
+    );
+
+    if (ticketResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Ticket no encontrado o ya finalizado' });
+    }
+
+    // Liberar cajón
+    await client.query(
+      "UPDATE CajonesEstacionamiento SET estado = 'Disponible' WHERE id_cajon = $1",
+      [ticketResult.rows[0].id_cajon]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({ message: 'Ticket finalizado exitosamente' });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error al finalizar ticket:', error);
+    res.status(500).json({ error: 'Error al finalizar ticket' });
+  } finally {
+    client.release();
+  }
+});
+
+// Eliminar ticket
+router.delete('/tickets/:id', async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { id } = req.params;
+
+    await client.query('BEGIN');
+
+    // Obtener info del ticket
+    const ticketInfo = await client.query(
+      'SELECT id_cajon, estado FROM TicketsEstancia WHERE id_ticket = $1',
+      [id]
+    );
+
+    if (ticketInfo.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Ticket no encontrado' });
+    }
+
+    // Si el ticket estaba activo, liberar el cajón
+    if (ticketInfo.rows[0].estado === 'ACTIVO') {
+      await client.query(
+        "UPDATE CajonesEstacionamiento SET estado = 'Disponible' WHERE id_cajon = $1",
+        [ticketInfo.rows[0].id_cajon]
+      );
+    }
+
+    // Eliminar ticket
+    await client.query('DELETE FROM TicketsEstancia WHERE id_ticket = $1', [id]);
+
+    await client.query('COMMIT');
+
+    res.json({ message: 'Ticket eliminado exitosamente' });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error al eliminar ticket:', error);
+    res.status(500).json({ error: 'Error al eliminar ticket' });
+  } finally {
+    client.release();
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// CRUD TARIFAS
+// ═══════════════════════════════════════════════════════════════
+
+// Obtener todas las tarifas
+router.get('/tarifas', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        t.id_tarifa,
+        t.descripcion,
+        t.costo_por_hora,
+        COUNT(c.id_cajon) as cajones_usando
+      FROM Tarifas t
+      LEFT JOIN CajonesEstacionamiento c ON t.id_tarifa = c.id_tarifa
+      GROUP BY t.id_tarifa
+      ORDER BY t.id_tarifa
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener tarifas:', error);
+    res.status(500).json({ error: 'Error al obtener tarifas' });
+  }
+});
+
+// Crear tarifa
+router.post('/tarifas', async (req, res) => {
+  try {
+    const { descripcion, costo_por_hora } = req.body;
+
+    if (!descripcion || !costo_por_hora) {
+      return res.status(400).json({ error: 'Descripción y costo son requeridos' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO Tarifas (descripcion, costo_por_hora)
+       VALUES ($1, $2)
+       RETURNING *`,
+      [descripcion, costo_por_hora]
+    );
+
+    res.status(201).json({
+      message: 'Tarifa creada exitosamente',
+      tarifa: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Error al crear tarifa:', error);
+    res.status(500).json({ error: 'Error al crear tarifa' });
+  }
+});
+
+// Actualizar tarifa
+router.put('/tarifas/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { descripcion, costo_por_hora } = req.body;
+
+    const result = await pool.query(
+      `UPDATE Tarifas 
+       SET descripcion = $1, costo_por_hora = $2
+       WHERE id_tarifa = $3
+       RETURNING *`,
+      [descripcion, costo_por_hora, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Tarifa no encontrada' });
+    }
+
+    res.json({
+      message: 'Tarifa actualizada exitosamente',
+      tarifa: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Error al actualizar tarifa:', error);
+    res.status(500).json({ error: 'Error al actualizar tarifa' });
+  }
+});
+
+// Eliminar tarifa
+router.delete('/tarifas/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Verificar si hay cajones usando esta tarifa
+    const check = await pool.query(
+      'SELECT COUNT(*) as total FROM CajonesEstacionamiento WHERE id_tarifa = $1',
+      [id]
+    );
+
+    if (parseInt(check.rows[0].total) > 0) {
+      return res.status(400).json({ 
+        error: 'No se puede eliminar: hay cajones usando esta tarifa' 
+      });
+    }
+
+    const result = await pool.query(
+      'DELETE FROM Tarifas WHERE id_tarifa = $1 RETURNING descripcion',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Tarifa no encontrada' });
+    }
+
+    res.json({ 
+      message: 'Tarifa eliminada exitosamente',
+      tarifa_eliminada: result.rows[0].descripcion
+    });
+
+  } catch (error) {
+    console.error('Error al eliminar tarifa:', error);
+    res.status(500).json({ error: 'Error al eliminar tarifa' });
+  }
+});
+
+module.exports = router;
