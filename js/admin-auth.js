@@ -1,5 +1,5 @@
 // Configuración de la API
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://parkpay-backend-1ti1.onrender.com/api';
 
 // Al cargar la página, verificar si ya existe un admin
 window.addEventListener('DOMContentLoaded', async () => {
