@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inicio - ParkPay</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -170,6 +171,75 @@
             font-size: 24px;
             margin-bottom: 4px;
         }
+
+        .active-tickets-section {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .active-tickets-section h3 {
+            margin: 0 0 15px 0;
+            color: #1e40af;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ticket-active-card {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .ticket-active-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .ticket-header-active {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .ticket-code-active {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .ticket-spot-active {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .ticket-qr-mini {
+            display: flex;
+            justify-content: center;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .empty-tickets {
+            text-align: center;
+            padding: 30px;
+            color: #94a3b8;
+        }
+
+        .empty-tickets-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -200,6 +270,15 @@
                     <div class="stat-label">Vehículos</div>
                 </div>
             </div>
+        </div>
+
+        <!-- Tickets Activos -->
+        <div class="active-tickets-section" id="activeTicketsSection" style="display: none;">
+            <h3>
+                🎫 Tickets Activos
+                <a href="tickets.html" style="font-size: 14px; color: #3b82f6; text-decoration: none;">Ver todos →</a>
+            </h3>
+            <div id="activeTicketsList"></div>
         </div>
 
         <!-- Acciones rápidas -->
@@ -259,8 +338,13 @@
                 // Tickets activos
                 const ticketsRes = await fetch(`${API_URL}/tickets/usuario/${usuario.id_usuario}`);
                 const tickets = await ticketsRes.json();
-                const activos = tickets.filter(t => t.estado === 'ACTIVO').length;
-                document.getElementById('ticketsActivos').textContent = activos;
+                const ticketsActivos = tickets.filter(t => t.estado === 'ACTIVO');
+                document.getElementById('ticketsActivos').textContent = ticketsActivos.length;
+
+                // Mostrar tickets activos si hay
+                if (ticketsActivos.length > 0) {
+                    mostrarTicketsActivos(ticketsActivos);
+                }
 
                 // Vehículos
                 const vehiculosRes = await fetch(`${API_URL}/usuarios/${usuario.id_usuario}/vehiculos`);
@@ -270,6 +354,50 @@
             } catch (error) {
                 console.error('Error:', error);
             }
+        }
+
+        function mostrarTicketsActivos(tickets) {
+            const section = document.getElementById('activeTicketsSection');
+            const container = document.getElementById('activeTicketsList');
+
+            section.style.display = 'block';
+
+            container.innerHTML = tickets.map(ticket => `
+                <div class="ticket-active-card" onclick="window.location.href='tickets.html'">
+                    <div class="ticket-header-active">
+                        <div class="ticket-code-active">🎫 ${ticket.codigo_acceso}</div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px; font-size: 12px;">
+                            ACTIVO
+                        </div>
+                    </div>
+                    <div class="ticket-spot-active">📍 Cajón ${ticket.numero_cajon || 'N/A'}</div>
+                    <div style="font-size: 14px; opacity: 0.9;">🚗 ${ticket.placa || 'N/A'}</div>
+                    <div class="ticket-qr-mini" id="qr-mini-${ticket.id_ticket}">
+                        <div style="color: #64748b; font-size: 12px;">Cargando QR...</div>
+                    </div>
+                    <div style="font-size: 12px; text-align: center; margin-top: 10px; opacity: 0.8;">
+                        Toca para ver detalles
+                    </div>
+                </div>
+            `).join('');
+
+            // Generar QR codes
+            setTimeout(() => {
+                tickets.forEach(ticket => {
+                    const qrContainer = document.getElementById(`qr-mini-${ticket.id_ticket}`);
+                    if (qrContainer) {
+                        qrContainer.innerHTML = '';
+                        new QRCode(qrContainer, {
+                            text: ticket.codigo_acceso,
+                            width: 120,
+                            height: 120,
+                            colorDark: "#1e40af",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+                    }
+                });
+            }, 100);
         }
     </script>
 </body>

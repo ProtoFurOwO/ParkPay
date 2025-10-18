@@ -293,7 +293,8 @@ async function confirmBooking() {
         const data = await response.json();
         
         if (response.ok) {
-            showMessage(`¡Pago exitoso! Tu código de acceso es: ${data.ticket.codigo_acceso}`, 'success');
+            // Mostrar modal de éxito con QR
+            showSuccessModal(data.ticket, selectedCajon, hours);
             
             // Actualizar el estado del cajón en el array local
             const cajonIndex = cajones.findIndex(c => c.id_cajon === selectedCajon.id_cajon);
@@ -315,11 +316,6 @@ async function confirmBooking() {
             
             selectedSpot = null;
             selectedCajon = null;
-            
-            // Recargar cajones después de 3 segundos para sincronizar con el servidor
-            setTimeout(() => {
-                loadCajones();
-            }, 3000);
         } else {
             showMessage(data.error || 'Error al crear la reserva', 'error');
         }
@@ -327,6 +323,42 @@ async function confirmBooking() {
         console.error('Error:', error);
         showMessage('Error de conexión al servidor', 'error');
     }
+}
+
+// Mostrar modal de éxito con QR
+function showSuccessModal(ticket, cajon, hours) {
+    const modal = document.getElementById('successModal');
+    
+    // Llenar información
+    document.getElementById('successCode').textContent = ticket.codigo_acceso;
+    document.getElementById('successSpot').textContent = cajon.numero_cajon + ' - ' + cajon.ubicacion_piso;
+    document.getElementById('successVehicle').textContent = vehiculos[0].placa;
+    document.getElementById('successHours').textContent = hours;
+    
+    // Calcular monto
+    const monto = (hours * parseFloat(cajon.costo_por_hora)).toFixed(2);
+    document.getElementById('successAmount').textContent = monto;
+    
+    // Generar QR
+    const qrContainer = document.getElementById('successQR');
+    qrContainer.innerHTML = ''; // Limpiar QR anterior
+    
+    new QRCode(qrContainer, {
+        text: ticket.codigo_acceso,
+        width: 200,
+        height: 200,
+        colorDark: "#1e40af",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+    
+    // Mostrar modal
+    modal.style.display = 'flex';
+}
+
+// Cerrar modal y redirigir al inicio
+function closeSuccessModal() {
+    window.location.href = 'inicio.html';
 }
 
 // Cerrar sesión
