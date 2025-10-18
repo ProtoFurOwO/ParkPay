@@ -134,8 +134,34 @@ function mostrarTickets() {
                     💵 $${parseFloat(ticket.monto_cobrado).toFixed(2)}
                 </div>
             ` : ''}
+            <div class="qr-container" id="qr-${ticket.id_ticket}">
+                <div class="qr-placeholder">Generando QR...</div>
+            </div>
         </div>
     `).join('');
+
+    // Generar códigos QR para cada ticket
+    setTimeout(() => {
+        ticketsFiltrados.forEach(ticket => {
+            const qrContainer = document.getElementById(`qr-${ticket.id_ticket}`);
+            if (qrContainer) {
+                qrContainer.innerHTML = ''; // Limpiar placeholder
+                new QRCode(qrContainer, {
+                    text: ticket.codigo_acceso,
+                    width: 150,
+                    height: 150,
+                    colorDark: "#1e40af",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                // Hacer el QR clickeable para ampliar
+                qrContainer.addEventListener('click', () => {
+                    mostrarQRGrande(ticket.codigo_acceso);
+                });
+            }
+        });
+    }, 100);
 }
 
 // Formatear fecha
@@ -151,6 +177,61 @@ function formatearFecha(fechaString) {
     };
     
     return fecha.toLocaleDateString('es-MX', opciones);
+}
+
+// Mostrar QR en pantalla completa
+function mostrarQRGrande(codigo) {
+    // Crear modal
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.95);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        padding: 20px;
+    `;
+    
+    modal.innerHTML = `
+        <div style="text-align: center; color: white;">
+            <h2 style="margin-bottom: 20px;">Código de Acceso</h2>
+            <div id="qr-fullscreen" style="background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px;"></div>
+            <p style="font-size: 24px; font-weight: bold; margin-bottom: 10px;">${codigo}</p>
+            <p style="color: #94a3b8; margin-bottom: 30px;">Presenta este código al salir</p>
+            <button onclick="this.closest('div').parentElement.remove()" 
+                    style="background: #1e40af; color: white; border: none; padding: 15px 40px; 
+                           border-radius: 10px; font-size: 16px; cursor: pointer; font-weight: bold;">
+                Cerrar
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Generar QR grande
+    setTimeout(() => {
+        new QRCode(document.getElementById('qr-fullscreen'), {
+            text: codigo,
+            width: 280,
+            height: 280,
+            colorDark: "#1e40af",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    }, 100);
+    
+    // Cerrar al hacer clic fuera del QR
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
 }
 
 // Mostrar mensajes

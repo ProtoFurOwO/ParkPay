@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Tickets - ParkPay</title>
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
         .tickets-container {
             max-width: 600px;
@@ -124,6 +125,21 @@
             color: #10b981;
             margin-top: 10px;
             text-align: right;
+        }
+
+        .qr-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 10px;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+
+        .qr-container canvas {
+            border-radius: 8px;
         }
 
         .empty-state {
