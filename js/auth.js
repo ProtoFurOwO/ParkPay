@@ -48,7 +48,7 @@ async function handleLogin(event) {
             showMessage('¡Bienvenido! Redirigiendo...', 'success');
             
             setTimeout(() => {
-                window.location.href = 'estacionamiento.html';
+                window.location.href = 'inicio.html';
             }, 1500);
         } else {
             showMessage(data.error || 'Error al iniciar sesión', 'error');
@@ -128,6 +128,6 @@ async function handleRegister(event) {
 window.addEventListener('DOMContentLoaded', () => {
     const usuario = localStorage.getItem('usuario');
     if (usuario && window.location.pathname.includes('index.html')) {
-        window.location.href = 'estacionamiento.html';
+        window.location.href = 'inicio.html';
     }
 });
