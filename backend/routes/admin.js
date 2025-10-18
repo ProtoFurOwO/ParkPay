@@ -4,13 +4,13 @@ const bcrypt = require('bcryptjs');
 const pool = require('../config/database');
 
 // ═══════════════════════════════════════════════════════════════
-// AUTENTICACIÓN DE ADMINISTRADOR (usando tabla Usuarios)
+// AUTENTICACIÓN DE ADMINISTRADOR (usando email @parkpay.com)
 // ═══════════════════════════════════════════════════════════════
 
 // Verificar si ya existe un administrador
 router.get('/check-admin', async (req, res) => {
   try {
-    const result = await pool.query('SELECT COUNT(*) as total FROM Usuarios WHERE es_admin = TRUE');
+    const result = await pool.query("SELECT COUNT(*) as total FROM Usuarios WHERE email LIKE '%@parkpay.com'");
     const hayAdmin = parseInt(result.rows[0].total) > 0;
     
     res.json({ 
@@ -37,7 +37,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Verificar que no exista ya un admin
-    const checkAdmin = await pool.query('SELECT COUNT(*) as total FROM Usuarios WHERE es_admin = TRUE');
+    const checkAdmin = await pool.query("SELECT COUNT(*) as total FROM Usuarios WHERE email LIKE '%@parkpay.com'");
     if (parseInt(checkAdmin.rows[0].total) > 0) {
       return res.status(403).json({ error: 'Ya existe un administrador registrado' });
     }
@@ -53,11 +53,11 @@ router.post('/register', async (req, res) => {
     // Usar el username como email (formato: username@parkpay.com)
     const email = `${username}@parkpay.com`;
 
-    // Insertar administrador como usuario con es_admin = TRUE
+    // Insertar administrador como usuario normal (el @parkpay.com lo identifica como admin)
     const result = await pool.query(
-      `INSERT INTO Usuarios (nombre, apellido, email, password_hash, es_admin) 
-       VALUES ($1, $2, $3, $4, TRUE) 
-       RETURNING id_usuario, nombre, apellido, email, fecha_registro, es_admin`,
+      `INSERT INTO Usuarios (nombre, apellido, email, password_hash) 
+       VALUES ($1, $2, $3, $4) 
+       RETURNING id_usuario, nombre, apellido, email, fecha_registro`,
       [nombre, apellido, email, password_hash]
     );
 
@@ -88,15 +88,20 @@ router.post('/login', async (req, res) => {
     // Buscar admin por email (usando username@parkpay.com)
     const email = `${username}@parkpay.com`;
     const result = await pool.query(
-      'SELECT * FROM Usuarios WHERE email = $1 AND es_admin = TRUE',
+      'SELECT * FROM Usuarios WHERE email = $1',
       [email]
     );
 
     if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Credenciales inválidas o no es administrador' });
+      return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
     const admin = result.rows[0];
+
+    // Verificar que sea admin (email @parkpay.com)
+    if (!admin.email.endsWith('@parkpay.com')) {
+      return res.status(401).json({ error: 'No es administrador' });
+    }
 
     // Verificar contraseña
     const passwordValida = await bcrypt.compare(password, admin.password_hash);
@@ -124,8 +129,8 @@ router.post('/login', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 router.get('/stats', async (req, res) => {
   try {
-    // Total usuarios (sin contar admins)
-    const usuarios = await pool.query('SELECT COUNT(*) as total FROM Usuarios WHERE es_admin = FALSE OR es_admin IS NULL');
+    // Total usuarios (sin contar admins - excluir @parkpay.com)
+    const usuarios = await pool.query("SELECT COUNT(*) as total FROM Usuarios WHERE email NOT LIKE '%@parkpay.com'");
     
     // Total vehículos
     const vehiculos = await pool.query('SELECT COUNT(*) as total FROM Vehiculos');
@@ -170,7 +175,7 @@ router.get('/usuarios', async (req, res) => {
         COUNT(v.id_vehiculo) as total_vehiculos
       FROM Usuarios u
       LEFT JOIN Vehiculos v ON u.id_usuario = v.id_usuario
-      WHERE u.es_admin = FALSE OR u.es_admin IS NULL
+      WHERE u.email NOT LIKE '%@parkpay.com'
       GROUP BY u.id_usuario
       ORDER BY u.fecha_registro DESC
     `);
@@ -195,8 +200,8 @@ router.post('/usuarios', async (req, res) => {
     const password_hash = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      `INSERT INTO Usuarios (nombre, apellido, email, password_hash, es_admin)
-       VALUES ($1, $2, $3, $4, FALSE)
+      `INSERT INTO Usuarios (nombre, apellido, email, password_hash)
+       VALUES ($1, $2, $3, $4)
        RETURNING id_usuario, nombre, apellido, email, fecha_registro`,
       [nombre, apellido, email, password_hash]
     );
@@ -221,9 +226,9 @@ router.delete('/usuarios/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Verificar que no sea admin
-    const checkAdmin = await pool.query('SELECT es_admin FROM Usuarios WHERE id_usuario = $1', [id]);
-    if (checkAdmin.rows.length > 0 && checkAdmin.rows[0].es_admin) {
+    // Verificar que no sea admin (email @parkpay.com)
+    const checkAdmin = await pool.query('SELECT email FROM Usuarios WHERE id_usuario = $1', [id]);
+    if (checkAdmin.rows.length > 0 && checkAdmin.rows[0].email.endsWith('@parkpay.com')) {
       return res.status(403).json({ error: 'No se puede eliminar un administrador' });
     }
 
