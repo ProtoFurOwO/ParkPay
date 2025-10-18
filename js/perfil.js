@@ -82,6 +82,7 @@ function mostrarVehiculos() {
         <div class="vehicle-card">
             <div class="vehicle-plate">${vehiculo.placa || 'Sin placa'}</div>
             <div class="vehicle-info">
+                ${vehiculo.tipo ? `<span>🚙 ${vehiculo.tipo}</span>` : ''}
                 ${vehiculo.marca ? `<span>🏢 ${vehiculo.marca}</span>` : ''}
                 ${vehiculo.modelo ? `<span>🚘 ${vehiculo.modelo}</span>` : ''}
                 ${vehiculo.color ? `<span>🎨 ${vehiculo.color}</span>` : ''}
@@ -119,6 +120,7 @@ async function submitVehicle(event) {
 
     const formData = {
         placa: document.getElementById('placa').value.trim().toUpperCase(),
+        tipo: document.getElementById('tipo').value,
         marca: document.getElementById('marca').value.trim() || null,
         modelo: document.getElementById('modelo').value.trim() || null,
         color: document.getElementById('color').value.trim() || null
