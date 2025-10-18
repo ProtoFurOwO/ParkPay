@@ -97,7 +97,7 @@ router.get('/usuario/:id_usuario', async (req, res) => {
         t.fecha_hora_entrada,
         t.fecha_hora_salida,
         t.monto_cobrado,
-        t.estado as ticket_estado,
+        t.estado,
         v.placa,
         v.marca,
         v.modelo,
