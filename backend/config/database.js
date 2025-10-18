@@ -29,7 +29,11 @@ const poolConfig = isSupabase
       connectionString: process.env.DATABASE_URL,
       ssl: {
         rejectUnauthorized: false // Supabase usa certificados autofirmados
-      }
+      },
+      // Configuración adicional para Render
+      max: 10, // Máximo de conexiones
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
     }
   : {
       // Configuración para Local (sin SSL)
