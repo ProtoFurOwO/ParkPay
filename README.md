@@ -1,6 +1,6 @@
 # 🚗 ParkPay - Sistema de Estacionamiento
 
-Sistema completo de gestión de estacionamiento con frontend y backend integrado.
+Sistema completo de gestión de estacionamiento con frontend y backend integrado, desplegado en la nube.
 
 ## 🎯 Características
 
@@ -10,67 +10,16 @@ Sistema completo de gestión de estacionamiento con frontend y backend integrado
 - ✅ Selección interactiva de cajones
 - ✅ Cálculo automático de tarifas por hora
 - ✅ Sistema de tickets con código de acceso
-- ✅ Base de datos PostgreSQL
+- ✅ Base de datos PostgreSQL en la nube (Supabase)
+- ✅ Backend desplegado en Render
 - ✅ Interfaz moderna y responsiva
 
-## 📋 Requisitos Previos
+## 🌐 Demo en Vivo
 
-- Node.js (versión 14 o superior)
-- PostgreSQL (versión 12 o superior)
-- Navegador web moderno
-
-## 🚀 Instalación Rápida
-
-### 1. Configurar Base de Datos
-
-1. Abre pgAdmin o psql
-2. Ejecuta el archivo `c:\masm\BIN\base postgre.sql` para crear la estructura
-3. Ejecuta el archivo `backend\init_db.sql` para insertar los datos iniciales (tarifas y cajones)
-
-### 2. Configurar Backend
-
-1. Ve a la carpeta `backend`
-2. Edita el archivo `.env` con tus credenciales de PostgreSQL:
-   ```
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_NAME=park_pay_db
-   DB_USER=postgres
-   DB_PASSWORD=tu_password_aqui
-   PORT=3000
-   ```
-
-### 3. Instalar Dependencias
-
-Abre una terminal en la carpeta `backend` y ejecuta:
-```bash
-npm install
-```
-
-### 4. Iniciar la Aplicación
-
-#### Opción 1: Usando los archivos .bat (Recomendado)
-
-1. Doble clic en `INICIAR_SERVIDOR.bat` - Esto iniciará el backend
-2. Doble clic en `ABRIR_APP.bat` - Esto abrirá la aplicación en tu navegador
-
-#### Opción 2: Manual
-
-Terminal 1 - Iniciar servidor:
-```bash
-cd backend
-node server.js
-```
-
-Terminal 2 - Abrir aplicación:
-```bash
-# Simplemente abre index.html en tu navegador
-start index.html
-```
+- **Frontend**: [URL pendiente de deploy]
+- **Backend API**: [URL pendiente de deploy]
 
 ## 📖 Uso
-
-### Primer Uso
 
 1. **Registro**: 
    - Crea tu cuenta con nombre, apellido, email y contraseña
@@ -92,28 +41,26 @@ start index.html
 ## 🗂️ Estructura del Proyecto
 
 ```
-PP/
+ParkPay/
 ├── backend/
 │   ├── config/
-│   │   └── database.js          # Configuración de PostgreSQL
+│   │   └── database.js          # Configuración de PostgreSQL + Supabase
 │   ├── routes/
 │   │   ├── auth.js              # Login y registro
 │   │   ├── cajones.js           # Gestión de cajones
 │   │   ├── tickets.js           # Gestión de tickets
 │   │   └── usuarios.js          # Gestión de usuarios
-│   ├── .env                     # Variables de entorno
+│   ├── .env                     # Variables de entorno (no incluido)
 │   ├── server.js                # Servidor Express
-│   ├── package.json             # Dependencias
-│   └── init_db.sql              # Datos iniciales
+│   └── package.json             # Dependencias
 ├── css/
 │   └── styles.css               # Estilos de la aplicación
 ├── js/
 │   ├── auth.js                  # Lógica de autenticación
 │   └── parking.js               # Lógica del estacionamiento
 ├── index.html                   # Página de login/registro
-├── estacionamiento.html         # Página principal
-├── INICIAR_SERVIDOR.bat         # Script para iniciar backend
-├── ABRIR_APP.bat                # Script para abrir app
+├── estacionamiento.html         # Página principal del estacionamiento
+├── admin.html                   # Panel de administración
 └── README.md                    # Este archivo
 ```
 
@@ -159,9 +106,14 @@ PP/
 ### Backend
 - Node.js
 - Express.js
-- PostgreSQL
+- PostgreSQL (Supabase)
 - bcryptjs (encriptación de contraseñas)
 - dotenv (variables de entorno)
+
+### Infraestructura
+- **Base de Datos**: Supabase (PostgreSQL en la nube)
+- **Backend**: Render (servidor Node.js)
+- **Frontend**: Netlify/Vercel (hosting estático)
 
 ## ⚙️ Configuración de la Base de Datos
 
@@ -183,24 +135,14 @@ PP/
 
 ## 🐛 Solución de Problemas
 
-### El servidor no inicia
-- Verifica que Node.js esté instalado: `node --version`
-- Verifica que las dependencias estén instaladas: `npm install`
-- Revisa que PostgreSQL esté corriendo
-
-### Error de conexión a la base de datos
-- Verifica las credenciales en `backend/.env`
-- Asegúrate de que PostgreSQL esté corriendo
-- Verifica que la base de datos `park_pay_db` exista
-
 ### La página no carga los cajones
-- Verifica que el servidor backend esté corriendo en http://localhost:3000
+- Verifica que el backend esté desplegado y funcionando
 - Abre la consola del navegador (F12) para ver errores
-- Verifica que los datos estén insertados con `init_db.sql`
+- Verifica que la URL de la API sea correcta
 
 ### Error de CORS
-- El servidor ya tiene CORS habilitado
-- Asegúrate de abrir la app desde el mismo dominio (localhost)
+- El servidor tiene CORS habilitado para dominios autorizados
+- Si estás en desarrollo local, contacta al administrador
 
 ## 📝 Notas
 
@@ -208,14 +150,12 @@ PP/
 - Los cajones se liberan automáticamente al finalizar el ticket
 - El cálculo de horas se redondea hacia arriba
 - Los códigos de acceso son únicos y no se repiten
+- El backend en Render (plan gratuito) se duerme después de 15 min de inactividad
+  - Se reactiva automáticamente en ~30 segundos con la primera petición
 
-## 👨‍💻 Desarrollo
+## 👨‍💻 Contribuir
 
-Para modo desarrollo con auto-reload:
-```bash
-cd backend
-npm run dev
-```
+Este es un proyecto educativo. Si encuentras algún bug o tienes sugerencias, siéntete libre de abrir un issue.
 
 ## 📄 Licencia
 
