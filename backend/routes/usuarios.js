@@ -8,7 +8,7 @@ router.get('/:id_usuario/vehiculos', async (req, res) => {
     const { id_usuario } = req.params;
 
     const result = await pool.query(
-      'SELECT id_vehiculo, placa, marca, modelo, color FROM Vehiculos WHERE id_usuario = $1',
+      'SELECT id_vehiculo, placa, tipo, marca, modelo, color FROM Vehiculos WHERE id_usuario = $1',
       [id_usuario]
     );
 
@@ -23,10 +23,14 @@ router.get('/:id_usuario/vehiculos', async (req, res) => {
 router.post('/:id_usuario/vehiculos', async (req, res) => {
   try {
     const { id_usuario } = req.params;
-    const { placa, marca, modelo, color } = req.body;
+    const { placa, tipo, marca, modelo, color } = req.body;
 
     if (!placa) {
       return res.status(400).json({ error: 'La placa es requerida' });
+    }
+
+    if (!tipo) {
+      return res.status(400).json({ error: 'El tipo de vehículo es requerido' });
     }
 
     // Verificar si la placa ya existe
@@ -40,8 +44,8 @@ router.post('/:id_usuario/vehiculos', async (req, res) => {
     }
 
     const result = await pool.query(
-      'INSERT INTO Vehiculos (id_usuario, placa, marca, modelo, color) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [id_usuario, placa, marca || null, modelo || null, color || null]
+      'INSERT INTO Vehiculos (id_usuario, placa, tipo, marca, modelo, color) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [id_usuario, placa, tipo, marca || null, modelo || null, color || null]
     );
 
     res.status(201).json({
