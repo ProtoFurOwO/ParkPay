@@ -37,7 +37,7 @@ router.post('/', async (req, res) => {
     const ticketResult = await client.query(`
       INSERT INTO TicketsEstancia 
       (id_vehiculo, id_cajon, codigo_acceso, fecha_hora_entrada, horas_estimadas, fecha_salida_estimada, estado) 
-      VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4, CURRENT_TIMESTAMP + ($4 || ' hours')::INTERVAL, 'ACTIVO') 
+      VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4, CURRENT_TIMESTAMP + ($4::numeric || ' hours')::INTERVAL, 'ACTIVO') 
       RETURNING *
     `, [id_vehiculo, id_cajon, codigo_acceso, horas_estimadas || 2]);
 
