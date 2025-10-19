@@ -96,7 +96,11 @@ function mostrarTickets() {
     );
 
     // Mostrar tickets
-    container.innerHTML = ticketsFiltrados.map(ticket => `
+    container.innerHTML = ticketsFiltrados.map(ticket => {
+        const minutosRestantes = ticket.minutos_restantes ? Math.floor(ticket.minutos_restantes) : null;
+        const mostrarExtender = ticket.estado === 'ACTIVO' && minutosRestantes !== null && minutosRestantes <= 20 && minutosRestantes > 0;
+
+        return `
         <div class="ticket-card">
             <div class="ticket-header">
                 <div class="ticket-code">🎫 ${ticket.codigo_acceso}</div>
@@ -122,6 +126,13 @@ function mostrarTickets() {
                         <span class="ticket-info-label">🚪 Salida:</span>
                         <span>${formatearFecha(ticket.fecha_hora_salida)}</span>
                     </div>
+                ` : minutosRestantes !== null ? `
+                    <div class="ticket-info-row">
+                        <span class="ticket-info-label">⏱️ Tiempo restante:</span>
+                        <span style="color: ${minutosRestantes <= 10 ? '#ef4444' : '#10b981'}; font-weight: bold;">
+                            ${minutosRestantes} minutos
+                        </span>
+                    </div>
                 ` : `
                     <div class="ticket-info-row">
                         <span class="ticket-info-label">⏱️ Estado:</span>
@@ -134,11 +145,33 @@ function mostrarTickets() {
                     💵 $${parseFloat(ticket.monto_cobrado).toFixed(2)}
                 </div>
             ` : ''}
+            ${mostrarExtender ? `
+                <div style="margin: 15px 0; padding: 15px; background: #fef3c7; border-radius: 10px;">
+                    <p style="margin: 0 0 10px 0; font-size: 14px; color: #78350f;">
+                        ¿Necesitas más tiempo?
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                        <button onclick="extenderTiempo(${ticket.id_ticket}, 15, ${ticket.costo_por_hora})" 
+                                style="background: #10b981; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                            +15min<br>$${(15/60 * ticket.costo_por_hora).toFixed(2)}
+                        </button>
+                        <button onclick="extenderTiempo(${ticket.id_ticket}, 30, ${ticket.costo_por_hora})" 
+                                style="background: #3b82f6; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                            +30min<br>$${(30/60 * ticket.costo_por_hora).toFixed(2)}
+                        </button>
+                        <button onclick="extenderTiempo(${ticket.id_ticket}, 60, ${ticket.costo_por_hora})" 
+                                style="background: #1e40af; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                            +1h<br>$${parseFloat(ticket.costo_por_hora).toFixed(2)}
+                        </button>
+                    </div>
+                </div>
+            ` : ''}
             <div class="qr-container" id="qr-${ticket.id_ticket}">
                 <div class="qr-placeholder">Generando QR...</div>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 
     // Generar códigos QR para cada ticket
     setTimeout(() => {
@@ -244,4 +277,40 @@ function showMessage(message, type = 'info') {
     setTimeout(() => {
         messageBox.style.display = 'none';
     }, 3000);
+}
+
+// Extender tiempo de un ticket
+async function extenderTiempo(idTicket, minutos, costoPorHora) {
+    const costo = (minutos / 60) * costoPorHora;
+    
+    if (!confirm(`¿Agregar ${minutos} minutos por $${costo.toFixed(2)}?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/tickets/${idTicket}/extender`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ minutos_adicionales: minutos })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Error al extender tiempo');
+        }
+
+        showMessage(`✅ Tiempo extendido: +${minutos} min ($${data.costo_adicional})`, 'success');
+        
+        // Recargar tickets
+        setTimeout(() => {
+            cargarTickets();
+        }, 1500);
+
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage(error.message || 'Error al extender tiempo', 'error');
+    }
 }
