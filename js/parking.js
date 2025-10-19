@@ -7,6 +7,7 @@ let vehiculos = [];
 let cajones = [];
 let selectedSpot = null;
 let selectedCajon = null;
+let selectedVehiculo = null; // Vehículo seleccionado actualmente
 
 // Inicializar la página
 window.addEventListener('DOMContentLoaded', () => {
@@ -25,8 +26,8 @@ window.addEventListener('DOMContentLoaded', () => {
     // Mostrar información del usuario
     document.getElementById('userName').textContent = `${usuario.nombre} ${usuario.apellido}`;
     
-    // Mostrar información del vehículo
-    displayVehicleInfo();
+    // Cargar vehículos del usuario
+    loadUserVehicles();
     
     // Cargar cajones
     loadCajones();
@@ -37,49 +38,111 @@ window.addEventListener('DOMContentLoaded', () => {
     }, 10000); // 10 segundos
 });
 
+// Cargar vehículos del usuario
+async function loadUserVehicles() {
+    try {
+        const response = await fetch(`${API_URL}/usuarios/${usuario.id_usuario}/vehiculos`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            vehiculos = data;
+            localStorage.setItem('vehiculos', JSON.stringify(vehiculos));
+            displayVehicleSelector();
+            
+            // Seleccionar el primer vehículo por defecto
+            if (vehiculos.length > 0) {
+                selectedVehiculo = vehiculos[0];
+                displayVehicleInfo();
+            }
+        } else {
+            showMessage('Error al cargar vehículos', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('Error de conexión al servidor', 'error');
+    }
+}
+
+// Mostrar selector de vehículos
+function displayVehicleSelector() {
+    const selector = document.getElementById('vehicleSelector');
+    
+    if (vehiculos.length === 0) {
+        selector.innerHTML = '<option value="">No tienes vehículos registrados</option>';
+        return;
+    }
+    
+    selector.innerHTML = vehiculos.map((v, index) => {
+        const tipoIcon = v.tipo === 'Motocicleta' ? '🏍️' : v.tipo === 'Eléctrico' ? '⚡' : '🚗';
+        return `<option value="${index}">${tipoIcon} ${v.placa} - ${v.tipo}</option>`;
+    }).join('');
+    
+    selector.value = '0'; // Seleccionar el primero
+}
+
+// Cuando cambia el vehículo seleccionado
+function onVehicleChange() {
+    const selector = document.getElementById('vehicleSelector');
+    const index = parseInt(selector.value);
+    
+    if (!isNaN(index) && vehiculos[index]) {
+        selectedVehiculo = vehiculos[index];
+        displayVehicleInfo();
+        
+        // Recargar cajones para actualizar compatibilidad
+        loadCajones();
+        
+        // Limpiar selección actual si hay
+        if (selectedSpot) {
+            cancelBooking();
+        }
+    }
+}
+
 // Mostrar información del vehículo
 function displayVehicleInfo() {
     const vehicleDetails = document.getElementById('vehicleDetails');
     
-    if (vehiculos.length > 0) {
-        const vehiculo = vehiculos[0];
-        
-        // Icono según tipo de vehículo
-        let tipoIcon = '🚗';
-        if (vehiculo.tipo === 'Motocicleta') tipoIcon = '🏍️';
-        else if (vehiculo.tipo === 'Eléctrico') tipoIcon = '⚡';
-        
-        vehicleDetails.innerHTML = `
-            <div class="vehicle-detail">
-                <span>Tipo:</span>
-                <strong>${tipoIcon} ${vehiculo.tipo}</strong>
-            </div>
-            <div class="vehicle-detail">
-                <span>Placa:</span>
-                <strong>${vehiculo.placa}</strong>
-            </div>
-            ${vehiculo.marca ? `
-                <div class="vehicle-detail">
-                    <span>Marca:</span>
-                    <strong>${vehiculo.marca}</strong>
-                </div>
-            ` : ''}
-            ${vehiculo.modelo ? `
-                <div class="vehicle-detail">
-                    <span>Modelo:</span>
-                    <strong>${vehiculo.modelo}</strong>
-                </div>
-            ` : ''}
-            ${vehiculo.color ? `
-                <div class="vehicle-detail">
-                    <span>Color:</span>
-                    <strong>${vehiculo.color}</strong>
-                </div>
-            ` : ''}
-        `;
-    } else {
-        vehicleDetails.innerHTML = '<p>No tienes vehículos registrados</p>';
+    if (!selectedVehiculo) {
+        vehicleDetails.innerHTML = '<p>Selecciona un vehículo</p>';
+        return;
     }
+    
+    const vehiculo = selectedVehiculo;
+    
+    // Icono según tipo de vehículo
+    let tipoIcon = '🚗';
+    if (vehiculo.tipo === 'Motocicleta') tipoIcon = '🏍️';
+    else if (vehiculo.tipo === 'Eléctrico') tipoIcon = '⚡';
+    
+    vehicleDetails.innerHTML = `
+        <div class="vehicle-detail">
+            <span>Tipo:</span>
+            <strong>${tipoIcon} ${vehiculo.tipo}</strong>
+        </div>
+        <div class="vehicle-detail">
+            <span>Placa:</span>
+            <strong>${vehiculo.placa}</strong>
+        </div>
+        ${vehiculo.marca ? `
+            <div class="vehicle-detail">
+                <span>Marca:</span>
+                <strong>${vehiculo.marca}</strong>
+            </div>
+        ` : ''}
+        ${vehiculo.modelo ? `
+            <div class="vehicle-detail">
+                <span>Modelo:</span>
+                <strong>${vehiculo.modelo}</strong>
+            </div>
+        ` : ''}
+        ${vehiculo.color ? `
+            <div class="vehicle-detail">
+                <span>Color:</span>
+                <strong>${vehiculo.color}</strong>
+            </div>
+        ` : ''}
+    `;
 }
 
 // Cargar cajones del estacionamiento
@@ -123,8 +186,8 @@ function displayCajones() {
 function createSpotElement(cajon) {
     const spot = document.createElement('div');
     
-    // Obtener el tipo de vehículo del usuario
-    const tipoVehiculoUsuario = vehiculos.length > 0 ? vehiculos[0].tipo : null;
+    // Obtener el tipo de vehículo del usuario seleccionado
+    const tipoVehiculoUsuario = selectedVehiculo ? selectedVehiculo.tipo : null;
     
     // Verificar si el cajón es compatible con el vehículo del usuario
     const esCompatible = esCajonCompatible(cajon.tipo, tipoVehiculoUsuario);
@@ -265,8 +328,8 @@ function cancelBooking() {
 
 // Confirmar reserva y crear ticket
 async function confirmBooking() {
-    if (!selectedCajon || vehiculos.length === 0) {
-        showMessage('Faltan datos para la reserva', 'error');
+    if (!selectedCajon || !selectedVehiculo) {
+        showMessage('Debes seleccionar un vehículo y un cajón', 'error');
         return;
     }
     
@@ -284,7 +347,7 @@ async function confirmBooking() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                id_vehiculo: vehiculos[0].id_vehiculo,
+                id_vehiculo: selectedVehiculo.id_vehiculo,
                 id_cajon: selectedCajon.id_cajon,
                 horas_estimadas: hours
             })
@@ -332,7 +395,7 @@ function showSuccessModal(ticket, cajon, hours) {
     // Llenar información
     document.getElementById('successCode').textContent = ticket.codigo_acceso;
     document.getElementById('successSpot').textContent = cajon.numero_cajon + ' - ' + cajon.ubicacion_piso;
-    document.getElementById('successVehicle').textContent = vehiculos[0].placa;
+    document.getElementById('successVehicle').textContent = selectedVehiculo.placa;
     document.getElementById('successHours').textContent = hours;
     
     // Calcular monto

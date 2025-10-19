@@ -21,7 +21,10 @@
             <!-- Panel lateral con información -->
             <div class="side-panel">
                 <div class="vehicle-info">
-                    <h3>Tu Vehículo</h3>
+                    <h3>Selecciona tu Vehículo</h3>
+                    <select id="vehicleSelector" onchange="onVehicleChange()" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; margin-bottom: 15px; background: white; color: #334155;">
+                        <option value="">Cargando vehículos...</option>
+                    </select>
                     <div id="vehicleDetails"></div>
                 </div>
 
