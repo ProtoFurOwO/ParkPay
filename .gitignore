@@ -35,3 +35,4 @@ backupnormalizado.backup
 # Archivos de respaldo local
 *_local.js
 *_supabase.js
+.vercel
