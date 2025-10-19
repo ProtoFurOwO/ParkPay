@@ -248,11 +248,12 @@ router.post('/:id_ticket/extender', async (req, res) => {
 
     // Obtener ticket con información del cajón
     const ticketQuery = await pool.query(`
-      SELECT t.*, c.costo_por_hora, t.fecha_hora_entrada, t.horas_estimadas,
+      SELECT t.*, tar.costo_por_hora, t.fecha_hora_entrada, t.horas_estimadas,
              COALESCE(t.fecha_salida_estimada, 
                       t.fecha_hora_entrada + (t.horas_estimadas || ' hours')::INTERVAL) as salida_estimada_actual
       FROM TicketsEstancia t
       JOIN CajonesEstacionamiento c ON t.id_cajon = c.id_cajon
+      JOIN Tarifas tar ON c.id_tarifa = tar.id_tarifa
       WHERE t.id_ticket = $1 AND t.estado = 'ACTIVO'
     `, [id_ticket]);
 
@@ -308,13 +309,14 @@ router.post('/checkout', async (req, res) => {
 
     // Obtener ticket con toda la información
     const ticketQuery = await client.query(`
-      SELECT t.*, c.costo_por_hora, c.numero_cajon, c.ubicacion_piso,
+      SELECT t.*, tar.costo_por_hora, c.numero_cajon, c.ubicacion_piso,
              v.placa,
              COALESCE(t.fecha_salida_estimada, 
                       t.fecha_hora_entrada + (t.horas_estimadas || ' hours')::INTERVAL) as salida_estimada,
              EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - t.fecha_hora_entrada)) / 3600 as horas_reales
       FROM TicketsEstancia t
       JOIN CajonesEstacionamiento c ON t.id_cajon = c.id_cajon
+      JOIN Tarifas tar ON c.id_tarifa = tar.id_tarifa
       JOIN Vehiculos v ON t.id_vehiculo = v.id_vehiculo
       WHERE t.codigo_acceso = $1 AND t.estado = 'ACTIVO'
     `, [codigo_acceso]);
