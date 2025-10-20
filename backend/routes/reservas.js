@@ -359,12 +359,11 @@ router.get('/usuario/:id_usuario', async (req, res) => {
 router.put('/:id_reserva/cancelar', async (req, res) => {
     try {
         const { id_reserva } = req.params;
-        const { id_usuario } = req.body;
 
-        // Verificar que la reserva existe y pertenece al usuario
+        // Verificar que la reserva existe
         const reservaCheck = await pool.query(
-            `SELECT * FROM reservasanticipadas WHERE id_reserva = $1 AND id_usuario = $2`,
-            [id_reserva, id_usuario]
+            `SELECT * FROM reservasanticipadas WHERE id_reserva = $1`,
+            [id_reserva]
         );
 
         if (reservaCheck.rows.length === 0) {
@@ -382,8 +381,7 @@ router.put('/:id_reserva/cancelar', async (req, res) => {
         // Cancelar reserva
         const result = await pool.query(
             `UPDATE reservasanticipadas 
-             SET estado = 'CANCELADA', 
-                 fecha_modificacion = NOW()
+             SET estado = 'CANCELADA'
              WHERE id_reserva = $1
              RETURNING *`,
             [id_reserva]
