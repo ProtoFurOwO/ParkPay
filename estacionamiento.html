@@ -44,13 +44,12 @@
 <body>
     <div class="container">
         <div class="header">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <img src="logo.png?v=2" alt="ParkPay Logo" style="height: 60px; width: auto; max-width: 60px;">
-                <h1 style="margin: 0;">ParkPay</h1>
-            </div>
-            <div class="user-info">
-                <span id="userName"></span>
-                <button onclick="logout()" class="btn-logout">Cerrar Sesión</button>
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <img src="logo.png?v=2" alt="ParkPay Logo" style="height: clamp(50px, 8vw, 80px); width: auto; max-width: 200px;">
+                <div class="user-info">
+                    <span id="userName"></span>
+                    <button onclick="logout()" class="btn-logout">Cerrar Sesión</button>
+                </div>
             </div>
         </div>
 
