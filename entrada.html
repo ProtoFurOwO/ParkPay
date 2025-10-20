@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrada - ParkPay</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .scanner-container {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #1e40af;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        .gate-icon {
+            font-size: 80px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        #reader {
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .manual-input {
+            margin-top: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #1e40af;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(30, 64, 175, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .result-box {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 15px;
+            display: none;
+        }
+
+        .result-box.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            display: block;
+        }
+
+        .result-box.error {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            display: block;
+        }
+
+        .result-icon {
+            font-size: 64px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .result-message {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .result-details {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .gate-animation {
+            text-align: center;
+            font-size: 100px;
+            margin: 20px 0;
+            animation: gateOpen 2s ease-in-out;
+        }
+
+        @keyframes gateOpen {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0); }
+        }
+
+        .loading {
+            text-align: center;
+            color: #64748b;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #1e40af;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="scanner-container">
+        <div class="header">
+            <h1>🚗 Entrada ParkPay</h1>
+            <p>Escanea tu código QR de reserva</p>
+        </div>
+
+        <div class="gate-icon">🚧</div>
+
+        <!-- Escáner QR -->
+        <div id="reader" style="display: none;"></div>
+        
+        <button class="btn btn-primary" id="btnStartScanner" onclick="iniciarEscaner()">
+            📸 Iniciar Escáner
+        </button>
+
+        <!-- Input Manual -->
+        <div class="manual-input">
+            <p style="text-align: center; color: #64748b; margin-bottom: 15px;">
+                O ingresa el código manualmente:
+            </p>
+            <div class="input-group">
+                <input type="text" id="codigoManual" placeholder="Ej: F7QBOLQY" maxlength="50">
+            </div>
+            <button class="btn btn-primary" onclick="validarCodigoManual()">
+                ✅ Validar Código
+            </button>
+        </div>
+
+        <!-- Resultado -->
+        <div class="result-box" id="resultBox"></div>
+
+        <!-- Loading -->
+        <div class="loading" id="loadingBox" style="display: none;">
+            <div class="spinner"></div>
+            <p>Validando reserva...</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://parkpay-backend-1ti1.onrender.com/api';
+        let html5QrcodeScanner = null;
+
+        function iniciarEscaner() {
+            const readerDiv = document.getElementById('reader');
+            const btnStart = document.getElementById('btnStartScanner');
+            
+            readerDiv.style.display = 'block';
+            btnStart.style.display = 'none';
+
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader",
+                { fps: 10, qrbox: 250 }
+            );
+
+            html5QrcodeScanner.render(onScanSuccess, onScanError);
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log(`Código escaneado: ${decodedText}`);
+            
+            // Detener el escáner
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear();
+            }
+            
+            // Validar el código
+            validarReserva(decodedText);
+        }
+
+        function onScanError(errorMessage) {
+            // Ignorar errores de escaneo continuo
+        }
+
+        async function validarCodigoManual() {
+            const codigo = document.getElementById('codigoManual').value.trim().toUpperCase();
+            
+            if (!codigo) {
+                mostrarError('Por favor ingresa un código');
+                return;
+            }
+            
+            await validarReserva(codigo);
+        }
+
+        async function validarReserva(codigoAcceso) {
+            const loadingBox = document.getElementById('loadingBox');
+            const resultBox = document.getElementById('resultBox');
+            
+            loadingBox.style.display = 'block';
+            resultBox.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_URL}/reservas/escanear`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        codigo_acceso: codigoAcceso
+                    })
+                });
+
+                const data = await response.json();
+                loadingBox.style.display = 'none';
+
+                if (response.ok) {
+                    mostrarExito(data);
+                } else {
+                    mostrarError(data.error || 'Error al validar la reserva');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                loadingBox.style.display = 'none';
+                mostrarError('Error de conexión al servidor');
+            }
+        }
+
+        function mostrarExito(data) {
+            const resultBox = document.getElementById('resultBox');
+            const gateIcon = document.querySelector('.gate-icon');
+            
+            // Animar la pluma
+            gateIcon.innerHTML = '✅';
+            gateIcon.classList.add('gate-animation');
+
+            resultBox.className = 'result-box success';
+            resultBox.innerHTML = `
+                <div class="result-icon">🎉</div>
+                <div class="result-message">¡Bienvenido al Estacionamiento!</div>
+                <div class="result-details">
+                    <div class="detail-item">
+                        <span>🎫 Ticket:</span>
+                        <strong>${data.ticket.codigo_acceso}</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>📍 Cajón:</span>
+                        <strong>${data.cajon.numero_cajon} - ${data.cajon.ubicacion_piso}</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>🚗 Vehículo:</span>
+                        <strong>${data.vehiculo.placa}</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>⏱️ Tiempo:</span>
+                        <strong>${Math.floor(data.ticket.tiempo_estimado / 60)} horas</strong>
+                    </div>
+                </div>
+                <p style="text-align: center; margin-top: 15px; font-size: 14px; opacity: 0.9;">
+                    La pluma se abrirá automáticamente
+                </p>
+            `;
+
+            // Simular apertura de pluma y redirección
+            setTimeout(() => {
+                if (confirm('¿Ir al inicio para ver tu ticket activo?')) {
+                    window.location.href = 'inicio.html';
+                }
+            }, 3000);
+        }
+
+        function mostrarError(mensaje) {
+            const resultBox = document.getElementById('resultBox');
+            const gateIcon = document.querySelector('.gate-icon');
+            
+            gateIcon.innerHTML = '🚫';
+            
+            resultBox.className = 'result-box error';
+            resultBox.innerHTML = `
+                <div class="result-icon">❌</div>
+                <div class="result-message">Acceso Denegado</div>
+                <p style="text-align: center; margin-top: 15px; font-size: 16px;">
+                    ${mensaje}
+                </p>
+                <button class="btn btn-secondary" style="width: 100%; margin-top: 15px;" onclick="location.reload()">
+                    🔄 Intentar de Nuevo
+                </button>
+            `;
+        }
+    </script>
+</body>
+</html>

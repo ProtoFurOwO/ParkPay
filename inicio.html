@@ -240,6 +240,120 @@
             font-size: 48px;
             margin-bottom: 10px;
         }
+
+        /* Estilos para Reservas Pendientes */
+        .reservas-section {
+            margin: 20px 0;
+        }
+
+        .reserva-card {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            border-radius: 20px;
+            padding: 20px;
+            color: white;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .reserva-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .reserva-tipo-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .reserva-codigo {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .reserva-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .reserva-info-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .reserva-countdown {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .countdown-timer {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .countdown-label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .reserva-qr {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .reserva-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn-cancelar-reserva {
+            flex: 1;
+            background: rgba(239, 68, 68, 0.9);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancelar-reserva:hover {
+            background: rgba(220, 38, 38, 1);
+        }
+
+        .btn-extender-tiempo {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-extender-tiempo:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -270,6 +384,14 @@
                     <div class="stat-label">Vehículos</div>
                 </div>
             </div>
+        </div>
+
+        <!-- Reservas Pendientes -->
+        <div class="reservas-section" id="reservasSection" style="display: none;">
+            <h3 style="color: white; margin-bottom: 15px;">
+                📅 Reservas Pendientes
+            </h3>
+            <div id="reservasList"></div>
         </div>
 
         <!-- Tickets Activos -->
@@ -335,6 +457,16 @@
 
         async function cargarEstadisticas() {
             try {
+                // Reservas pendientes
+                const reservasRes = await fetch(`${API_URL}/reservas/usuario/${usuario.id_usuario}`);
+                const reservasData = await reservasRes.json();
+                const reservasPendientes = reservasData.filter(r => r.estado === 'PENDIENTE');
+                
+                // Mostrar reservas pendientes si hay
+                if (reservasPendientes.length > 0) {
+                    mostrarReservasPendientes(reservasPendientes);
+                }
+
                 // Tickets activos
                 const ticketsRes = await fetch(`${API_URL}/tickets/usuario/${usuario.id_usuario}`);
                 const tickets = await ticketsRes.json();
@@ -398,6 +530,195 @@
                     }
                 });
             }, 100);
+        }
+
+        // Mostrar reservas pendientes
+        function mostrarReservasPendientes(reservas) {
+            const section = document.getElementById('reservasSection');
+            const container = document.getElementById('reservasList');
+
+            section.style.display = 'block';
+
+            container.innerHTML = reservas.map(reserva => {
+                const fechaInicio = new Date(reserva.fecha_inicio_reserva);
+                const fechaFin = new Date(reserva.fecha_fin_reserva);
+                const ahora = new Date();
+                
+                // Determinar tipo de reserva
+                const minutosHastaInicio = Math.floor((fechaInicio - ahora) / (1000 * 60));
+                const esInstantanea = minutosHastaInicio <= 30;
+                const tipoBadge = esInstantanea ? '⚡ Instantánea' : '📅 Programada';
+                
+                // Calcular tiempo restante
+                const tiempoRestante = fechaFin - ahora;
+                const minutosRestantes = Math.floor(tiempoRestante / (1000 * 60));
+                const horasRestantes = Math.floor(minutosRestantes / 60);
+                const minsRestantes = minutosRestantes % 60;
+                
+                let countdownText = '';
+                if (ahora >= fechaInicio && ahora <= fechaFin) {
+                    // Dentro de la ventana de escaneo
+                    countdownText = `${horasRestantes}h ${minsRestantes}m restantes para escanear`;
+                } else if (ahora < fechaInicio) {
+                    // Todavía no inicia la ventana
+                    const horasHastaInicio = Math.floor(minutosHastaInicio / 60);
+                    const minsHastaInicio = minutosHastaInicio % 60;
+                    countdownText = `Inicia en ${horasHastaInicio}h ${minsHastaInicio}m`;
+                } else {
+                    countdownText = 'Expirada';
+                }
+
+                return `
+                    <div class="reserva-card">
+                        <div class="reserva-header">
+                            <div class="reserva-tipo-badge">${tipoBadge}</div>
+                            <div style="font-size: 12px;">${reserva.estado}</div>
+                        </div>
+                        
+                        <div class="reserva-codigo">
+                            🎫 ${reserva.codigo_acceso}
+                        </div>
+                        
+                        <div class="reserva-info">
+                            <div class="reserva-info-item">
+                                <span>📍 Cajón:</span>
+                                <strong>${reserva.numero_cajon} - ${reserva.ubicacion_piso}</strong>
+                            </div>
+                            <div class="reserva-info-item">
+                                <span>🚗 Vehículo:</span>
+                                <strong>${reserva.placa}</strong>
+                            </div>
+                            <div class="reserva-info-item">
+                                <span>📅 Llegada:</span>
+                                <strong>${fechaInicio.toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })}</strong>
+                            </div>
+                            <div class="reserva-info-item">
+                                <span>⏱️ Tiempo comprado:</span>
+                                <strong>${Math.floor(reserva.duracion_comprada_minutos / 60)}h</strong>
+                            </div>
+                            <div class="reserva-info-item">
+                                <span>💵 Total:</span>
+                                <strong>$${parseFloat(reserva.monto_total).toFixed(2)}</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="reserva-countdown" id="countdown-${reserva.id_reserva}">
+                            <div class="countdown-timer">${countdownText}</div>
+                            <div class="countdown-label">Ventana de escaneo</div>
+                        </div>
+                        
+                        <div class="reserva-qr" id="qr-reserva-${reserva.id_reserva}">
+                            <div style="color: #64748b; font-size: 12px;">Cargando QR...</div>
+                        </div>
+                        
+                        <div class="reserva-actions">
+                            <button class="btn-extender-tiempo" onclick="extenderTiempo(${reserva.id_reserva})">
+                                ⏰ +10 min
+                            </button>
+                            <button class="btn-cancelar-reserva" onclick="cancelarReserva(${reserva.id_reserva})">
+                                ❌ Cancelar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Generar QR codes
+            setTimeout(() => {
+                reservas.forEach(reserva => {
+                    const qrContainer = document.getElementById(`qr-reserva-${reserva.id_reserva}`);
+                    if (qrContainer) {
+                        qrContainer.innerHTML = '';
+                        new QRCode(qrContainer, {
+                            text: reserva.codigo_acceso,
+                            width: 150,
+                            height: 150,
+                            colorDark: "#1e40af",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+                    }
+                });
+            }, 100);
+
+            // Actualizar countdowns cada segundo
+            setInterval(() => {
+                reservas.forEach(reserva => {
+                    const fechaInicio = new Date(reserva.fecha_inicio_reserva);
+                    const fechaFin = new Date(reserva.fecha_fin_reserva);
+                    const ahora = new Date();
+                    
+                    const tiempoRestante = fechaFin - ahora;
+                    const minutosRestantes = Math.floor(tiempoRestante / (1000 * 60));
+                    const horasRestantes = Math.floor(minutosRestantes / 60);
+                    const minsRestantes = minutosRestantes % 60;
+                    
+                    const countdownEl = document.getElementById(`countdown-${reserva.id_reserva}`);
+                    if (countdownEl) {
+                        const timerEl = countdownEl.querySelector('.countdown-timer');
+                        if (ahora >= fechaInicio && ahora <= fechaFin) {
+                            timerEl.textContent = `${horasRestantes}h ${minsRestantes}m restantes`;
+                        } else if (ahora < fechaInicio) {
+                            const minutosHastaInicio = Math.floor((fechaInicio - ahora) / (1000 * 60));
+                            const horasHastaInicio = Math.floor(minutosHastaInicio / 60);
+                            const minsHastaInicio = minutosHastaInicio % 60;
+                            timerEl.textContent = `Inicia en ${horasHastaInicio}h ${minsHastaInicio}m`;
+                        } else {
+                            timerEl.textContent = 'Expirada';
+                            countdownEl.style.background = 'rgba(239, 68, 68, 0.3)';
+                        }
+                    }
+                });
+            }, 1000);
+        }
+
+        // Cancelar reserva
+        async function cancelarReserva(idReserva) {
+            if (!confirm('¿Estás seguro de cancelar esta reserva?')) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/reservas/${idReserva}/cancelar`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ Reserva cancelada exitosamente');
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + (data.error || 'No se pudo cancelar la reserva'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error de conexión al servidor');
+            }
+        }
+
+        // Extender tiempo de reserva
+        async function extenderTiempo(idReserva) {
+            if (!confirm('¿Agregar 10 minutos adicionales a la ventana de escaneo?')) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/reservas/${idReserva}/extender`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ minutos: 10 })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ Se agregaron 10 minutos adicionales');
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + (data.error || 'No se pudo extender el tiempo'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error de conexión al servidor');
+            }
         }
     </script>
 </body>

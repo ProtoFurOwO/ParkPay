@@ -433,4 +433,65 @@ router.get('/admin/estadisticas', async (req, res) => {
 });
 
 
+// ============================================================================
+// ENDPOINT 9: EXTENDER TIEMPO DE VENTANA DE ESCANEO
+// ============================================================================
+// PUT /api/reservas/:id_reserva/extender
+// Body: { minutos: 10 }
+router.put('/:id_reserva/extender', async (req, res) => {
+    try {
+        const { id_reserva } = req.params;
+        const { minutos } = req.body;
+
+        if (!minutos || minutos < 1 || minutos > 30) {
+            return res.status(400).json({ 
+                error: 'Los minutos deben estar entre 1 y 30' 
+            });
+        }
+
+        // Verificar que la reserva exista y esté pendiente
+        const checkReserva = await pool.query(
+            `SELECT * FROM reservasanticipadas WHERE id_reserva = $1`,
+            [id_reserva]
+        );
+
+        if (checkReserva.rows.length === 0) {
+            return res.status(404).json({ error: 'Reserva no encontrada' });
+        }
+
+        const reserva = checkReserva.rows[0];
+
+        if (reserva.estado !== 'PENDIENTE') {
+            return res.status(400).json({ 
+                error: 'Solo se puede extender el tiempo de reservas pendientes' 
+            });
+        }
+
+        // Extender la fecha_fin_reserva (ventana de escaneo)
+        const result = await pool.query(
+            `UPDATE reservasanticipadas 
+             SET fecha_fin_reserva = fecha_fin_reserva + ($1 || ' minutes')::INTERVAL
+             WHERE id_reserva = $2
+             RETURNING *`,
+            [minutos, id_reserva]
+        );
+
+        const reservaActualizada = result.rows[0];
+
+        res.json({
+            message: `Ventana de escaneo extendida ${minutos} minutos`,
+            reserva: {
+                id_reserva: reservaActualizada.id_reserva,
+                fecha_inicio_reserva: reservaActualizada.fecha_inicio_reserva,
+                fecha_fin_reserva: reservaActualizada.fecha_fin_reserva,
+                estado: reservaActualizada.estado
+            }
+        });
+    } catch (error) {
+        console.error('Error al extender tiempo de reserva:', error);
+        res.status(500).json({ error: 'Error al extender tiempo de reserva' });
+    }
+});
+
+
 module.exports = router;
