@@ -16,6 +16,7 @@ const ticketsRoutes = require('./routes/tickets');
 const usuariosRoutes = require('./routes/usuarios');
 const syncRoutes = require('./routes/sync');
 const adminRoutes = require('./routes/admin');
+const reservasRoutes = require('./routes/reservas');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/cajones', cajonesRoutes);
@@ -23,6 +24,7 @@ app.use('/api/tickets', ticketsRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/sync', syncRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/reservas', reservasRoutes);
 
 // Ruta de prueba
 app.get('/', (req, res) => {
