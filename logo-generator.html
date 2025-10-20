@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generador de Logo ParkPay</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        canvas {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin: 20px 0;
+        }
+        button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: 20px auto;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 Generador de Logo ParkPay</h1>
+    
+    <div class="instructions">
+        <h3>Instrucciones:</h3>
+        <ol style="text-align: left;">
+            <li>Haz clic en "Generar Logo"</li>
+            <li>Haz clic en "Descargar PNG"</li>
+            <li>Guarda el archivo como <code>parkpay-logo.png</code></li>
+            <li>Colócalo en la carpeta <code>images/</code> de tu proyecto</li>
+        </ol>
+    </div>
+    
+    <canvas id="logoCanvas" width="512" height="512"></canvas>
+    <br>
+    <button onclick="generateLogo()">Generar Logo</button>
+    <button onclick="downloadLogo()">Descargar PNG</button>
+    
+    <script>
+        function generateLogo() {
+            const canvas = document.getElementById('logoCanvas');
+            const ctx = canvas.getContext('2d');
+            const size = 512;
+            
+            // Limpiar canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Fondo con gradiente suave
+            const bgGradient = ctx.createLinearGradient(0, 0, size, size);
+            bgGradient.addColorStop(0, '#f0f9ff');
+            bgGradient.addColorStop(1, '#e0f2fe');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Carro
+            ctx.save();
+            ctx.translate(100, 220);
+            ctx.scale(2.5, 2.5);
+            
+            // Gradiente del carro
+            const carGradient = ctx.createLinearGradient(0, 0, 100, 50);
+            carGradient.addColorStop(0, '#3b82f6');
+            carGradient.addColorStop(1, '#1e40af');
+            
+            // Cuerpo del carro
+            ctx.fillStyle = carGradient;
+            ctx.beginPath();
+            ctx.roundRect(10, 25, 100, 35, 5);
+            ctx.fill();
+            
+            // Techo
+            ctx.beginPath();
+            ctx.moveTo(30, 25);
+            ctx.lineTo(50, 5);
+            ctx.lineTo(80, 5);
+            ctx.lineTo(90, 25);
+            ctx.closePath();
+            ctx.fillStyle = carGradient;
+            ctx.globalAlpha = 0.9;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            
+            // Ventanas
+            ctx.fillStyle = '#e0f2fe';
+            ctx.beginPath();
+            ctx.roundRect(35, 10, 18, 12, 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.roundRect(65, 10, 18, 12, 2);
+            ctx.fill();
+            
+            // Ruedas
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(30, 63, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(90, 63, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Centros de ruedas
+            ctx.fillStyle = '#64748b';
+            ctx.beginPath();
+            ctx.arc(30, 63, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(90, 63, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Faros
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(115, 35, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(5, 35, 3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // Check mark (palomita)
+            ctx.save();
+            ctx.translate(320, 140);
+            
+            // Círculo de fondo del check con gradiente
+            const checkGradient = ctx.createLinearGradient(0, 0, 60, 60);
+            checkGradient.addColorStop(0, '#10b981');
+            checkGradient.addColorStop(1, '#059669');
+            
+            // Círculo exterior
+            ctx.fillStyle = checkGradient;
+            ctx.beginPath();
+            ctx.arc(30, 30, 50, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Círculo blanco interior
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(30, 30, 42, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Círculo verde interior
+            ctx.fillStyle = checkGradient;
+            ctx.beginPath();
+            ctx.arc(30, 30, 36, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Palomita
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(10, 30);
+            ctx.lineTo(23, 45);
+            ctx.lineTo(52, 15);
+            ctx.stroke();
+            
+            ctx.restore();
+            
+            // Texto "ParkPay" debajo
+            ctx.fillStyle = '#1e40af';
+            ctx.font = 'bold 60px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('ParkPay', size/2, 450);
+        }
+        
+        function downloadLogo() {
+            const canvas = document.getElementById('logoCanvas');
+            const link = document.createElement('a');
+            link.download = 'parkpay-logo.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // Generar al cargar
+        window.onload = generateLogo;
+    </script>
+</body>
+</html>
