@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const pool = require('../config/database');
+const sgMail = require('@sendgrid/mail');
+
+// Configurar SendGrid con la API Key desde variable de entorno
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 // Almacenamiento temporal de códigos de recuperación (en producción usar Redis o base de datos)
 const codigosRecuperacion = new Map();
@@ -9,6 +15,69 @@ const codigosRecuperacion = new Map();
 // Generar código de 6 dígitos
 function generarCodigoRecuperacion() {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Función para enviar email con SendGrid
+async function enviarEmailRecuperacion(email, nombre, codigo) {
+  // Si no hay API Key configurada, solo mostrar en consola (modo desarrollo)
+  if (!process.env.SENDGRID_API_KEY) {
+    console.log(`📧 [MODO DESARROLLO] Código para ${email}: ${codigo}`);
+    return { success: true, modo: 'desarrollo' };
+  }
+
+  const msg = {
+    to: email,
+    from: process.env.SENDGRID_FROM_EMAIL || 'noreply@parkpay.com', // Email verificado en SendGrid
+    subject: '🔐 Código de Recuperación - ParkPay',
+    text: `Hola ${nombre},\n\nTu código de recuperación es: ${codigo}\n\nEste código expirará en 10 minutos.\n\nSi no solicitaste este código, ignora este mensaje.\n\nSaludos,\nEquipo ParkPay`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">🚗 ParkPay</h1>
+          <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Sistema de Estacionamiento Inteligente</p>
+        </div>
+        
+        <div style="background: white; padding: 40px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+          <h2 style="color: #333; margin-top: 0;">Recuperación de Contraseña</h2>
+          <p style="color: #666; font-size: 16px;">Hola <strong>${nombre}</strong>,</p>
+          <p style="color: #666; font-size: 16px;">Recibimos una solicitud para restablecer la contraseña de tu cuenta.</p>
+          
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; text-align: center; margin: 30px 0;">
+            <p style="color: white; margin: 0 0 10px 0; font-size: 14px;">Tu código de recuperación es:</p>
+            <h1 style="color: white; margin: 0; font-size: 48px; letter-spacing: 8px; font-weight: bold;">${codigo}</h1>
+          </div>
+          
+          <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="color: #92400e; margin: 0; font-size: 14px;">
+              ⏱️ <strong>Este código expirará en 10 minutos.</strong>
+            </p>
+          </div>
+          
+          <p style="color: #666; font-size: 14px; margin-top: 30px;">
+            Si no solicitaste este código, puedes ignorar este mensaje de forma segura. Tu contraseña no será cambiada.
+          </p>
+          
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+          
+          <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
+            © 2025 ParkPay - Sistema de Estacionamiento Inteligente<br>
+            Este es un mensaje automático, por favor no respondas a este correo.
+          </p>
+        </div>
+      </div>
+    `
+  };
+
+  try {
+    await sgMail.send(msg);
+    console.log(`✅ Email de recuperación enviado a ${email}`);
+    return { success: true, modo: 'produccion' };
+  } catch (error) {
+    console.error('❌ Error al enviar email:', error);
+    // Aún en caso de error, mostramos el código en consola para desarrollo
+    console.log(`📧 [FALLBACK] Código para ${email}: ${codigo}`);
+    return { success: false, error: error.message };
+  }
 }
 
 // REGISTRO - Crear usuario y su vehículo
@@ -169,14 +238,22 @@ router.post('/solicitar-recuperacion', async (req, res) => {
       intentos: 0
     });
 
-    // Aquí deberías enviar el email con el código
-    // Por ahora lo devolvemos en la respuesta (solo para desarrollo/demo)
-    console.log(`Código de recuperación para ${email}: ${codigo}`);
+    // Enviar email con SendGrid
+    const resultadoEmail = await enviarEmailRecuperacion(email, usuario.nombre, codigo);
 
-    // En producción, elimina 'codigo' de la respuesta
+    // En modo desarrollo, devolver el código (solo si no hay SendGrid configurado)
+    if (resultadoEmail.modo === 'desarrollo') {
+      return res.json({ 
+        message: 'Código de recuperación generado',
+        codigo: codigo, // Solo en desarrollo
+        modo: 'desarrollo'
+      });
+    }
+
+    // En producción, no revelar el código
     res.json({ 
-      message: 'Código de recuperación enviado',
-      codigo: codigo // ⚠️ SOLO PARA DEMO - ELIMINAR EN PRODUCCIÓN
+      message: 'Código de recuperación enviado a tu email',
+      modo: 'produccion'
     });
 
   } catch (error) {

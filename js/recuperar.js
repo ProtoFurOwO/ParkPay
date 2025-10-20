@@ -76,10 +76,14 @@ async function solicitarCodigo(event) {
         const data = await response.json();
         
         if (response.ok) {
-            // Guardar código temporalmente (en producción esto vendría en el email)
-            codigoGenerado = data.codigo;
-            
-            showMessage(`✅ Código enviado a ${email}. Revisa tu bandeja de entrada.`, 'success');
+            // En modo desarrollo, el código viene en la respuesta
+            if (data.modo === 'desarrollo' && data.codigo) {
+                codigoGenerado = data.codigo;
+                showMessage(`✅ [MODO DESARROLLO] Tu código es: ${data.codigo}`, 'info');
+            } else {
+                // En producción, el código llegó por email
+                showMessage(`✅ Código enviado a ${email}. Revisa tu bandeja de entrada (incluye spam/promociones).`, 'success');
+            }
             
             // Avanzar al paso 2
             setTimeout(() => {
