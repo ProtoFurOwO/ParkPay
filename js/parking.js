@@ -512,6 +512,16 @@ async function crearReservaFutura() {
     const montoTotal = hours * parseFloat(selectedCajon.costo_por_hora);
     
     try {
+        console.log('🔄 Creando reserva futura...', {
+            id_usuario: usuario.id_usuario,
+            id_vehiculo: selectedVehiculo.id_vehiculo,
+            id_cajon: selectedCajon.id_cajon,
+            fecha_inicio: fechaInicio.toISOString(),
+            fecha_fin: fechaFin.toISOString(),
+            duracion_minutos: duracionMinutos,
+            monto_total: montoTotal
+        });
+
         const response = await fetch(`${API_URL}/reservas/futura`, {
             method: 'POST',
             headers: {
@@ -528,7 +538,10 @@ async function crearReservaFutura() {
             })
         });
         
+        console.log('📡 Respuesta del servidor:', response.status, response.statusText);
+        
         const data = await response.json();
+        console.log('📦 Data recibida:', data);
         
         if (response.ok) {
             // Mostrar modal de éxito con información de reserva
@@ -539,11 +552,12 @@ async function crearReservaFutura() {
             selectedSpot = null;
             selectedCajon = null;
         } else {
+            console.error('❌ Error del servidor:', data);
             showMessage(data.error || 'Error al crear la reserva', 'error');
         }
     } catch (error) {
-        console.error('Error:', error);
-        showMessage('Error de conexión al servidor', 'error');
+        console.error('❌ Error de conexión:', error);
+        showMessage('Error de conexión al servidor: ' + error.message, 'error');
     }
 }
 

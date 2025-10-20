@@ -34,7 +34,10 @@ app.get('/', (req, res) => {
       auth: '/api/auth',
       cajones: '/api/cajones',
       tickets: '/api/tickets',
-      usuarios: '/api/usuarios'
+      usuarios: '/api/usuarios',
+      sync: '/api/sync',
+      admin: '/api/admin',
+      reservas: '/api/reservas'
     }
   });
 });
