@@ -418,6 +418,44 @@ router.put('/cajones/:id', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
+// CRUD RESERVAS
+// ═══════════════════════════════════════════════════════════════
+
+// Obtener todas las reservas
+router.get('/reservas', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        r.id_reserva,
+        r.codigo_acceso,
+        r.fecha_inicio_reserva,
+        r.fecha_fin_reserva,
+        r.duracion_comprada_minutos,
+        r.monto_total,
+        r.estado,
+        r.fecha_creacion,
+        r.fecha_escaneado,
+        v.placa,
+        v.marca,
+        v.modelo,
+        u.nombre || ' ' || u.apellido as cliente,
+        c.numero_cajon,
+        c.ubicacion_piso
+      FROM reservasanticipadas r
+      JOIN vehiculos v ON r.id_vehiculo = v.id_vehiculo
+      JOIN usuarios u ON v.id_usuario = u.id_usuario
+      JOIN cajonesestacionamiento c ON r.id_cajon = c.id_cajon
+      ORDER BY r.fecha_creacion DESC
+    `);
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener reservas:', error);
+    res.status(500).json({ error: 'Error al obtener reservas' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
 // CRUD TICKETS
 // ═══════════════════════════════════════════════════════════════
 

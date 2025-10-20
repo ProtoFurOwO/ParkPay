@@ -78,6 +78,9 @@ function showTab(tabName) {
         case 'cajones':
             loadCajones();
             break;
+        case 'reservas':
+            loadReservas();
+            break;
         case 'tickets':
             loadTickets();
             break;
@@ -448,6 +451,93 @@ async function updateEstadoCajon(event, id) {
     } catch (error) {
         console.error('Error:', error);
         showMessage('Error al actualizar estado', 'error');
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CRUD TICKETS
+// ═══════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════
+// CRUD RESERVAS
+// ═══════════════════════════════════════════════════════════════
+
+async function loadReservas() {
+    try {
+        const response = await fetch(`${API_URL}/admin/reservas`);
+        const reservas = await response.json();
+        
+        const tbody = document.querySelector('#tablaReservas tbody');
+        tbody.innerHTML = '';
+        
+        if (reservas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align: center;">No hay reservas registradas</td></tr>';
+            return;
+        }
+        
+        reservas.forEach(reserva => {
+            const tr = document.createElement('tr');
+            const inicio = new Date(reserva.fecha_inicio_reserva).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' });
+            const fin = new Date(reserva.fecha_fin_reserva).toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' });
+            const duracion = `${Math.floor(reserva.duracion_comprada_minutos / 60)}h ${reserva.duracion_comprada_minutos % 60}m`;
+            const monto = `$${parseFloat(reserva.monto_total).toFixed(2)}`;
+            
+            // Color según estado
+            let estadoClass = 'status-activo';
+            if (reserva.estado === 'PENDIENTE') estadoClass = 'status-pendiente';
+            else if (reserva.estado === 'CANCELADA') estadoClass = 'status-cancelado';
+            else if (reserva.estado === 'EXPIRADA') estadoClass = 'status-expirado';
+            else if (reserva.estado === 'ACTIVA') estadoClass = 'status-activo';
+            
+            tr.innerHTML = `
+                <td>${reserva.id_reserva}</td>
+                <td><small>${reserva.codigo_acceso}</small></td>
+                <td>${reserva.cliente}</td>
+                <td><strong>${reserva.placa}</strong></td>
+                <td>${reserva.numero_cajon} - ${reserva.ubicacion_piso}</td>
+                <td><small>${inicio}</small></td>
+                <td><small>${fin}</small></td>
+                <td>${duracion}</td>
+                <td>${monto}</td>
+                <td><span class="status-badge ${estadoClass}">${reserva.estado}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        ${reserva.estado === 'PENDIENTE' ? 
+                            `<button class="btn-small btn-delete" onclick="cancelarReservaAdmin(${reserva.id_reserva})">❌ Cancelar</button>` : 
+                            '-'
+                        }
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        
+    } catch (error) {
+        console.error('Error al cargar reservas:', error);
+        showMessage('Error al cargar reservas', 'error');
+    }
+}
+
+async function cancelarReservaAdmin(idReserva) {
+    if (!confirm('¿Estás seguro de cancelar esta reserva?')) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/reservas/${idReserva}/cancelar`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showMessage('Reserva cancelada exitosamente', 'success');
+            loadReservas();
+        } else {
+            showMessage(data.error || 'Error al cancelar reserva', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('Error de conexión al servidor', 'error');
     }
 }
 

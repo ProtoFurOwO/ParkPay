@@ -62,6 +62,7 @@
             <button class="tab-btn active" onclick="showTab('usuarios')">👥 Usuarios</button>
             <button class="tab-btn" onclick="showTab('vehiculos')">🚗 Vehículos</button>
             <button class="tab-btn" onclick="showTab('cajones')">🅿️ Cajones</button>
+            <button class="tab-btn" onclick="showTab('reservas')">📅 Reservas</button>
             <button class="tab-btn" onclick="showTab('tickets')">🎫 Tickets</button>
             <button class="tab-btn" onclick="showTab('tarifas')">💵 Tarifas</button>
         </div>
@@ -131,6 +132,33 @@
                                 <th>Estado</th>
                                 <th>Tarifa</th>
                                 <th>$/Hora</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: RESERVAS -->
+            <div id="tab-reservas" class="tab-content">
+                <div class="content-header">
+                    <h2>Gestión de Reservas</h2>
+                </div>
+                <div class="table-container">
+                    <table id="tablaReservas">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Código</th>
+                                <th>Cliente</th>
+                                <th>Placa</th>
+                                <th>Cajón</th>
+                                <th>Inicio Ventana</th>
+                                <th>Fin Ventana</th>
+                                <th>Duración</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
