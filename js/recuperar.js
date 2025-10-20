@@ -34,6 +34,7 @@ function showMessage(message, type) {
     const messageBox = document.getElementById('messageBox');
     messageBox.textContent = message;
     messageBox.className = `message-box ${type}`;
+    messageBox.style.display = 'block'; // ⚡ Asegurar que se muestre
     
     setTimeout(() => {
         messageBox.style.display = 'none';
@@ -174,15 +175,125 @@ async function cambiarContraseña(event) {
                 window.location.href = 'index.html';
             }, 2000);
         } else {
-            showMessage(data.error || 'Error al cambiar contraseña', 'error');
+            showMessage(`❌ ${data.error || 'Error al cambiar contraseña'}`, 'error');
+            // Rehabilitar botón
+            btn.disabled = false;
+            btn.textContent = textoOriginal;
         }
     } catch (error) {
         console.error('Error:', error);
-        showMessage('Error de conexión al servidor', 'error');
+        showMessage('❌ Error de conexión al servidor', 'error');
+        // Rehabilitar botón
+        btn.disabled = false;
+        btn.textContent = textoOriginal;
     }
 }
 
 function volverAPaso1() {
     cambiarPaso(1);
     document.getElementById('codigo').value = '';
+}
+
+// Validación visual en tiempo real
+function validarPasswordEnTiempoReal() {
+    const password = document.getElementById('nuevaPassword').value;
+    
+    // Verificar cada requisito
+    const length = password.length >= 6;
+    const uppercase = /[A-Z]/.test(password);
+    const number = /[0-9]/.test(password);
+    
+    // Actualizar iconos
+    document.getElementById('req-length').innerHTML = length ? '✅ Mínimo 6 caracteres' : '❌ Mínimo 6 caracteres';
+    document.getElementById('req-uppercase').innerHTML = uppercase ? '✅ Al menos 1 letra mayúscula' : '❌ Al menos 1 letra mayúscula';
+    document.getElementById('req-number').innerHTML = number ? '✅ Al menos 1 número' : '❌ Al menos 1 número';
+    
+    // Habilitar/deshabilitar botón
+    const esValida = length && uppercase && number;
+    const btn = document.getElementById('btnCambiarPassword');
+    
+    if (esValida) {
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+    } else {
+        btn.style.opacity = '0.6';
+        btn.style.cursor = 'not-allowed';
+    }
+    
+    validarConfirmacion();
+}
+
+function validarConfirmacion() {
+    const password = document.getElementById('nuevaPassword').value;
+    const confirmPassword = document.getElementById('confirmarPassword').value;
+    const feedback = document.getElementById('password-feedback');
+    
+    if (confirmPassword.length > 0) {
+        if (password === confirmPassword) {
+            feedback.innerHTML = '<span style="color: #22c55e;">✅ Las contraseñas coinciden</span>';
+        } else {
+            feedback.innerHTML = '<span style="color: #ef4444;">❌ Las contraseñas no coinciden</span>';
+        }
+    } else {
+        feedback.innerHTML = '';
+    }
+}
+
+// PASO 3: Cambiar contraseña (mejorado)
+async function cambiarContraseña(event) {
+    event.preventDefault();
+    
+    const nuevaPassword = document.getElementById('nuevaPassword').value;
+    const confirmarPassword = document.getElementById('confirmarPassword').value;
+    
+    // Validar que coincidan
+    if (nuevaPassword !== confirmarPassword) {
+        showMessage('❌ Las contraseñas no coinciden', 'error');
+        return;
+    }
+    
+    // Validar contraseña fuerte
+    const validation = validarContraseña(nuevaPassword);
+    if (!validation.valida) {
+        showMessage(`❌ ${validation.mensaje}`, 'error');
+        return;
+    }
+    
+    // Deshabilitar botón mientras procesa
+    const btn = document.getElementById('btnCambiarPassword');
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '🔄 Cambiando...';
+    
+    try {
+        const response = await fetch(`${API_URL}/auth/cambiar-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                email: emailActual,
+                nueva_password: nuevaPassword
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showMessage('✅ ¡Contraseña cambiada exitosamente! Redirigiendo...', 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 2000);
+        } else {
+            showMessage(`❌ ${data.error || 'Error al cambiar contraseña'}`, 'error');
+            // Rehabilitar botón
+            btn.disabled = false;
+            btn.textContent = textoOriginal;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('❌ Error de conexión al servidor', 'error');
+        // Rehabilitar botón
+        btn.disabled = false;
+        btn.textContent = textoOriginal;
+    }
 }

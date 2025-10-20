@@ -217,22 +217,23 @@
         <div id="step3" class="step">
             <div class="password-requirements">
                 <strong>📋 Requisitos de la contraseña:</strong>
-                <ul>
-                    <li>✓ Mínimo 6 caracteres</li>
-                    <li>✓ Al menos 1 letra mayúscula</li>
-                    <li>✓ Al menos 1 número</li>
+                <ul id="password-checklist">
+                    <li id="req-length">⚪ Mínimo 6 caracteres</li>
+                    <li id="req-uppercase">⚪ Al menos 1 letra mayúscula</li>
+                    <li id="req-number">⚪ Al menos 1 número</li>
                 </ul>
             </div>
             <form onsubmit="cambiarContraseña(event)">
                 <div class="form-group">
                     <label for="nuevaPassword">🔒 Nueva Contraseña</label>
-                    <input type="password" id="nuevaPassword" required placeholder="Nueva contraseña">
+                    <input type="password" id="nuevaPassword" required placeholder="Nueva contraseña" oninput="validarPasswordEnTiempoReal()">
                 </div>
                 <div class="form-group">
                     <label for="confirmarPassword">🔒 Confirmar Contraseña</label>
-                    <input type="password" id="confirmarPassword" required placeholder="Repite la contraseña">
+                    <input type="password" id="confirmarPassword" required placeholder="Repite la contraseña" oninput="validarConfirmacion()">
                 </div>
-                <button type="submit" class="btn btn-primary">
+                <div id="password-feedback" style="margin: 10px 0; font-size: 14px;"></div>
+                <button type="submit" class="btn btn-primary" id="btnCambiarPassword">
                     🔄 Cambiar Contraseña
                 </button>
             </form>
