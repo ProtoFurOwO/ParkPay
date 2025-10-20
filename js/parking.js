@@ -570,7 +570,11 @@ function showReservaSuccessModal(reserva, cajon, hours, fechaLlegada) {
     document.getElementById('successSpot').textContent = cajon.numero_cajon + ' - ' + cajon.ubicacion_piso;
     document.getElementById('successVehicle').textContent = selectedVehiculo.placa;
     document.getElementById('successHours').textContent = hours;
-    document.getElementById('successAmount').textContent = reserva.monto_total.toFixed(2);
+    // Convertir monto_total a número antes de usar toFixed
+    const montoTotal = typeof reserva.monto_total === 'string' 
+        ? parseFloat(reserva.monto_total) 
+        : reserva.monto_total;
+    document.getElementById('successAmount').textContent = montoTotal.toFixed(2);
     
     // Generar QR
     const qrContainer = document.getElementById('successQR');
