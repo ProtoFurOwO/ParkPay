@@ -130,10 +130,14 @@ function showMessage(message, type = 'info') {
 
 // Manejar Login
 async function handleLogin(event) {
+    console.log('🔑 handleLogin ejecutándose...');
     event.preventDefault();
     
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
+    
+    console.log('📧 Email:', email);
+    console.log('🔐 Password length:', password.length);
     
     try {
         const response = await fetch(`${API_URL}/auth/login`, {
