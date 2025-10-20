@@ -459,12 +459,21 @@
             try {
                 // Reservas pendientes
                 const reservasRes = await fetch(`${API_URL}/reservas/usuario/${usuario.id_usuario}`);
-                const reservasData = await reservasRes.json();
-                const reservasPendientes = reservasData.filter(r => r.estado === 'PENDIENTE');
                 
-                // Mostrar reservas pendientes si hay
-                if (reservasPendientes.length > 0) {
-                    mostrarReservasPendientes(reservasPendientes);
+                if (reservasRes.ok) {
+                    const reservasData = await reservasRes.json();
+                    
+                    // Verificar que sea un array
+                    if (Array.isArray(reservasData)) {
+                        const reservasPendientes = reservasData.filter(r => r.estado === 'PENDIENTE');
+                        
+                        // Mostrar reservas pendientes si hay
+                        if (reservasPendientes.length > 0) {
+                            mostrarReservasPendientes(reservasPendientes);
+                        }
+                    }
+                } else {
+                    console.log('No hay reservas disponibles o error en el servidor');
                 }
 
                 // Tickets activos

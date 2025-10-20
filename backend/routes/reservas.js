@@ -316,14 +316,35 @@ router.get('/usuario/:id_usuario', async (req, res) => {
         const { id_usuario } = req.params;
 
         const result = await pool.query(
-            `SELECT * FROM v_mis_reservas WHERE id_usuario = $1 ORDER BY fecha_inicio_reserva DESC`,
+            `SELECT 
+                r.id_reserva,
+                r.id_usuario,
+                r.id_vehiculo,
+                r.id_cajon,
+                r.fecha_inicio_reserva,
+                r.fecha_fin_reserva,
+                r.duracion_comprada_minutos,
+                r.monto_total,
+                r.estado,
+                r.codigo_acceso,
+                r.id_ticket,
+                r.fecha_creacion,
+                r.fecha_escaneado,
+                v.placa,
+                v.tipo AS tipo_vehiculo,
+                c.numero_cajon,
+                c.ubicacion_piso,
+                c.tipo AS tipo_cajon
+             FROM reservasanticipadas r
+             JOIN vehiculos v ON r.id_vehiculo = v.id_vehiculo
+             JOIN cajonesestacionamiento c ON r.id_cajon = c.id_cajon
+             WHERE r.id_usuario = $1 
+             ORDER BY r.fecha_inicio_reserva DESC`,
             [id_usuario]
         );
 
-        res.json({
-            reservas: result.rows,
-            total: result.rows.length
-        });
+        // Devolver array directo (no objeto)
+        res.json(result.rows);
     } catch (error) {
         console.error('Error al obtener reservas del usuario:', error);
         res.status(500).json({ error: 'Error al obtener reservas' });
