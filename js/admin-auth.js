@@ -1,6 +1,32 @@
 // Configuración de la API
 const API_URL = 'https://parkpay-backend-1ti1.onrender.com/api';
 
+// Validar contraseña fuerte
+function validarContraseña(password) {
+    const errores = [];
+    
+    if (password.length < 6) {
+        errores.push('mínimo 6 caracteres');
+    }
+    
+    if (!/[A-Z]/.test(password)) {
+        errores.push('al menos 1 mayúscula');
+    }
+    
+    if (!/[0-9]/.test(password)) {
+        errores.push('al menos 1 número');
+    }
+    
+    if (errores.length > 0) {
+        return {
+            valida: false,
+            mensaje: `🔒 La contraseña debe tener: ${errores.join(', ')}`
+        };
+    }
+    
+    return { valida: true };
+}
+
 // Al cargar la página, verificar si ya existe un admin
 window.addEventListener('DOMContentLoaded', async () => {
     try {
@@ -41,8 +67,10 @@ async function handleRegisterAdmin(event) {
         return;
     }
     
-    if (password.length < 6) {
-        showMessage('La contraseña debe tener al menos 6 caracteres', 'error');
+    // Validación de contraseña fuerte
+    const passwordValidation = validarContraseña(password);
+    if (!passwordValidation.valida) {
+        showMessage(passwordValidation.mensaje, 'error');
         return;
     }
     
