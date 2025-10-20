@@ -441,3 +441,150 @@ function showMessage(message, type = 'info') {
         messageBox.className = 'message-box';
     }, 5000);
 }
+
+// ============================================================================
+// FUNCIONES PARA SISTEMA DE RESERVAS
+// ============================================================================
+
+// Detectar cambio en tipo de reserva
+function onReservationTypeChange() {
+    const tipo = document.querySelector('input[name="reservationType"]:checked').value;
+    const futureFields = document.getElementById('futureReservationFields');
+    const confirmButton = document.getElementById('confirmButton');
+    
+    if (tipo === 'despues') {
+        futureFields.style.display = 'block';
+        confirmButton.innerHTML = '📅 Crear Reserva';
+        
+        // Establecer fecha mínima (1 hora desde ahora)
+        const now = new Date();
+        now.setHours(now.getHours() + 1);
+        const minDateTime = now.toISOString().slice(0, 16);
+        document.getElementById('reservationDateTime').min = minDateTime;
+        document.getElementById('reservationDateTime').value = minDateTime;
+    } else {
+        futureFields.style.display = 'none';
+        confirmButton.innerHTML = '💳 Pagar y Ocupar Lugar';
+    }
+}
+
+// Modificar la función confirmBooking para detectar el tipo
+const originalConfirmBooking = confirmBooking;
+
+confirmBooking = async function() {
+    const tipo = document.querySelector('input[name="reservationType"]:checked').value;
+    
+    if (tipo === 'ahora') {
+        // Flujo original: crear ticket directamente
+        return originalConfirmBooking();
+    } else {
+        // Nuevo flujo: crear reserva futura
+        return crearReservaFutura();
+    }
+};
+
+// Crear reserva futura
+async function crearReservaFutura() {
+    if (!selectedCajon || !selectedVehiculo) {
+        showMessage('Debes seleccionar un vehículo y un cajón', 'error');
+        return;
+    }
+    
+    const fechaLlegada = document.getElementById('reservationDateTime').value;
+    if (!fechaLlegada) {
+        showMessage('Debes seleccionar la fecha y hora de llegada', 'error');
+        return;
+    }
+    
+    const hours = parseInt(document.getElementById('hoursInput').value);
+    
+    if (hours < 1 || hours > 24) {
+        showMessage('Las horas deben estar entre 1 y 24', 'error');
+        return;
+    }
+    
+    // Calcular ventana de escaneo (3 horas desde la hora seleccionada)
+    const fechaInicio = new Date(fechaLlegada);
+    const fechaFin = new Date(fechaInicio);
+    fechaFin.setHours(fechaFin.getHours() + 3);
+    
+    const duracionMinutos = hours * 60;
+    const montoTotal = hours * parseFloat(selectedCajon.costo_por_hora);
+    
+    try {
+        const response = await fetch(`${API_URL}/reservas/futura`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id_usuario: usuario.id_usuario,
+                id_vehiculo: selectedVehiculo.id_vehiculo,
+                id_cajon: selectedCajon.id_cajon,
+                fecha_inicio: fechaInicio.toISOString(),
+                fecha_fin: fechaFin.toISOString(),
+                duracion_minutos: duracionMinutos,
+                monto_total: montoTotal
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            // Mostrar modal de éxito con información de reserva
+            showReservaSuccessModal(data.reserva, selectedCajon, hours, fechaInicio);
+            
+            // Ocultar formulario
+            document.getElementById('bookingForm').style.display = 'none';
+            selectedSpot = null;
+            selectedCajon = null;
+        } else {
+            showMessage(data.error || 'Error al crear la reserva', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('Error de conexión al servidor', 'error');
+    }
+}
+
+// Mostrar modal de éxito para reserva futura
+function showReservaSuccessModal(reserva, cajon, hours, fechaLlegada) {
+    const modal = document.getElementById('successModal');
+    
+    // Llenar información
+    document.getElementById('successCode').textContent = reserva.codigo_acceso;
+    document.getElementById('successSpot').textContent = cajon.numero_cajon + ' - ' + cajon.ubicacion_piso;
+    document.getElementById('successVehicle').textContent = selectedVehiculo.placa;
+    document.getElementById('successHours').textContent = hours;
+    document.getElementById('successAmount').textContent = reserva.monto_total.toFixed(2);
+    
+    // Generar QR
+    const qrContainer = document.getElementById('successQR');
+    qrContainer.innerHTML = ''; // Limpiar QR anterior
+    
+    new QRCode(qrContainer, {
+        text: reserva.codigo_acceso,
+        width: 200,
+        height: 200,
+        colorDark: "#1e40af",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+    
+    // Cambiar el título del modal
+    const modalTitle = modal.querySelector('h2');
+    modalTitle.textContent = '📅 ¡Reserva Programada!';
+    
+    // Agregar información de fecha
+    const detailsDiv = modal.querySelector('.eff6ff');
+    const fechaInfo = `<p style="margin: 8px 0; color: #334155;"><strong style="color: #1e40af;">📆 Fecha llegada:</strong> ${fechaLlegada.toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}</p>`;
+    detailsDiv.innerHTML = fechaInfo + detailsDiv.innerHTML;
+    
+    // Agregar mensaje especial
+    const specialMessage = modal.querySelector('p[style*="color: #64748b"]');
+    specialMessage.textContent = 'Guarda este código. Podrás escanear el QR desde la hora indicada hasta 3 horas después.';
+    
+    // Mostrar modal
+    modal.style.display = 'flex';
+}
+

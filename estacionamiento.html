@@ -6,6 +6,40 @@
     <title>ParkPay - Seleccionar Lugar</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        /* Estilos para opciones de reserva */
+        input[type="radio"] {
+            display: none;
+        }
+        
+        input[type="radio"]:checked + .reservation-option {
+            border-color: #1e40af !important;
+            background: #eff6ff !important;
+            transform: scale(1.02);
+        }
+        
+        .reservation-option:hover {
+            border-color: #60a5fa !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.15);
+        }
+
+        /* Animación suave para campos condicionales */
+        #futureReservationFields {
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -32,6 +66,36 @@
                     <h3>Detalles de Reserva</h3>
                     <div class="selected-spot-info" id="selectedSpotInfo"></div>
                     
+                    <!-- NUEVO: Selector de Tipo de Reserva -->
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #1e40af;">⏰ ¿Cuándo necesitas el lugar?</label>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <label style="flex: 1; cursor: pointer;">
+                                <input type="radio" name="reservationType" value="ahora" checked onchange="onReservationTypeChange()">
+                                <div style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center; transition: all 0.3s;" class="reservation-option">
+                                    <div style="font-size: 32px; margin-bottom: 5px;">⚡</div>
+                                    <div style="font-weight: 600; color: #1e40af;">Ahora mismo</div>
+                                    <div style="font-size: 12px; color: #64748b;">30 min para llegar</div>
+                                </div>
+                            </label>
+                            <label style="flex: 1; cursor: pointer;">
+                                <input type="radio" name="reservationType" value="despues" onchange="onReservationTypeChange()">
+                                <div style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center; transition: all 0.3s;" class="reservation-option">
+                                    <div style="font-size: 32px; margin-bottom: 5px;">📅</div>
+                                    <div style="font-weight: 600; color: #1e40af;">Para después</div>
+                                    <div style="font-size: 12px; color: #64748b;">Elegir fecha/hora</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Campo de fecha/hora (solo visible para "después") -->
+                    <div class="form-group" id="futureReservationFields" style="display: none; margin-bottom: 20px;">
+                        <label for="reservationDateTime" style="display: block; margin-bottom: 8px; font-weight: 600; color: #334155;">📆 Fecha y Hora de Llegada</label>
+                        <input type="datetime-local" id="reservationDateTime" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;" onchange="calculateCost()">
+                        <p style="font-size: 12px; color: #64748b; margin-top: 5px;">Puedes escanear el QR desde esta hora hasta 3 horas después</p>
+                    </div>
+
                     <div class="form-group">
                         <label for="hoursInput">Horas Estimadas</label>
                         <input type="number" id="hoursInput" min="1" max="24" value="2" onchange="calculateCost()">
@@ -52,7 +116,7 @@
                         </div>
                     </div>
 
-                    <button onclick="confirmBooking()" class="btn btn-success">
+                    <button onclick="confirmBooking()" class="btn btn-success" id="confirmButton">
                         💳 Pagar y Ocupar Lugar
                     </button>
                     <button onclick="cancelBooking()" class="btn btn-secondary">
