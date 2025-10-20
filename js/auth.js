@@ -3,7 +3,29 @@ const API_URL = 'https://parkpay-backend-1ti1.onrender.com/api';
 
 // === FUNCIONES JWT ===
 function guardarToken(token) {
-    localStorage.setItem('jwt_token', token);
+    console.log('🔐 Guardando token:', token ? 'Recibido' : 'VACÍO');
+    if (!token) {
+        console.error('❌ Token es nulo o vacío, no se puede guardar');
+        return false;
+    }
+    
+    try {
+        localStorage.setItem('jwt_token', token);
+        console.log('✅ Token guardado en localStorage');
+        
+        // Verificar que realmente se guardó
+        const tokenGuardado = localStorage.getItem('jwt_token');
+        if (tokenGuardado === token) {
+            console.log('✅ Verificación: Token confirmado en localStorage');
+            return true;
+        } else {
+            console.error('❌ Error: Token no se guardó correctamente');
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Error al guardar token en localStorage:', error);
+        return false;
+    }
 }
 
 function obtenerToken() {
@@ -125,11 +147,19 @@ async function handleLogin(event) {
         const data = await response.json();
         
         if (response.ok) {
+            // Verificar que el token existe en la respuesta
+            if (!data.token) {
+                console.error('❌ Backend no envió token:', data);
+                showMessage('Error: No se recibió token de autenticación', 'error');
+                return;
+            }
+            
             // Guardar JWT token y datos del usuario
             guardarToken(data.token);
             localStorage.setItem('usuario', JSON.stringify(data.usuario));
             localStorage.setItem('vehiculos', JSON.stringify(data.vehiculos));
             
+            console.log('✅ Token guardado:', data.token.substring(0, 20) + '...');
             showMessage(`¡Bienvenido! Token válido por ${data.expiresIn}. Redirigiendo...`, 'success');
             
             setTimeout(() => {
@@ -192,23 +222,26 @@ async function handleRegister(event) {
         const data = await response.json();
         
         if (response.ok) {
-            // Guardar JWT token inmediatamente después del registro
-            if (data.token) {
-                guardarToken(data.token);
-                localStorage.setItem('usuario', JSON.stringify(data.usuario));
-                localStorage.setItem('vehiculos', JSON.stringify([data.vehiculo]));
-                
-                showMessage('¡Registro exitoso! Redirigiendo...', 'success');
-                
-                setTimeout(() => {
-                    window.location.href = 'inicio.html';
-                }, 1500);
-            } else {
+            // Verificar que el token existe en la respuesta
+            if (!data.token) {
+                console.error('❌ Backend no envió token en registro:', data);
                 showMessage('¡Registro exitoso! Ahora puedes iniciar sesión', 'success');
                 setTimeout(() => {
                     showLoginForm();
                 }, 2000);
+                return;
             }
+            
+            // Guardar JWT token inmediatamente después del registro
+            guardarToken(data.token);
+            localStorage.setItem('usuario', JSON.stringify(data.usuario));
+            localStorage.setItem('vehiculos', JSON.stringify([data.vehiculo]));
+            
+            showMessage('¡Registro exitoso! Redirigiendo...', 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'inicio.html';
+            }, 1500);
             
             // Limpiar formulario
             document.getElementById('registerForm').querySelector('form').reset();

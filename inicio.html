@@ -4,6 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inicio - ParkPay</title>
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ParkPay">
+    
+    <!-- Icons for PWA -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
@@ -740,5 +754,21 @@
     </script>
     
     <script src="js/jwt-utils.js"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+        // Registrar Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('✅ SW registrado:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('❌ SW registration failed:', error);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Iconos ParkPay</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin: 10px;
+            border-radius: 8px;
+        }
+        .download-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .icon-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .icon-item {
+            text-align: center;
+        }
+        .icon-item span {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🅿️ Generador de Iconos ParkPay</h1>
+        <p>Este generador crea todos los iconos necesarios para la PWA de ParkPay.</p>
+        
+        <div class="download-section">
+            <h3>Generar Iconos PWA</h3>
+            <button onclick="generateAllIcons()">Generar Todos los Iconos</button>
+            <button onclick="downloadAllIcons()">Descargar Todos</button>
+            <p><strong>Instrucciones:</strong></p>
+            <ol>
+                <li>Haz clic en "Generar Todos los Iconos"</li>
+                <li>Haz clic en "Descargar Todos" para obtener los iconos</li>
+                <li>Guarda los archivos en la carpeta <code>/icons/</code> de tu proyecto</li>
+            </ol>
+        </div>
+
+        <div class="icon-preview" id="iconPreview">
+            <!-- Los iconos aparecerán aquí -->
+        </div>
+    </div>
+
+    <script>
+        const iconSizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const canvases = {};
+
+        function createParkPayIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Fondo con gradiente
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#007bff');
+            gradient.addColorStop(1, '#0056b3');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Círculo de fondo más claro
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size * 0.4, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Letra P estilizada
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size * 0.5}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('P', size/2, size/2);
+
+            // Pequeño indicador de estacionamiento
+            ctx.fillStyle = '#ffd700';
+            ctx.fillRect(size * 0.15, size * 0.75, size * 0.7, size * 0.08);
+
+            return canvas;
+        }
+
+        function generateAllIcons() {
+            const preview = document.getElementById('iconPreview');
+            preview.innerHTML = '';
+
+            iconSizes.forEach(size => {
+                const canvas = createParkPayIcon(size);
+                canvases[size] = canvas;
+
+                const container = document.createElement('div');
+                container.className = 'icon-item';
+                
+                container.appendChild(canvas);
+                
+                const label = document.createElement('span');
+                label.textContent = `${size}x${size}`;
+                container.appendChild(label);
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = 'Descargar';
+                downloadBtn.onclick = () => downloadIcon(size);
+                container.appendChild(downloadBtn);
+
+                preview.appendChild(container);
+            });
+        }
+
+        function downloadIcon(size) {
+            const canvas = canvases[size];
+            if (!canvas) return;
+
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `icon-${size}x${size}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+
+        function downloadAllIcons() {
+            iconSizes.forEach((size, index) => {
+                setTimeout(() => {
+                    downloadIcon(size);
+                }, index * 200); // Delay para evitar problemas del navegador
+            });
+        }
+
+        // Generar automáticamente al cargar
+        window.onload = () => {
+            generateAllIcons();
+        };
+    </script>
+</body>
+</html>
