@@ -4,20 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ParkPay - Inicio de Sesión</title>
-    
-    <!-- PWA Configuration -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#007bff">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="ParkPay">
-    
-    <!-- Icons for PWA -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png">
-    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
-    
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -114,52 +100,6 @@
         </div>
     </div>
 
-    <script src="js/jwt-utils.js"></script>
     <script src="js/auth.js"></script>
-    
-    <!-- PWA Service Worker Registration -->
-    <script>
-        // Registrar Service Worker para PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('✅ SW registrado:', registration.scope);
-                        
-                        // Verificar actualizaciones
-                        registration.addEventListener('updatefound', () => {
-                            console.log('🔄 SW: Nueva versión disponible');
-                            const newWorker = registration.installing;
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    // Nueva versión disponible, pero no forzar reload
-                                    console.log('📱 PWA: Nueva versión lista');
-                                }
-                            });
-                        });
-                    })
-                    .catch(error => {
-                        console.error('❌ SW registration failed:', error);
-                    });
-            });
-        }
-
-        // PWA Install Prompt
-        let deferredPrompt;
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            console.log('📱 PWA: Install prompt disponible');
-            e.preventDefault();
-            deferredPrompt = e;
-            
-            // Mostrar botón de instalación personalizado si lo deseas
-            // showInstallButton();
-        });
-
-        window.addEventListener('appinstalled', (evt) => {
-            console.log('🎉 PWA: App instalada exitosamente');
-            deferredPrompt = null;
-        });
-    </script>
 </body>
 </html>
