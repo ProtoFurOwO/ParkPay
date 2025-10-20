@@ -475,13 +475,77 @@ confirmBooking = async function() {
     const tipo = document.querySelector('input[name="reservationType"]:checked').value;
     
     if (tipo === 'ahora') {
-        // Flujo original: crear ticket directamente
-        return originalConfirmBooking();
+        // Crear reserva instantánea (30 min para llegar)
+        return crearReservaInstantanea();
     } else {
-        // Nuevo flujo: crear reserva futura
+        // Crear reserva futura (fecha/hora específica)
         return crearReservaFutura();
     }
 };
+
+// Crear reserva instantánea (30 minutos para llegar)
+async function crearReservaInstantanea() {
+    if (!selectedCajon || !selectedVehiculo) {
+        showMessage('Debes seleccionar un vehículo y un cajón', 'error');
+        return;
+    }
+    
+    const hours = parseInt(document.getElementById('hoursInput').value);
+    
+    if (hours < 1 || hours > 24) {
+        showMessage('Las horas deben estar entre 1 y 24', 'error');
+        return;
+    }
+    
+    const duracionMinutos = hours * 60;
+    const montoTotal = hours * parseFloat(selectedCajon.costo_por_hora);
+    
+    try {
+        console.log('🔄 Creando reserva instantánea...', {
+            id_usuario: usuario.id_usuario,
+            id_vehiculo: selectedVehiculo.id_vehiculo,
+            id_cajon: selectedCajon.id_cajon,
+            duracion_minutos: duracionMinutos,
+            monto_total: montoTotal
+        });
+
+        const response = await fetch(`${API_URL}/reservas/instante`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id_usuario: usuario.id_usuario,
+                id_vehiculo: selectedVehiculo.id_vehiculo,
+                id_cajon: selectedCajon.id_cajon,
+                duracion_minutos: duracionMinutos,
+                monto_total: montoTotal
+            })
+        });
+        
+        console.log('📡 Respuesta del servidor:', response.status, response.statusText);
+        
+        const data = await response.json();
+        console.log('📦 Data recibida:', data);
+        
+        if (response.ok) {
+            // Mostrar modal de éxito - ahora es una reserva, no un ticket
+            showReservaInstantaneaModal(data.reserva, selectedCajon, hours);
+            
+            // Ocultar formulario
+            document.getElementById('bookingForm').style.display = 'none';
+            selectedSpot = null;
+            selectedCajon = null;
+        } else {
+            console.error('❌ Error del servidor:', data);
+            showMessage(data.error || 'Error al crear la reserva', 'error');
+        }
+    } catch (error) {
+        console.error('❌ Error de conexión:', error);
+        showMessage('Error de conexión al servidor: ' + error.message, 'error');
+    }
+}
+
 
 // Crear reserva futura
 async function crearReservaFutura() {
@@ -630,3 +694,64 @@ function showReservaSuccessModal(reserva, cajon, hours, fechaLlegada) {
     modal.style.display = 'flex';
 }
 
+// Mostrar modal de éxito para reserva instantánea (30 min para llegar)
+function showReservaInstantaneaModal(reserva, cajon, hours) {
+    const modal = document.getElementById('successModal');
+    
+    if (!modal) {
+        console.error('❌ Modal no encontrado');
+        showMessage('Reserva creada exitosamente. Código: ' + reserva.codigo_acceso, 'success');
+        setTimeout(() => window.location.href = 'inicio.html', 2000);
+        return;
+    }
+    
+    // Llenar información
+    const successCode = document.getElementById('successCode');
+    const successSpot = document.getElementById('successSpot');
+    const successVehicle = document.getElementById('successVehicle');
+    const successHours = document.getElementById('successHours');
+    const successAmount = document.getElementById('successAmount');
+    const qrContainer = document.getElementById('successQR');
+    
+    if (successCode) successCode.textContent = reserva.codigo_acceso;
+    if (successSpot) successSpot.textContent = cajon.numero_cajon + ' - ' + cajon.ubicacion_piso;
+    if (successVehicle) successVehicle.textContent = selectedVehiculo.placa;
+    if (successHours) successHours.textContent = hours;
+    
+    // Convertir monto_total a número antes de usar toFixed
+    if (successAmount) {
+        const montoTotal = typeof reserva.monto_total === 'string' 
+            ? parseFloat(reserva.monto_total) 
+            : reserva.monto_total;
+        successAmount.textContent = montoTotal.toFixed(2);
+    }
+    
+    // Generar QR
+    if (qrContainer) {
+        qrContainer.innerHTML = ''; // Limpiar QR anterior
+        
+        new QRCode(qrContainer, {
+            text: reserva.codigo_acceso,
+            width: 200,
+            height: 200,
+            colorDark: "#1e40af",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    }
+    
+    // Cambiar el título del modal
+    const modalTitle = modal.querySelector('h2');
+    if (modalTitle) {
+        modalTitle.textContent = '⚡ ¡Reserva Instantánea!';
+    }
+    
+    // Cambiar el mensaje
+    const specialMessage = modal.querySelector('p[style*="color: #64748b"]');
+    if (specialMessage) {
+        specialMessage.textContent = '⏰ Tienes 30 minutos para llegar y escanear este QR en la entrada del estacionamiento.';
+    }
+    
+    // Mostrar modal
+    modal.style.display = 'flex';
+}
