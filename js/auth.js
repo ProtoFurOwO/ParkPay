@@ -130,14 +130,10 @@ function showMessage(message, type = 'info') {
 
 // Manejar Login
 async function handleLogin(event) {
-    console.log('🔑 handleLogin ejecutándose...');
     event.preventDefault();
     
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
-    
-    console.log('📧 Email:', email);
-    console.log('🔐 Password length:', password.length);
     
     try {
         const response = await fetch(`${API_URL}/auth/login`, {
@@ -258,31 +254,19 @@ async function handleRegister(event) {
     }
 }
 
-// Exponer funciones globalmente para uso en HTML
-window.handleLogin = handleLogin;
-window.handleRegister = handleRegister;
-window.showRegisterForm = showRegisterForm;
-window.showLoginForm = showLoginForm;
-
 // Verificar si ya hay sesión iniciada
 window.addEventListener('DOMContentLoaded', () => {
-    console.log('🔍 DOM cargado, verificando sesión...');
     const usuario = localStorage.getItem('usuario');
     const token = obtenerToken();
     
-    console.log('👤 Usuario en localStorage:', usuario ? 'SÍ' : 'NO');
-    console.log('🔑 Token encontrado:', token ? 'SÍ' : 'NO');
-    
     // Si hay usuario pero no token, limpiar todo
     if (usuario && !token) {
-        console.log('🧹 Limpiando sesión incompleta...');
         eliminarToken();
         return;
     }
     
     // Si hay token válido y estamos en index, redirigir a inicio
     if (token && !tokenExpirado() && window.location.pathname.includes('index.html')) {
-        console.log('🔄 Redirigiendo a inicio...');
         window.location.href = 'inicio.html';
     }
 });
