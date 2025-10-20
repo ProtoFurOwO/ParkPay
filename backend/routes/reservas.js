@@ -46,7 +46,7 @@ router.post('/instante', async (req, res) => {
             return res.status(400).json({ error: 'Faltan datos requeridos' });
         }
 
-        // Crear reserva con ventana de 30 minutos desde AHORA
+        // Crear reserva con ventana de 30 minutos desde AHORA (el trigger generará el código)
         const result = await pool.query(
             `INSERT INTO reservasanticipadas (
                 id_usuario, 
@@ -55,14 +55,12 @@ router.post('/instante', async (req, res) => {
                 fecha_inicio_reserva, 
                 fecha_fin_reserva, 
                 duracion_comprada_minutos, 
-                monto_total,
-                codigo_acceso
+                monto_total
             ) VALUES (
                 $1, $2, $3, 
                 NOW(), 
                 NOW() + INTERVAL '30 minutes', 
-                $4, $5,
-                ''  -- El trigger lo generará automáticamente
+                $4, $5
             ) RETURNING *`,
             [id_usuario, id_vehiculo, id_cajon, duracion_minutos, monto_total]
         );
@@ -133,7 +131,7 @@ router.post('/futura', async (req, res) => {
             });
         }
 
-        // Crear reserva futura
+        // Crear reserva futura (el trigger generará el código automáticamente)
         const result = await pool.query(
             `INSERT INTO reservasanticipadas (
                 id_usuario, 
@@ -142,10 +140,9 @@ router.post('/futura', async (req, res) => {
                 fecha_inicio_reserva, 
                 fecha_fin_reserva, 
                 duracion_comprada_minutos, 
-                monto_total,
-                codigo_acceso
+                monto_total
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, ''
+                $1, $2, $3, $4, $5, $6, $7
             ) RETURNING *`,
             [id_usuario, id_vehiculo, id_cajon, fecha_inicio, fecha_fin, duracion_minutos, monto_total]
         );
