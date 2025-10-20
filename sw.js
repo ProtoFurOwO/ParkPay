@@ -1,25 +1,15 @@
-// Service Worker para ParkPay PWA
-const CACHE_NAME = 'parkpay-v1.0.0';
+// Service Worker para ParkPay PWA - Versión Simplificada
+const CACHE_NAME = 'parkpay-v1.0.1';
 const urlsToCache = [
   '/',
   '/index.html',
   '/inicio.html',
   '/estacionamiento.html',
-  '/css/style.css',
-  '/css/dashboard.css',
+  '/css/styles.css',
   '/js/auth.js',
-  '/js/estacionamiento.js',
-  '/js/mapa.js',
-  '/js/pagos.js',
-  '/js/script.js',
-  '/manifest.json',
-  // Iconos
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  // Fuentes y recursos externos críticos
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
-  'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.7.1/dist/leaflet.js'
+  '/js/jwt-utils.js',
+  '/js/parking.js',
+  '/manifest.json'
 ];
 
 // URLs que siempre deben ir a la red (datos en tiempo real)
@@ -34,15 +24,22 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('📦 Service Worker: Cacheando archivos');
-        return cache.addAll(urlsToCache);
+        console.log('📦 Service Worker: Cacheando archivos básicos');
+        // Solo cachear archivos que seguro existen
+        return cache.addAll([
+          '/',
+          '/index.html',
+          '/manifest.json'
+        ]);
       })
       .then(() => {
         console.log('✅ Service Worker: Instalación completada');
-        return self.skipWaiting(); // Activar inmediatamente
+        return self.skipWaiting();
       })
       .catch(error => {
         console.error('❌ Service Worker: Error en instalación:', error);
+        // No fallar completamente si hay errores de cache
+        return self.skipWaiting();
       })
   );
 });
@@ -67,84 +64,35 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Intercepción de peticiones de red
+// Intercepción de peticiones de red - Versión simplificada
 self.addEventListener('fetch', event => {
-  const requestUrl = new URL(event.request.url);
-  
-  // Estrategia Network-Only para APIs (datos en tiempo real)
-  if (networkOnlyUrls.some(url => event.request.url.includes(url))) {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          console.log('🌐 SW: Network-only response para:', event.request.url);
-          return response;
-        })
-        .catch(error => {
-          console.log('❌ SW: Error en network-only:', error);
-          // Retornar respuesta offline para APIs
-          return new Response(
-            JSON.stringify({ 
-              error: 'Sin conexión', 
-              message: 'No hay conexión a internet. Funcionalidad limitada.',
-              offline: true 
-            }),
-            { 
-              status: 503,
-              statusText: 'Service Unavailable',
-              headers: { 'Content-Type': 'application/json' }
-            }
-          );
-        })
-    );
+  // Solo interceptar requests GET para evitar problemas con API calls
+  if (event.request.method !== 'GET') {
     return;
   }
-
-  // Estrategia Cache-First para recursos estáticos
+  
+  // No interceptar requests a APIs externas para evitar problemas
+  if (event.request.url.includes('parkpay-backend-1ti1.onrender.com') || 
+      event.request.url.includes('/api/')) {
+    return;
+  }
+  
+  // Estrategia Network-First simple para todo lo demás
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then(response => {
-        // Si está en cache, devolverlo
-        if (response) {
-          console.log('📦 SW: Serving from cache:', event.request.url);
-          return response;
-        }
-
-        // Si no está en cache, ir a la red
-        console.log('🌐 SW: Fetching from network:', event.request.url);
-        return fetch(event.request)
-          .then(response => {
-            // Verificar si es una respuesta válida
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
+        console.log('🌐 SW: Network response para:', event.request.url);
+        return response;
+      })
+      .catch(error => {
+        console.log('❌ SW: Network error, intentando cache:', event.request.url);
+        return caches.match(event.request)
+          .then(cachedResponse => {
+            if (cachedResponse) {
+              console.log('� SW: Serving from cache:', event.request.url);
+              return cachedResponse;
             }
-
-            // Clonar la respuesta porque es un stream que solo se puede usar una vez
-            const responseToCache = response.clone();
-
-            // Agregar al cache si es un recurso cacheable
-            if (event.request.method === 'GET') {
-              caches.open(CACHE_NAME)
-                .then(cache => {
-                  cache.put(event.request, responseToCache);
-                  console.log('💾 SW: Cached new resource:', event.request.url);
-                });
-            }
-
-            return response;
-          })
-          .catch(error => {
-            console.log('❌ SW: Network error:', error);
-            
-            // Si es una página HTML, mostrar página offline
-            if (event.request.destination === 'document') {
-              return caches.match('/offline.html') || 
-                     new Response(getOfflineHTML(), {
-                       headers: { 'Content-Type': 'text/html' }
-                     });
-            }
-            
-            // Para otros recursos, intentar encontrar algo similar en cache
-            return caches.match('/') || new Response('Recurso no disponible offline');
+            return new Response('Recurso no disponible offline');
           });
       })
   );
