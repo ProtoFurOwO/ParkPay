@@ -1,8 +1,44 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
 const sgMail = require('@sendgrid/mail');
+
+// JWT Secret (en producción usar variable de entorno)
+const JWT_SECRET = process.env.JWT_SECRET || 'parkpay_secret_key_muy_segura_2025';
+const JWT_EXPIRES_IN = '24h'; // Token expira en 24 horas
+
+// Función para generar JWT token
+function generarJWT(usuario) {
+  return jwt.sign(
+    { 
+      id_usuario: usuario.id_usuario,
+      email: usuario.email,
+      nombre: usuario.nombre,
+      apellido: usuario.apellido
+    },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN }
+  );
+}
+
+// Middleware para verificar JWT
+function verificarJWT(req, res, next) {
+  const token = req.headers.authorization?.split(' ')[1]; // Bearer TOKEN
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Token de acceso requerido' });
+  }
+  
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.usuario = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Token inválido o expirado' });
+  }
+}
 
 // Configurar SendGrid con la API Key desde variable de entorno
 if (process.env.SENDGRID_API_KEY) {
@@ -138,10 +174,15 @@ router.post('/register', async (req, res) => {
 
     await client.query('COMMIT');
 
+    // Generar JWT token para el nuevo usuario
+    const token = generarJWT(usuario);
+
     res.status(201).json({
       message: 'Usuario y vehículo registrados exitosamente',
       usuario: usuario,
-      vehiculo: vehiculoResult.rows[0]
+      vehiculo: vehiculoResult.rows[0],
+      token: token,
+      expiresIn: JWT_EXPIRES_IN
     });
 
   } catch (error) {
@@ -190,10 +231,15 @@ router.post('/login', async (req, res) => {
     // No enviar el password_hash al cliente
     delete usuario.password_hash;
 
+    // Generar JWT token
+    const token = generarJWT(usuario);
+
     res.json({
       message: 'Login exitoso',
       usuario: usuario,
-      vehiculos: vehiculos.rows
+      vehiculos: vehiculos.rows,
+      token: token,
+      expiresIn: JWT_EXPIRES_IN
     });
 
   } catch (error) {
@@ -355,4 +401,21 @@ router.post('/cambiar-password', async (req, res) => {
   }
 });
 
-module.exports = router;
+// Endpoint para verificar si token es válido
+router.get('/verificar-token', verificarJWT, (req, res) => {
+  res.json({ 
+    message: 'Token válido',
+    usuario: req.usuario
+  });
+});
+
+// Endpoint para refrescar token
+router.post('/refresh-token', verificarJWT, (req, res) => {
+  const nuevoToken = generarJWT(req.usuario);
+  res.json({
+    token: nuevoToken,
+    expiresIn: JWT_EXPIRES_IN
+  });
+});
+
+module.exports = { router, verificarJWT };

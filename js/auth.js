@@ -1,6 +1,60 @@
 // Configuración de la API
 const API_URL = 'https://parkpay-backend-1ti1.onrender.com/api';
 
+// === FUNCIONES JWT ===
+function guardarToken(token) {
+    localStorage.setItem('jwt_token', token);
+}
+
+function obtenerToken() {
+    return localStorage.getItem('jwt_token');
+}
+
+function eliminarToken() {
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('vehiculos');
+}
+
+function obtenerHeadersAutorizacion() {
+    const token = obtenerToken();
+    return token ? {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    } : {
+        'Content-Type': 'application/json'
+    };
+}
+
+// Verificar si token está expirado
+function tokenExpirado() {
+    const token = obtenerToken();
+    if (!token) return true;
+    
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.exp * 1000 < Date.now();
+    } catch (e) {
+        return true;
+    }
+}
+
+// Auto-logout si token expira
+function verificarTokenValido() {
+    if (tokenExpirado()) {
+        eliminarToken();
+        if (window.location.pathname !== '/index.html' && window.location.pathname !== '/') {
+            alert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.');
+            window.location.href = 'index.html';
+        }
+        return false;
+    }
+    return true;
+}
+
+// Verificar token cada 5 minutos
+setInterval(verificarTokenValido, 5 * 60 * 1000);
+
 // Validar contraseña fuerte
 function validarContraseña(password) {
     const errores = [];
@@ -70,11 +124,12 @@ async function handleLogin(event) {
         const data = await response.json();
         
         if (response.ok) {
-            // Guardar datos del usuario en localStorage
+            // Guardar JWT token y datos del usuario
+            guardarToken(data.token);
             localStorage.setItem('usuario', JSON.stringify(data.usuario));
             localStorage.setItem('vehiculos', JSON.stringify(data.vehiculos));
             
-            showMessage('¡Bienvenido! Redirigiendo...', 'success');
+            showMessage(`¡Bienvenido! Token válido por ${data.expiresIn}. Redirigiendo...`, 'success');
             
             setTimeout(() => {
                 window.location.href = 'inicio.html';
@@ -136,15 +191,26 @@ async function handleRegister(event) {
         const data = await response.json();
         
         if (response.ok) {
-            showMessage('¡Registro exitoso! Ahora puedes iniciar sesión', 'success');
+            // Guardar JWT token inmediatamente después del registro
+            if (data.token) {
+                guardarToken(data.token);
+                localStorage.setItem('usuario', JSON.stringify(data.usuario));
+                localStorage.setItem('vehiculos', JSON.stringify([data.vehiculo]));
+                
+                showMessage('¡Registro exitoso! Redirigiendo...', 'success');
+                
+                setTimeout(() => {
+                    window.location.href = 'inicio.html';
+                }, 1500);
+            } else {
+                showMessage('¡Registro exitoso! Ahora puedes iniciar sesión', 'success');
+                setTimeout(() => {
+                    showLoginForm();
+                }, 2000);
+            }
             
             // Limpiar formulario
             document.getElementById('registerForm').querySelector('form').reset();
-            
-            // Cambiar a formulario de login después de 2 segundos
-            setTimeout(() => {
-                showLoginForm();
-            }, 2000);
         } else {
             showMessage(data.error || 'Error al registrarse', 'error');
         }
@@ -157,7 +223,16 @@ async function handleRegister(event) {
 // Verificar si ya hay sesión iniciada
 window.addEventListener('DOMContentLoaded', () => {
     const usuario = localStorage.getItem('usuario');
-    if (usuario && window.location.pathname.includes('index.html')) {
+    const token = obtenerToken();
+    
+    // Si hay usuario pero no token, limpiar todo
+    if (usuario && !token) {
+        eliminarToken();
+        return;
+    }
+    
+    // Si hay token válido y estamos en index, redirigir a inicio
+    if (token && !tokenExpirado() && window.location.pathname.includes('index.html')) {
         window.location.href = 'inicio.html';
     }
 });
