@@ -12,10 +12,11 @@ function obtenerToken() {
 
 function eliminarToken() {
     localStorage.removeItem('jwt_token');
-    localStorage.removeItem('user');
+    localStorage.removeItem('usuario');
     localStorage.removeItem('vehiculos');
 }
 
+// === FUNCIONES JWT ===
 function obtenerHeadersAutorizacion() {
     const token = obtenerToken();
     return token ? {
