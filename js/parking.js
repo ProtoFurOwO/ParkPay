@@ -565,42 +565,66 @@ async function crearReservaFutura() {
 function showReservaSuccessModal(reserva, cajon, hours, fechaLlegada) {
     const modal = document.getElementById('successModal');
     
+    if (!modal) {
+        console.error('❌ Modal no encontrado');
+        showMessage('Reserva creada exitosamente. Código: ' + reserva.codigo_acceso, 'success');
+        setTimeout(() => window.location.href = 'inicio.html', 2000);
+        return;
+    }
+    
     // Llenar información
-    document.getElementById('successCode').textContent = reserva.codigo_acceso;
-    document.getElementById('successSpot').textContent = cajon.numero_cajon + ' - ' + cajon.ubicacion_piso;
-    document.getElementById('successVehicle').textContent = selectedVehiculo.placa;
-    document.getElementById('successHours').textContent = hours;
+    const successCode = document.getElementById('successCode');
+    const successSpot = document.getElementById('successSpot');
+    const successVehicle = document.getElementById('successVehicle');
+    const successHours = document.getElementById('successHours');
+    const successAmount = document.getElementById('successAmount');
+    const qrContainer = document.getElementById('successQR');
+    
+    if (successCode) successCode.textContent = reserva.codigo_acceso;
+    if (successSpot) successSpot.textContent = cajon.numero_cajon + ' - ' + cajon.ubicacion_piso;
+    if (successVehicle) successVehicle.textContent = selectedVehiculo.placa;
+    if (successHours) successHours.textContent = hours;
+    
     // Convertir monto_total a número antes de usar toFixed
-    const montoTotal = typeof reserva.monto_total === 'string' 
-        ? parseFloat(reserva.monto_total) 
-        : reserva.monto_total;
-    document.getElementById('successAmount').textContent = montoTotal.toFixed(2);
+    if (successAmount) {
+        const montoTotal = typeof reserva.monto_total === 'string' 
+            ? parseFloat(reserva.monto_total) 
+            : reserva.monto_total;
+        successAmount.textContent = montoTotal.toFixed(2);
+    }
     
     // Generar QR
-    const qrContainer = document.getElementById('successQR');
-    qrContainer.innerHTML = ''; // Limpiar QR anterior
-    
-    new QRCode(qrContainer, {
-        text: reserva.codigo_acceso,
-        width: 200,
-        height: 200,
-        colorDark: "#1e40af",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H
-    });
+    if (qrContainer) {
+        qrContainer.innerHTML = ''; // Limpiar QR anterior
+        
+        new QRCode(qrContainer, {
+            text: reserva.codigo_acceso,
+            width: 200,
+            height: 200,
+            colorDark: "#1e40af",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    }
     
     // Cambiar el título del modal
     const modalTitle = modal.querySelector('h2');
-    modalTitle.textContent = '📅 ¡Reserva Programada!';
+    if (modalTitle) {
+        modalTitle.textContent = '📅 ¡Reserva Programada!';
+    }
     
-    // Agregar información de fecha
-    const detailsDiv = modal.querySelector('.eff6ff');
-    const fechaInfo = `<p style="margin: 8px 0; color: #334155;"><strong style="color: #1e40af;">📆 Fecha llegada:</strong> ${fechaLlegada.toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}</p>`;
-    detailsDiv.innerHTML = fechaInfo + detailsDiv.innerHTML;
+    // Agregar información de fecha (buscar el div con background eff6ff)
+    const detailsDiv = modal.querySelector('div[style*="eff6ff"]');
+    if (detailsDiv && fechaLlegada) {
+        const fechaInfo = `<p style="margin: 8px 0; color: #334155;"><strong style="color: #1e40af;">📆 Fecha llegada:</strong> ${fechaLlegada.toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })}</p>`;
+        detailsDiv.innerHTML = fechaInfo + detailsDiv.innerHTML;
+    }
     
     // Agregar mensaje especial
     const specialMessage = modal.querySelector('p[style*="color: #64748b"]');
-    specialMessage.textContent = 'Guarda este código. Podrás escanear el QR desde la hora indicada hasta 3 horas después.';
+    if (specialMessage) {
+        specialMessage.textContent = 'Guarda este código. Podrás escanear el QR desde la hora indicada hasta 3 horas después.';
+    }
     
     // Mostrar modal
     modal.style.display = 'flex';
