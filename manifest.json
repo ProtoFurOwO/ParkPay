@@ -1,0 +1,48 @@
+{
+  "name": "ParkPay - Sistema de Estacionamiento",
+  "short_name": "ParkPay",
+  "description": "Sistema inteligente de gestión de estacionamiento",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1e40af",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Estacionar",
+      "url": "/estacionamiento.html",
+      "description": "Buscar y reservar cajón"
+    },
+    {
+      "name": "Mis Tickets",
+      "url": "/tickets.html",
+      "description": "Ver mis tickets activos"
+    },
+    {
+      "name": "Entrada",
+      "url": "/entrada.html",
+      "description": "Escanear entrada"
+    },
+    {
+      "name": "Salida",
+      "url": "/salida-scanner.html",
+      "description": "Escanear salida"
+    }
+  ]
+}
