@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Iconos PWA - ParkPay</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 20px;
+            padding: 40px;
+        }
+        h1 { color: #3b82f6; margin-bottom: 30px; }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .preview-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        canvas {
+            border: 2px solid #1e40af;
+            border-radius: 10px;
+            max-width: 100%;
+            height: auto;
+        }
+        .btn {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .instructions {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+            border-radius: 8px;
+        }
+        .size-label {
+            color: #1e40af;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Generador de Iconos PWA</h1>
+        <p>Genera iconos de 192x192 y 512x512 para tu PWA de ParkPay</p>
+
+        <div class="instructions">
+            <h3>📋 Instrucciones:</h3>
+            <ol>
+                <li>Los iconos se generarán automáticamente al cargar esta página</li>
+                <li>Haz clic derecho en cada imagen → "Guardar imagen como..."</li>
+                <li>Guarda como <code>icon-192.png</code> y <code>icon-512.png</code></li>
+                <li>Colócalos en la raíz del proyecto junto a logo.png</li>
+            </ol>
+        </div>
+
+        <div class="preview-grid">
+            <div class="preview-card">
+                <h3>Icono 192x192</h3>
+                <canvas id="canvas192" width="192" height="192"></canvas>
+                <p class="size-label">192 x 192 px</p>
+                <button class="btn" onclick="downloadIcon(192)">⬇️ Descargar 192px</button>
+            </div>
+
+            <div class="preview-card">
+                <h3>Icono 512x512</h3>
+                <canvas id="canvas512" width="512" height="512"></canvas>
+                <p class="size-label">512 x 512 px</p>
+                <button class="btn" onclick="downloadIcon(512)">⬇️ Descargar 512px</button>
+            </div>
+        </div>
+
+        <button class="btn" onclick="generateIcons()" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+            🔄 Regenerar Iconos
+        </button>
+    </div>
+
+    <script>
+        function generateIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            
+            // Fondo con degradado
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#1e40af');
+            gradient.addColorStop(1, '#3b82f6');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Borde redondeado (para que se vea como app moderna)
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, size * 0.2);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+
+            // Círculo blanco de fondo para el ícono
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const circleRadius = size * 0.35;
+            
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, circleRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Dibujar símbolo de estacionamiento (P)
+            ctx.fillStyle = '#1e40af';
+            ctx.font = `bold ${size * 0.5}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('P', centerX, centerY);
+
+            // Pequeño detalle de carro en la parte superior
+            const carSize = size * 0.12;
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = `${carSize}px Arial`;
+            ctx.fillText('🚗', centerX, size * 0.2);
+        }
+
+        function generateIcons() {
+            const canvas192 = document.getElementById('canvas192');
+            const canvas512 = document.getElementById('canvas512');
+            
+            generateIcon(canvas192, 192);
+            generateIcon(canvas512, 512);
+        }
+
+        function downloadIcon(size) {
+            const canvas = document.getElementById(`canvas${size}`);
+            const link = document.createElement('a');
+            link.download = `icon-${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Generar automáticamente al cargar
+        window.addEventListener('load', generateIcons);
+    </script>
+</body>
+</html>
