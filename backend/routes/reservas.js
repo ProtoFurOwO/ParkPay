@@ -236,6 +236,8 @@ router.post('/escanear', async (req, res) => {
         }
 
         // 4. Crear el ticket de estancia
+        const horasEstimadas = Math.ceil(reserva.duracion_comprada_minutos / 60);
+        
         const ticketResult = await client.query(
             `INSERT INTO ticketsestancia (
                 id_vehiculo,
@@ -243,20 +245,18 @@ router.post('/escanear', async (req, res) => {
                 codigo_acceso,
                 fecha_hora_entrada,
                 fecha_salida_estimada,
-                horas_estimadas,
                 estado,
                 monto_cobrado
             ) VALUES (
                 $1, $2, $3, NOW(), 
                 NOW() + ($4 || ' minutes')::INTERVAL,
-                ($4 / 60.0)::NUMERIC,
                 'ACTIVO',
                 $5
             ) RETURNING *`,
             [
                 reserva.id_vehiculo,
                 reserva.id_cajon,
-                'TKT-' + codigo_acceso,  // Código de ticket diferente al de reserva
+                'TICKET-' + codigo_acceso,  // Código de ticket diferente al de reserva
                 reserva.duracion_comprada_minutos,
                 reserva.monto_total
             ]
@@ -282,6 +282,17 @@ router.post('/escanear', async (req, res) => {
 
         await client.query('COMMIT');
 
+        // Obtener información completa del cajón y vehículo
+        const cajonInfo = await client.query(
+            `SELECT * FROM cajonesestacionamiento WHERE id_cajon = $1`,
+            [reserva.id_cajon]
+        );
+
+        const vehiculoInfo = await client.query(
+            `SELECT * FROM vehiculos WHERE id_vehiculo = $1`,
+            [reserva.id_vehiculo]
+        );
+
         res.json({
             message: '¡Bienvenido! Tu estancia ha comenzado',
             ticket: {
@@ -289,18 +300,21 @@ router.post('/escanear', async (req, res) => {
                 codigo_acceso: ticket.codigo_acceso,
                 fecha_hora_entrada: ticket.fecha_hora_entrada,
                 fecha_salida_estimada: ticket.fecha_salida_estimada,
-                duracion_minutos: reserva.duracion_comprada_minutos,
+                tiempo_estimado: reserva.duracion_comprada_minutos,
                 monto_cobrado: ticket.monto_cobrado
             },
-            cajon: {
-                id_cajon: reserva.id_cajon
-            }
+            cajon: cajonInfo.rows[0],
+            vehiculo: vehiculoInfo.rows[0]
         });
 
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Error al escanear reserva:', error);
-        res.status(500).json({ error: 'Error al procesar escaneo de reserva' });
+        console.error('Stack:', error.stack);
+        res.status(500).json({ 
+            error: 'Error al procesar escaneo de reserva',
+            detalle: error.message 
+        });
     } finally {
         client.release();
     }
