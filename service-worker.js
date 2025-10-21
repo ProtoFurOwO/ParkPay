@@ -1,5 +1,5 @@
 // Service Worker para ParkPay PWA
-const CACHE_NAME = 'parkpay-v1';
+const CACHE_NAME = 'parkpay-v2'; // ⬅️ CAMBIADO PARA FORZAR ACTUALIZACIÓN
 const urlsToCache = [
   '/',
   '/index.html',
