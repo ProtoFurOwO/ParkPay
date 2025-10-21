@@ -23,16 +23,14 @@ INSERT INTO ticketsestancia (
     codigo_acceso,
     fecha_hora_entrada,
     estado,
-    tiempo_comprado_minutos,
-    monto_pagado
+    monto_cobrado
 ) VALUES (
     ID_VEHICULO,  -- ⬅️ Reemplaza con tu id_vehiculo
     ID_CAJON,     -- ⬅️ Reemplaza con el id_cajon
     'TICKET-VIEJO-TEST',
-    NOW() - INTERVAL '5 hours',  -- ⬅️ Ticket de hace 5 horas
+    NOW() - INTERVAL '5 hours',  -- ⬅️ Ticket de hace 5 horas (usó 5 horas)
     'ACTIVO',
-    120,  -- 2 horas pagadas
-    50.00
+    50.00  -- Monto que pagó inicialmente (por ~2 horas aproximadamente)
 );
 
 -- 5. Marcar el cajón como ocupado
@@ -45,15 +43,16 @@ SELECT
     t.id_ticket,
     t.codigo_acceso,
     t.fecha_hora_entrada,
-    t.tiempo_comprado_minutos,
+    t.monto_cobrado,
     t.estado,
     v.placa,
     c.numero_cajon,
-    EXTRACT(EPOCH FROM (NOW() - t.fecha_hora_entrada)) / 3600 as horas_transcurridas
+    EXTRACT(EPOCH FROM (NOW() - t.fecha_hora_entrada)) / 3600 as horas_transcurridas,
+    EXTRACT(EPOCH FROM (NOW() - t.fecha_hora_entrada)) / 60 as minutos_transcurridos
 FROM ticketsestancia t
 JOIN vehiculos v ON t.id_vehiculo = v.id_vehiculo
 JOIN cajonesestacionamiento c ON t.id_cajon = c.id_cajon
 WHERE t.codigo_acceso = 'TICKET-VIEJO-TEST';
 
 -- 7. Para probarlo, usa el código: TICKET-VIEJO-TEST en salida.html
--- Debería cobrar 3 horas extra (5 horas usadas - 2 horas pagadas)
+-- Debería mostrar tiempo extra porque han pasado 5 horas desde la entrada
