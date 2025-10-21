@@ -391,11 +391,14 @@ router.put('/cajones/:id', async (req, res) => {
 
     console.log('✅ Cajón encontrado:', cajonExistente.rows[0]);
 
-    // Validar tipo si se proporciona
-    const tiposValidos = ['Normal', 'Discapacitado', 'Eléctrico', 'Moto', 'Motocicleta'];
+    // Validar tipo si se proporciona - VALORES DEL ENUM EN LA BD
+    const tiposValidos = ['Automóvil', 'Discapacitado', 'Eléctrico', 'Motocicleta'];
     if (tipo && !tiposValidos.includes(tipo)) {
       console.log('❌ Tipo inválido:', tipo);
-      return res.status(400).json({ error: `Tipo de cajón inválido. Tipos válidos: ${tiposValidos.join(', ')}` });
+      return res.status(400).json({ 
+        error: `Tipo de cajón inválido. Tipos válidos: ${tiposValidos.join(', ')}`,
+        tipo_recibido: tipo
+      });
     }
 
     // Verificar que la tarifa existe si se proporciona
