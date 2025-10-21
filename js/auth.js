@@ -1,6 +1,21 @@
 // Configuración de la API
 const API_URL = 'https://parkpay-backend-1ti1.onrender.com/api';
 
+// Validar email
+function validarEmail(email) {
+    // Regex para validar email con dominio válido (debe tener @ y punto después del @)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (!emailRegex.test(email)) {
+        return {
+            valido: false,
+            mensaje: '📧 Por favor ingresa un email válido (ejemplo: usuario@gmail.com)'
+        };
+    }
+    
+    return { valido: true };
+}
+
 // Validar contraseña fuerte
 function validarContraseña(password) {
     const errores = [];
@@ -58,6 +73,13 @@ async function handleLogin(event) {
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
     
+    // Validar email
+    const validacionEmail = validarEmail(email);
+    if (!validacionEmail.valido) {
+        showMessage(validacionEmail.mensaje, 'error');
+        return;
+    }
+    
     try {
         const response = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
@@ -101,6 +123,13 @@ async function handleRegister(event) {
     const marca = document.getElementById('regMarca').value;
     const modelo = document.getElementById('regModelo').value;
     const color = document.getElementById('regColor').value;
+    
+    // Validación de email
+    const validacionEmail = validarEmail(email);
+    if (!validacionEmail.valido) {
+        showMessage(validacionEmail.mensaje, 'error');
+        return;
+    }
     
     // Validación de contraseña fuerte
     const passwordValidation = validarContraseña(password);
