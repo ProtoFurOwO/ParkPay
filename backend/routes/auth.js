@@ -91,8 +91,8 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Faltan datos requeridos (incluye tipo de vehículo)' });
     }
     
-    // Validar que el tipo sea válido
-    const tiposValidos = ['Automóvil', 'Motocicleta', 'Eléctrico'];
+    // Validar que el tipo sea válido - SIN ACENTOS EN MAYÚSCULAS
+    const tiposValidos = ['AUTOMOVIL', 'MOTOCICLETA', 'ELECTRICO'];
     if (!tiposValidos.includes(tipo)) {
       return res.status(400).json({ error: 'Tipo de vehículo inválido' });
     }

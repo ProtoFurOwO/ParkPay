@@ -391,8 +391,8 @@ router.put('/cajones/:id', async (req, res) => {
 
     console.log('✅ Cajón encontrado:', cajonExistente.rows[0]);
 
-    // Validar tipo si se proporciona - VALORES DEL ENUM EN LA BD
-    const tiposValidos = ['Automóvil', 'Discapacitado', 'Eléctrico', 'Motocicleta'];
+    // Validar tipo si se proporciona - VALORES DEL ENUM SIN ACENTOS EN MAYÚSCULAS
+    const tiposValidos = ['AUTOMOVIL', 'DISCAPACITADO', 'ELECTRICO', 'MOTOCICLETA'];
     if (tipo && !tiposValidos.includes(tipo)) {
       console.log('❌ Tipo inválido:', tipo);
       return res.status(400).json({ 
@@ -418,7 +418,7 @@ router.put('/cajones/:id', async (req, res) => {
     // Actualizar cajón
     const result = await pool.query(
       `UPDATE CajonesEstacionamiento 
-       SET tipo = COALESCE($1, tipo),
+       SET tipo = COALESCE($1::tipo_cajon_enum, tipo),
            id_tarifa = COALESCE($2, id_tarifa)
        WHERE id_cajon = $3 
        RETURNING *`,

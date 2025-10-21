@@ -374,10 +374,10 @@ async function editarCajon(id) {
                     <div class="form-group">
                         <label>Tipo de Cajón</label>
                         <select id="modalTipo" class="form-control" required>
-                            <option value="Automóvil" ${cajon.tipo === 'Automóvil' ? 'selected' : ''}>🚗 Automóvil</option>
-                            <option value="Discapacitado" ${cajon.tipo === 'Discapacitado' ? 'selected' : ''}>♿ Discapacitado</option>
-                            <option value="Eléctrico" ${cajon.tipo === 'Eléctrico' ? 'selected' : ''}>⚡ Eléctrico</option>
-                            <option value="Motocicleta" ${cajon.tipo === 'Motocicleta' ? 'selected' : ''}>🏍️ Motocicleta</option>
+                            <option value="AUTOMOVIL" ${cajon.tipo === 'AUTOMOVIL' ? 'selected' : ''}>🚗 Automóvil</option>
+                            <option value="DISCAPACITADO" ${cajon.tipo === 'DISCAPACITADO' ? 'selected' : ''}>♿ Discapacitado</option>
+                            <option value="ELECTRICO" ${cajon.tipo === 'ELECTRICO' ? 'selected' : ''}>⚡ Eléctrico</option>
+                            <option value="MOTOCICLETA" ${cajon.tipo === 'MOTOCICLETA' ? 'selected' : ''}>🏍️ Motocicleta</option>
                         </select>
                     </div>
                     <div class="form-group">

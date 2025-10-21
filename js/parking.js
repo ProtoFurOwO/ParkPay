@@ -73,7 +73,7 @@ function displayVehicleSelector() {
     }
     
     selector.innerHTML = vehiculos.map((v, index) => {
-        const tipoIcon = v.tipo === 'Motocicleta' ? '🏍️' : v.tipo === 'Eléctrico' ? '⚡' : '🚗';
+        const tipoIcon = v.tipo === 'MOTOCICLETA' ? '🏍️' : v.tipo === 'ELECTRICO' ? '⚡' : '🚗';
         return `<option value="${index}">${tipoIcon} ${v.placa} - ${v.tipo}</option>`;
     }).join('');
     
@@ -112,8 +112,8 @@ function displayVehicleInfo() {
     
     // Icono según tipo de vehículo
     let tipoIcon = '🚗';
-    if (vehiculo.tipo === 'Motocicleta') tipoIcon = '🏍️';
-    else if (vehiculo.tipo === 'Eléctrico') tipoIcon = '⚡';
+    if (vehiculo.tipo === 'MOTOCICLETA') tipoIcon = '🏍️';
+    else if (vehiculo.tipo === 'ELECTRICO') tipoIcon = '⚡';
     
     vehicleDetails.innerHTML = `
         <div class="vehicle-detail">
@@ -217,9 +217,9 @@ function createSpotElement(cajon) {
     
     // Tipo de cajón (ícono)
     let tipoIcon = '🚗';
-    if (cajon.tipo === 'Discapacitado') tipoIcon = '♿';
-    else if (cajon.tipo === 'Motocicleta') tipoIcon = '🏍️';
-    else if (cajon.tipo === 'Eléctrico') tipoIcon = '⚡';
+    if (cajon.tipo === 'DISCAPACITADO') tipoIcon = '♿';
+    else if (cajon.tipo === 'MOTOCICLETA') tipoIcon = '🏍️';
+    else if (cajon.tipo === 'ELECTRICO') tipoIcon = '⚡';
     
     spot.innerHTML = `
         <div class="spot-number">${cajon.numero_cajon}</div>
@@ -242,19 +242,19 @@ function esCajonCompatible(tipoCajon, tipoVehiculo) {
     if (!tipoVehiculo) return false;
     
     // Reglas de compatibilidad:
-    // 1. Motocicletas solo en cajones de Motocicleta
-    if (tipoVehiculo === 'Motocicleta') {
-        return tipoCajon === 'Motocicleta';
+    // 1. MOTOCICLETA solo en cajones de MOTOCICLETA
+    if (tipoVehiculo === 'MOTOCICLETA') {
+        return tipoCajon === 'MOTOCICLETA';
     }
     
-    // 2. Automóviles pueden usar cajones: Automóvil, Discapacitado (si aplica)
-    if (tipoVehiculo === 'Automóvil') {
-        return tipoCajon === 'Automóvil' || tipoCajon === 'Discapacitado';
+    // 2. AUTOMOVIL pueden usar cajones: AUTOMOVIL, DISCAPACITADO
+    if (tipoVehiculo === 'AUTOMOVIL') {
+        return tipoCajon === 'AUTOMOVIL' || tipoCajon === 'DISCAPACITADO';
     }
     
-    // 3. Eléctricos pueden usar cajones: Eléctrico, Automóvil, Discapacitado
-    if (tipoVehiculo === 'Eléctrico') {
-        return tipoCajon === 'Eléctrico' || tipoCajon === 'Automóvil' || tipoCajon === 'Discapacitado';
+    // 3. ELECTRICO pueden usar cajones: ELECTRICO, AUTOMOVIL, DISCAPACITADO
+    if (tipoVehiculo === 'ELECTRICO') {
+        return tipoCajon === 'ELECTRICO' || tipoCajon === 'AUTOMOVIL' || tipoCajon === 'DISCAPACITADO';
     }
     
     return false;
