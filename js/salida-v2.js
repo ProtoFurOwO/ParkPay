@@ -6,37 +6,74 @@ let html5QrcodeScanner = null;
 let scannerActive = false;
 let tieneExtraSinPagar = false;
 
-// ESCÁNER QR
+// ESCÁNER QR - Función mejorada basada en entrada.html
 function toggleScanner() {
     const readerDiv = document.getElementById('reader');
     const btnToggle = document.getElementById('btnToggleScanner');
     
     if (!scannerActive) {
-        // Activar escáner
-        readerDiv.style.display = 'block';
-        btnToggle.textContent = '🛑 Detener Escáner';
-        btnToggle.style.background = '#ef4444';
-        
-        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-        html5QrcodeScanner.render(onScanSuccess, onScanError);
-        scannerActive = true;
+        try {
+            console.log('📸 Iniciando escáner QR...');
+            
+            // Mostrar el div del reader
+            readerDiv.style.display = 'block';
+            btnToggle.textContent = '🛑 Detener Escáner';
+            btnToggle.style.background = '#ef4444';
+            
+            // Crear e inicializar el escáner
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader",
+                { fps: 10, qrbox: 250 },
+                false // verbose = false
+            );
+            
+            html5QrcodeScanner.render(onScanSuccess, onScanError);
+            scannerActive = true;
+            console.log('✅ Escáner QR iniciado correctamente');
+            
+        } catch (error) {
+            console.error('❌ Error al iniciar escáner:', error);
+            showMessage('Error al iniciar el escáner. Verifica los permisos de cámara.', 'error');
+            readerDiv.style.display = 'none';
+            btnToggle.textContent = '📸 Activar Escáner QR';
+            btnToggle.style.background = '#6366f1';
+        }
     } else {
         // Detener escáner
-        if (html5QrcodeScanner) {
-            html5QrcodeScanner.clear();
+        try {
+            console.log('🛑 Deteniendo escáner...');
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear().then(() => {
+                    console.log('✅ Escáner detenido');
+                }).catch(err => {
+                    console.error('Error al detener:', err);
+                });
+            }
+            readerDiv.style.display = 'none';
+            btnToggle.textContent = '📸 Activar Escáner QR';
+            btnToggle.style.background = '#6366f1';
+            scannerActive = false;
+        } catch (error) {
+            console.error('❌ Error al detener escáner:', error);
         }
-        readerDiv.style.display = 'none';
-        btnToggle.textContent = '📸 Activar Escáner QR';
-        btnToggle.style.background = '#6366f1';
-        scannerActive = false;
     }
 }
 
 function onScanSuccess(decodedText, decodedResult) {
-    console.log(`Código escaneado: ${decodedText}`);
+    console.log(`✅ Código escaneado exitosamente: ${decodedText}`);
     
     // Detener el escáner
-    toggleScanner();
+    if (html5QrcodeScanner) {
+        html5QrcodeScanner.clear();
+    }
+    
+    const readerDiv = document.getElementById('reader');
+    const btnToggle = document.getElementById('btnToggleScanner');
+    
+    readerDiv.style.display = 'none';
+    btnToggle.textContent = '📸 Activar Escáner QR';
+    btnToggle.style.background = '#6366f1';
+    scannerActive = false;
     
     // Poner el código en el input
     document.getElementById('codigoInput').value = decodedText;
@@ -46,7 +83,7 @@ function onScanSuccess(decodedText, decodedResult) {
 }
 
 function onScanError(errorMessage) {
-    // Ignorar errores de escaneo continuo
+    // Ignorar errores de escaneo continuo (no hacer nada)
 }
 
 // Procesar checkout
