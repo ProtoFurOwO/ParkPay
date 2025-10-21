@@ -66,6 +66,20 @@ function showMessage(message, type = 'info') {
     }, 5000);
 }
 
+// Toggle para mostrar/ocultar contraseña en registro
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('regPassword');
+    const button = event.target;
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        button.textContent = '🙈'; // Ojo cerrado
+    } else {
+        passwordInput.type = 'password';
+        button.textContent = '👁️'; // Ojo abierto
+    }
+}
+
 // Manejar Login
 async function handleLogin(event) {
     event.preventDefault();
