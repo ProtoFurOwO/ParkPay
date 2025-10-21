@@ -376,23 +376,43 @@ router.put('/cajones/:id', async (req, res) => {
     const { id } = req.params;
     const { tipo, id_tarifa } = req.body;
 
-    const tiposValidos = ['Normal', 'Discapacitado', 'Eléctrico', 'Moto'];
-    if (tipo && !tiposValidos.includes(tipo)) {
-      return res.status(400).json({ error: 'Tipo de cajón inválido' });
+    console.log('📝 Actualizando cajón:', { id, tipo, id_tarifa });
+
+    // Validar que el cajón existe primero
+    const cajonExistente = await pool.query(
+      'SELECT * FROM CajonesEstacionamiento WHERE id_cajon = $1',
+      [id]
+    );
+
+    if (cajonExistente.rows.length === 0) {
+      console.log('❌ Cajón no encontrado:', id);
+      return res.status(404).json({ error: 'Cajón no encontrado' });
     }
 
-    // Verificar que la tarifa existe
+    console.log('✅ Cajón encontrado:', cajonExistente.rows[0]);
+
+    // Validar tipo si se proporciona
+    const tiposValidos = ['Normal', 'Discapacitado', 'Eléctrico', 'Moto', 'Motocicleta'];
+    if (tipo && !tiposValidos.includes(tipo)) {
+      console.log('❌ Tipo inválido:', tipo);
+      return res.status(400).json({ error: `Tipo de cajón inválido. Tipos válidos: ${tiposValidos.join(', ')}` });
+    }
+
+    // Verificar que la tarifa existe si se proporciona
     if (id_tarifa) {
       const checkTarifa = await pool.query(
-        'SELECT id_tarifa FROM Tarifas WHERE id_tarifa = $1',
+        'SELECT id_tarifa, descripcion, costo_por_hora FROM Tarifas WHERE id_tarifa = $1',
         [id_tarifa]
       );
       
       if (checkTarifa.rows.length === 0) {
+        console.log('❌ Tarifa no encontrada:', id_tarifa);
         return res.status(404).json({ error: 'La tarifa especificada no existe' });
       }
+      console.log('✅ Tarifa encontrada:', checkTarifa.rows[0]);
     }
 
+    // Actualizar cajón
     const result = await pool.query(
       `UPDATE CajonesEstacionamiento 
        SET tipo = COALESCE($1, tipo),
@@ -402,9 +422,7 @@ router.put('/cajones/:id', async (req, res) => {
       [tipo, id_tarifa, id]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Cajón no encontrado' });
-    }
+    console.log('✅ Cajón actualizado exitosamente:', result.rows[0]);
 
     res.json({
       message: 'Cajón actualizado exitosamente',
@@ -412,8 +430,12 @@ router.put('/cajones/:id', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error al actualizar cajón:', error);
-    res.status(500).json({ error: 'Error al actualizar cajón' });
+    console.error('❌ Error al actualizar cajón:', error);
+    console.error('Stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Error al actualizar cajón',
+      details: error.message 
+    });
   }
 });
 

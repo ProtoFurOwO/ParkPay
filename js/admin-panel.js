@@ -403,26 +403,38 @@ async function updateCajon(event, id) {
     const tipo = document.getElementById('modalTipo').value;
     const id_tarifa = parseInt(document.getElementById('modalTarifa').value);
     
+    console.log('📝 Actualizando cajón:', { id, tipo, id_tarifa });
+    
+    if (!tipo || !id_tarifa) {
+        showMessage('Por favor completa todos los campos', 'error');
+        return;
+    }
+    
     try {
+        const payload = { tipo, id_tarifa };
+        console.log('📤 Enviando:', payload);
+        
         const response = await fetch(`${API_URL}/admin/cajones/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tipo, id_tarifa })
+            body: JSON.stringify(payload)
         });
         
         const data = await response.json();
+        console.log('📥 Respuesta:', { status: response.status, data });
         
         if (response.ok) {
-            showMessage('Cajón actualizado exitosamente', 'success');
+            showMessage('✅ Cajón actualizado exitosamente', 'success');
             closeModal();
             loadCajones();
             loadStats();
         } else {
-            showMessage(data.error, 'error');
+            console.error('❌ Error del servidor:', data);
+            showMessage(data.error || data.details || 'Error al actualizar cajón', 'error');
         }
     } catch (error) {
-        console.error('Error:', error);
-        showMessage('Error al actualizar cajón', 'error');
+        console.error('❌ Error de red:', error);
+        showMessage('Error de conexión al actualizar cajón', 'error');
     }
 }
 
