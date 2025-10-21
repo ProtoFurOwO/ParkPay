@@ -165,16 +165,21 @@ function mostrarResumen(data) {
     document.getElementById('totalAmount').textContent = `$${cobro.total || cobro.total_pagar || 0}`;
 
     // Mostrar/Ocultar botón de pago si hay tiempo extra SIN PAGAR
+    const btnConfirmar = document.getElementById('btnConfirmar');
     if (tieneExtra) {
         document.getElementById('paymentSection').style.display = 'block';
-        document.getElementById('btnConfirmar').disabled = true;
-        document.getElementById('btnConfirmar').style.background = '#94a3b8';
+        btnConfirmar.disabled = true;
+        btnConfirmar.style.opacity = '0.5';
+        btnConfirmar.style.cursor = 'not-allowed';
         tieneExtraSinPagar = true;
+        console.log('🔒 Botón de confirmar BLOQUEADO - Debe pagar tiempo extra');
     } else {
         document.getElementById('paymentSection').style.display = 'none';
-        document.getElementById('btnConfirmar').disabled = false;
-        document.getElementById('btnConfirmar').style.background = '';
+        btnConfirmar.disabled = false;
+        btnConfirmar.style.opacity = '1';
+        btnConfirmar.style.cursor = 'pointer';
         tieneExtraSinPagar = false;
+        console.log('✅ Botón de confirmar HABILITADO - No hay tiempo extra');
     }
 
     // Mostrar sección de resumen
@@ -201,13 +206,16 @@ async function pagarTiempoExtra() {
         tieneExtraSinPagar = false;
         
         // Habilitar botón de confirmar
-        document.getElementById('btnConfirmar').disabled = false;
-        document.getElementById('btnConfirmar').style.background = '';
+        const btnConfirmar = document.getElementById('btnConfirmar');
+        btnConfirmar.disabled = false;
+        btnConfirmar.style.opacity = '1';
+        btnConfirmar.style.cursor = 'pointer';
         
         // Ocultar sección de pago
         document.getElementById('paymentSection').style.display = 'none';
 
-        showMessage('✅ Pago procesado exitosamente', 'success');
+        showMessage('✅ Pago procesado exitosamente. Ahora puedes confirmar la salida.', 'success');
+        console.log('✅ Botón habilitado después del pago');
 
         // TODO: Aquí deberías actualizar el ticket en el backend para marcar el pago extra
         // await fetch(`${API_URL}/tickets/pagar-extra`, { ... });
@@ -217,21 +225,27 @@ async function pagarTiempoExtra() {
         showMessage('Error al procesar el pago', 'error');
         btn.disabled = false;
         btn.textContent = '💳 Pagar Tiempo Extra';
-    }
-}
-
 // Confirmar salida
 async function confirmarSalida() {
+    console.log('🔍 Intentando confirmar salida...');
+    console.log('   tieneExtraSinPagar:', tieneExtraSinPagar);
+    console.log('   checkoutData:', checkoutData);
+    
     if (!checkoutData) {
         showMessage('Error: No hay datos de checkout', 'error');
         return;
     }
 
     if (tieneExtraSinPagar) {
-        showMessage('Debe pagar el tiempo extra antes de salir', 'error');
+        showMessage('⚠️ Debe pagar el tiempo extra antes de salir', 'error');
+        console.log('❌ Intento bloqueado: Hay tiempo extra sin pagar');
         return;
     }
 
+    const btn = document.getElementById('btnConfirmar');
+    btn.disabled = true;
+    btn.textContent = 'Finalizando...';
+    console.log('✅ Procediendo a finalizar ticket...');
     const btn = document.getElementById('btnConfirmar');
     btn.disabled = true;
     btn.textContent = 'Finalizando...';
