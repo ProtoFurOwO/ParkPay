@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salida - ParkPay</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <link rel="stylesheet" href="css/styles.css">
     <style>
         body {
@@ -155,6 +156,67 @@
             font-weight: bold;
         }
 
+        /* ESTILOS DEL ESCÁNER QR */
+        #reader {
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .scanner-toggle {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 10px 0;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .scanner-toggle:hover {
+            background: #4f46e5;
+        }
+
+        /* BOTÓN DE PAGO PARA TIEMPO EXTRA */
+        .btn-pay-extra {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn-pay-extra:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            background: #64748b;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-cancel:hover {
+            background: #475569;
+        }
+
         #messageBox {
             position: fixed;
             top: 20px;
@@ -216,6 +278,15 @@
             <h1>🚪 Salida</h1>
             <p style="color: #94a3b8; margin-top: 5px;">Procesar salida del estacionamiento</p>
         </div>
+        
+        <!-- ESCÁNER QR -->
+        <div class="checkout-card">
+            <h3 style="margin-top: 0;">📱 Escanear Código QR</h3>
+            <button class="scanner-toggle" id="btnToggleScanner" onclick="toggleScanner()">
+                📸 Activar Escáner QR
+            </button>
+            <div id="reader"></div>
+        </div>
 
         <!-- Formulario para ingresar código -->
         <div class="checkout-card" id="inputSection">
@@ -244,12 +315,25 @@
                 <div class="total-value" id="totalAmount">$0.00</div>
             </div>
 
-            <button class="btn-checkout" onclick="confirmarSalida()" style="margin-top: 20px;">
-                Confirmar y Salir
-            </button>
-            <button class="btn-checkout" onclick="cancelar()" style="background: #6b7280; margin-top: 10px;">
-                Cancelar
-            </button>
+            <!-- Botón de pago si hay tiempo extra -->
+            <div id="paymentSection" style="display: none;">
+                <div class="extra-charge-row" style="text-align: center; margin-top: 15px;">
+                    <p style="margin: 0; color: #dc2626; font-weight: bold;">⚠️ Debe pagar el tiempo extra antes de salir</p>
+                </div>
+                <button class="btn-pay-extra" onclick="pagarTiempoExtra()">
+                    💳 Pagar Tiempo Extra
+                </button>
+            </div>
+
+            <!-- Botones de confirmar/cancelar -->
+            <div id="confirmSection">
+                <button class="btn-checkout" id="btnConfirmar" onclick="confirmarSalida()" style="margin-top: 20px;">
+                    Confirmar y Salir
+                </button>
+                <button class="btn-cancel" onclick="cancelar()">
+                    Cancelar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -273,6 +357,6 @@
         </a>
     </nav>
 
-    <script src="js/salida.js"></script>
+    <script src="js/salida-v2.js"></script>
 </body>
 </html>
