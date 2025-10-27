@@ -56,7 +56,9 @@ class PWAInstallBanner {
         banner.id = 'pwa-install-banner';
         banner.innerHTML = `
             <div class="pwa-banner-content">
-                <div class="pwa-banner-icon">🚗</div>
+                <div class="pwa-banner-icon">
+                <img src="../icon-64.ico" alt="Descripción del logo" width="auto" height= "auto">
+                </div>
                 <div class="pwa-banner-text">
                     <strong>¿Instalar ParkPay como aplicación?</strong>
                     <p>Acceso rápido desde tu pantalla de inicio</p>
@@ -71,17 +73,39 @@ class PWAInstallBanner {
         // Estilos del banner
         const style = document.createElement('style');
         style.textContent = `
+                    /* --- NUEVAS FUENTES --- */
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700&display=swap');
+
+            /* --- PALETA DEL LOGO (COPIADA DE LA PÁGINA ANTERIOR) --- */
+            :root {
+                --primary-color: #0061c9;   /* Azul vibrante, extraído del fondo del logo */
+                --success-color: #10b981;   /* Verde estándar */
+                --danger-color: #ef4444;    /* Rojo estándar */
+                --warning-color: #facc15;   /* Amarillo de las líneas del logo */
+                --dark-bg: #1e293b;         /* Gris asfalto/azulado (Fondo de contenedores) */
+                --darker-bg: #0f172a;       /* Fondo principal del body */
+                --light-text: #f1f5f9;
+                --gray-text: #94a3b8;
+                --selected-color: #fde047;  /* Amarillo brillante para selección */
+                --selected-text-color: #0f172a; /* Texto oscuro para contrastar con el amarillo */
+                --border-color: #334155;
+            }
+
+            /* --- CAMBIO: Adaptado al tema --- */
             #pwa-install-banner {
                 position: fixed;
                 bottom: 0;
                 left: 0;
                 right: 0;
-                background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-                color: white;
+                /* --- CAMBIO: Usando azul del logo --- */
+                background: linear-gradient(135deg, var(--primary-color) 0%, #004a9e 100%);
+                color: var(--light-text);
                 padding: 15px;
-                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+                /* --- CAMBIO: Sombra azulada --- */
+                box-shadow: 0 -4px 20px rgba(0, 97, 201, 0.3);
                 z-index: 10000;
                 animation: slideUp 0.4s ease-out;
+                border-top: 1px solid var(--border-color); /* Borde sutil */
             }
 
             @keyframes slideUp {
@@ -106,6 +130,7 @@ class PWAInstallBanner {
 
             .pwa-banner-icon {
                 font-size: 48px;
+                color: var(--selected-color); /* --- CAMBIO: Icono amarillo --- */
             }
 
             .pwa-banner-text {
@@ -115,14 +140,19 @@ class PWAInstallBanner {
 
             .pwa-banner-text strong {
                 display: block;
-                font-size: 16px;
+                font-size: 1rem; /* 16px */
                 margin-bottom: 4px;
+                /* --- CAMBIO: Fuente de título --- */
+                font-family: 'Montserrat', sans-serif;
+                font-weight: 700;
             }
 
             .pwa-banner-text p {
                 margin: 0;
                 font-size: 13px;
                 opacity: 0.9;
+                /* --- CAMBIO: Fuente de cuerpo --- */
+                font-family: 'Inter', sans-serif;
             }
 
             .pwa-banner-buttons {
@@ -130,23 +160,29 @@ class PWAInstallBanner {
                 gap: 10px;
             }
 
+            /* --- CAMBIO: Fuente de botón --- */
             .pwa-banner-buttons button {
                 padding: 10px 20px;
                 border: none;
                 border-radius: 8px;
-                font-weight: bold;
                 cursor: pointer;
                 transition: all 0.3s ease;
+                font-family: 'Montserrat', sans-serif;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                font-size: 0.9rem;
             }
 
+            /* --- CAMBIO: Botón "Llamativo" AMARILLO --- */
             .pwa-btn-install {
-                background: white;
-                color: #1e40af;
+                background: var(--selected-color);
+                color: var(--selected-text-color);
             }
 
             .pwa-btn-install:hover {
-                background: #f1f5f9;
-                transform: translateY(-2px);
+                background: var(--selected-color);
+                filter: brightness(90%); /* Sutil oscurecimiento */
             }
 
             .pwa-btn-dismiss {

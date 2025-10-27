@@ -108,9 +108,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .subtitle {
+    font-weight: bold;
     text-align: center;
-    color: var(--gray-text);
+    color: white;
     margin-bottom: 30px;
+    font-size: large;
 }
 
 .form-container {
@@ -237,8 +239,8 @@ h3 {
 }
 
 .switch-form a {
-    color: var(--primary-color); /* <-- AHORA USA EL AZUL DEL LOGO */
-    text-decoration: none;
+    color: #ffffff ; /* <-- AHORA USA EL AZUL DEL LOGO */
+    text-decoration: underline;
     font-weight: 600;
 }
 

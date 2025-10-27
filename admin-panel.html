@@ -270,12 +270,18 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 0.95rem;
+            /* Let the table layout be flexible so columns can shrink/wrap when needed */
+            table-layout: auto;
         }
 
         th, td {
-            padding: 1rem 2rem;
+            /* Slightly smaller horizontal padding so many columns fit on small screens */
+            padding: 0.9rem 1rem;
             text-align: left;
-            white-space: nowrap; /* Evita que el texto se parta */
+            /* Allow text to wrap instead of forcing a horizontal scrollbar */
+            white-space: normal; /* Previously nowrap */
+            word-break: break-word;
+            overflow-wrap: anywhere;
             border-bottom: 1px solid var(--color-border);
         }
 
@@ -308,7 +314,9 @@
 
         /* --- Modales y Mensajes --- */
         #modalContainer {
-            /* Estilos de modal (backdrop, etc.) irían aquí */
+            /* Contenedor dinámico para modales. Mantener posicionamiento relativo
+               para que los modales insertados puedan posicionarse correctamente. */
+            position: relative;
         }
 
         .message-box {
