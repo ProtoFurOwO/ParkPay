@@ -1,11 +1,62 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middlewares
+// 🛡️ SEGURIDAD ANTI-BURP SUITE
+// Rate limiting general
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Máximo 100 requests por IP cada 15 min
+  message: {
+    error: 'Demasiadas solicitudes',
+    message: 'Rate limit exceeded. Try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiting específico para admin
+const adminLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutos  
+  max: 50, // Máximo 50 requests admin por IP cada 5 min
+  message: {
+    error: 'Rate limit admin excedido',
+    message: 'Too many admin requests. Try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiting para login (anti brute force)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // Máximo 5 intentos de login por IP cada 15 min
+  message: {
+    error: 'Demasiados intentos de login',
+    message: 'Too many login attempts. Try again later.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Middlewares de seguridad
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+}));
+
+app.use(generalLimiter); // Rate limiting global
 app.use(cors());
 app.use(express.json());
 
@@ -19,12 +70,12 @@ const adminRoutes = require('./routes/admin');
 const reservasRoutes = require('./routes/reservas');
 const healthRoutes = require('./routes/health');
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', loginLimiter, authRoutes); // Rate limiting para login
 app.use('/api/cajones', cajonesRoutes);
 app.use('/api/tickets', ticketsRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/sync', syncRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminLimiter, adminRoutes); // Rate limiting para admin
 app.use('/api/reservas', reservasRoutes);
 app.use('/api/health', healthRoutes);
 
