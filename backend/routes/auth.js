@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const pool = require('../config/database');
 const sgMail = require('@sendgrid/mail');
+const { generarToken, rateLimitByIP } = require('../middleware/auth');
 
 // Configurar SendGrid con la API Key desde variable de entorno
 if (process.env.SENDGRID_API_KEY) {
@@ -153,8 +154,8 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// LOGIN
-router.post('/login', async (req, res) => {
+// LOGIN CON JWT - ANTI BURP SUITE
+router.post('/login', rateLimitByIP(10, 15 * 60 * 1000), async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -190,8 +191,14 @@ router.post('/login', async (req, res) => {
     // No enviar el password_hash al cliente
     delete usuario.password_hash;
 
+    // 🔐 GENERAR TOKEN JWT
+    const token = generarToken(usuario);
+
+    console.log(`✅ Login exitoso para: ${usuario.email} (${usuario.rol || 'cliente'})`);
+
     res.json({
       message: 'Login exitoso',
+      token: token, // ← NUEVO: Token JWT
       usuario: usuario,
       vehiculos: vehiculos.rows
     });

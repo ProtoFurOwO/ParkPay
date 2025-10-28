@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const pool = require('../config/database');
+const { verificarToken, verificarAdmin, rateLimitByIP } = require('../middleware/auth');
 
 // ═══════════════════════════════════════════════════════════════
 // AUTENTICACIÓN DE ADMINISTRADOR (usando email @parkpay.com)
@@ -127,7 +128,8 @@ router.post('/login', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 // ESTADÍSTICAS DEL DASHBOARD
 // ═══════════════════════════════════════════════════════════════
-router.get('/stats', async (req, res) => {
+// 🔐 ESTADÍSTICAS PROTEGIDAS (Solo admins con JWT)
+router.get('/stats', verificarToken, verificarAdmin, async (req, res) => {
   try {
     // Total usuarios (sin contar admins - excluir @parkpay.com)
     const usuarios = await pool.query("SELECT COUNT(*) as total FROM Usuarios WHERE email NOT LIKE '%@parkpay.com'");
@@ -162,8 +164,8 @@ router.get('/stats', async (req, res) => {
 // CRUD USUARIOS
 // ═══════════════════════════════════════════════════════════════
 
-// Obtener todos los usuarios (sin admins)
-router.get('/usuarios', async (req, res) => {
+// 🔐 Obtener todos los usuarios (PROTEGIDO - Solo admins con JWT)
+router.get('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -188,7 +190,8 @@ router.get('/usuarios', async (req, res) => {
 });
 
 // Crear usuario
-router.post('/usuarios', async (req, res) => {
+// 🔐 Crear nuevo usuario (PROTEGIDO)
+router.post('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const { nombre, apellido, email, password } = req.body;
 
@@ -222,7 +225,8 @@ router.post('/usuarios', async (req, res) => {
 });
 
 // Eliminar usuario
-router.delete('/usuarios/:id', async (req, res) => {
+// 🔐 Eliminar usuario (PROTEGIDO)
+router.delete('/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -258,7 +262,8 @@ router.delete('/usuarios/:id', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 
 // Obtener todos los vehículos
-router.get('/vehiculos', async (req, res) => {
+// 🔐 Obtener todos los vehículos (PROTEGIDO)
+router.get('/vehiculos', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -283,7 +288,8 @@ router.get('/vehiculos', async (req, res) => {
 });
 
 // Eliminar vehículo
-router.delete('/vehiculos/:id', async (req, res) => {
+// 🔐 Eliminar vehículo (PROTEGIDO)
+router.delete('/vehiculos/:id', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -312,7 +318,8 @@ router.delete('/vehiculos/:id', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 
 // Obtener todos los cajones
-router.get('/cajones', async (req, res) => {
+// 🔐 Obtener todos los cajones (PROTEGIDO)
+router.get('/cajones', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -371,7 +378,8 @@ router.patch('/cajones/:id/estado', async (req, res) => {
 });
 
 // Editar cajón completo (tipo y tarifa)
-router.put('/cajones/:id', async (req, res) => {
+// 🔐 Actualizar estado de cajón (PROTEGIDO)
+router.put('/cajones/:id', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { tipo, id_tarifa } = req.body;
