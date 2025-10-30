@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="css/buttons.css" rel="stylesheet">
 
     <style>
         /* --- Paleta de Colores (Modo Oscuro) --- */
@@ -142,49 +143,7 @@
             color: var(--color-text-primary);
         }
         
-        /* --- Botones --- */
-        .btn {
-            padding: 0.6rem 1.2rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.95rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .btn-logout {
-            background-color: var(--color-danger);
-            color: #fff;
-        }
-        .btn-logout:hover {
-            opacity: 0.85;
-        }
-        
-        .btn-success {
-            background-color: var(--color-success);
-            color: #fff;
-        }
-        .btn-success:hover {
-            opacity: 0.85;
-        }
-        
-        .btn-edit {
-            background-color: var(--color-primary);
-            color: var(--color-bg-body);
-            font-weight: 600;
-        }
-        .btn-edit:hover {
-            background-color: var(--color-primary-hover);
-        }
-
-        .btn-delete {
-            background-color: var(--color-danger);
-            color: #fff;
-        }
-        .btn-delete:hover {
-            opacity: 0.85;
-        }
+        /* Los estilos de botones han sido movidos a buttons.css */
 
 
         /* --- Tarjetas de Estadísticas --- */
@@ -322,11 +281,17 @@
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.55);
-            display: none; /* mostrado por JS */
+            /* Mostrar por defecto: los modales son insertados via JS en #modalContainer */
+            display: flex;
             align-items: center;
             justify-content: center;
             z-index: 300;
             padding: 1rem;
+        }
+
+        /* Ocultar overlays estáticos cuando se usan atributos aria-hidden="true" */
+        .modal-overlay[aria-hidden="true"] {
+            display: none;
         }
 
         .modal-card {
@@ -566,6 +531,12 @@
                                 <input id="uVehiculos" name="vehiculos" type="text" placeholder="ABC-123, DEF-456" />
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col">
+                                <label for="uPassword">Contraseña</label>
+                                <input id="uPassword" name="password" type="password" placeholder="Mínimo 6 caracteres" minlength="6" required />
+                            </div>
+                        </div>
                         <div class="actions">
                             <button class="btn btn-success" type="submit">Guardar Usuario</button>
                             <button class="btn btn-delete" type="button" onclick="toggleCreateBox('createUserBox',true)">Cancelar</button>
@@ -619,7 +590,7 @@
                             </div>
                         </div>
                         <div class="actions">
-                            <button class="btn btn-success" type="submit">Guardar Vehículo</button>
+                            <button class="btn btn-success" type="submit" onclick="toggleCreateBox('createVehicleForm',true)">Guardar Vehículo</button>
                             <button class="btn btn-delete" type="button" onclick="toggleCreateBox('createVehicleBox',true)">Cancelar</button>
                         </div>
                     </form>
@@ -764,7 +735,7 @@
                     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="createVehicleTitle">
                         <header>
                             <h3 id="createVehicleTitle">+ Crear Vehículo</h3>
-                            <button class="btn btn-close" onclick="closeModal('createVehicleModal')" aria-label="Cerrar">✖</button>
+                            <button class="btn btn-close" onclick="closeStaticModal('createVehicleModal')" aria-label="Cerrar">✖</button>
                         </header>
 
                         <form id="createVehicleForm">
@@ -790,8 +761,8 @@
                             </div>
 
                             <div class="modal-actions">
-                                <button type="submit" class="btn btn-success">Guardar Vehículo</button>
-                                <button type="button" class="btn btn-delete" onclick="closeModal('createVehicleModal')">Cancelar</button>
+                                <button type="submit" class="btn btn-success" onclick="closeStaticModal('createVehicleModal')">Guardar Vehículo</button>
+                                <button type="button" class="btn btn-delete" onclick="closeStaticModal('createVehicleModal')">Cancelar</button>
                             </div>
                         </form>
                     </div>
@@ -800,117 +771,8 @@
 
             <div id="messageBox" class="message-box" style="display: none;"></div>
 
-            <script src="js/admin-panel-v2.js"></script>
-            <script>
-                // Modal helpers and simple form handler for vehicle creation
-                function showCreateVehicleModal() {
-                    const modal = document.getElementById('createVehicleModal');
-                    if (!modal) return;
-                    modal.style.display = 'flex';
-                    modal.setAttribute('aria-hidden', 'false');
-                    // focus first input
-                    const first = modal.querySelector('input');
-                    if (first) first.focus();
-                }
-
-                function closeModal(id) {
-                    const modal = document.getElementById(id);
-                    if (!modal) return;
-                    modal.style.display = 'none';
-                    modal.setAttribute('aria-hidden', 'true');
-                }
-
-                function showMessage(text, type = 'success', timeout = 3000) {
-                    const box = document.getElementById('messageBox');
-                    if (!box) return;
-                    box.textContent = text;
-                    box.className = 'message-box ' + (type === 'error' ? 'error' : '');
-                    box.style.display = 'block';
-                    setTimeout(() => { box.style.display = 'none'; }, timeout);
-                }
-
-                // Simple client-side handling — integrate with backend in admin-panel-v2.js as needed
-                document.addEventListener('DOMContentLoaded', function () {
-                    const form = document.getElementById('createVehicleForm');
-                    if (!form) return;
-                    form.addEventListener('submit', function (e) {
-                        e.preventDefault();
-                        const data = {
-                            placa: form.placa.value.trim(),
-                            marca: form.marca.value.trim(),
-                            modelo: form.modelo.value.trim(),
-                            color: form.color.value.trim(),
-                            propietario: form.propietario.value.trim()
-                        };
-                        if (!data.placa) { showMessage('La placa es obligatoria', 'error'); return; }
-
-                        // For now, just show a success message and close modal.
-                        // Replace this with an actual POST/fetch to your API.
-                        showMessage('Vehículo creado: ' + data.placa, 'success');
-                        closeModal('createVehicleModal');
-                        form.reset();
-                    });
-                    // Inline forms handling
-                    const userForm = document.getElementById('createUserInlineForm');
-                    if (userForm) {
-                        userForm.addEventListener('submit', function (e) {
-                            e.preventDefault();
-                            const nombre = userForm.nombre.value.trim();
-                            const email = userForm.email.value.trim();
-                            if (!nombre || !email) { showMessage('Nombre y email son obligatorios', 'error'); return; }
-                            showMessage('Usuario creado: ' + nombre, 'success');
-                            toggleCreateBox('createUserBox', true);
-                            userForm.reset();
-                        });
-                    }
-
-                    const vehicleInline = document.getElementById('createVehicleInlineForm');
-                    if (vehicleInline) {
-                        vehicleInline.addEventListener('submit', function (e) {
-                            e.preventDefault();
-                            const placa = vehicleInline.placa.value.trim();
-                            const marca = vehicleInline.marca.value.trim();
-                            if (!placa || !marca) { showMessage('Placa y marca son obligatorios', 'error'); return; }
-                            showMessage('Vehículo creado: ' + placa, 'success');
-                            toggleCreateBox('createVehicleBox', true);
-                            vehicleInline.reset();
-                        });
-                    }
-
-                    const tarifaInline = document.getElementById('createTarifaInlineForm');
-                    if (tarifaInline) {
-                        tarifaInline.addEventListener('submit', function (e) {
-                            e.preventDefault();
-                            const desc = tarifaInline.descripcion.value.trim();
-                            const costo = tarifaInline.costo.value.trim();
-                            if (!desc || !costo) { showMessage('Descripción y costo son obligatorios', 'error'); return; }
-                            showMessage('Tarifa creada: ' + desc, 'success');
-                            toggleCreateBox('createTarifaBox', true);
-                            tarifaInline.reset();
-                        });
-                    }
-                });
-
-                // Toggle inline create boxes
-                function toggleCreateBox(id, hideOnly = false) {
-                    const el = document.getElementById(id);
-                    if (!el) return;
-                    if (hideOnly) {
-                        el.style.display = 'none';
-                        el.setAttribute('aria-hidden', 'true');
-                        return;
-                    }
-                    const isVisible = window.getComputedStyle(el).display !== 'none';
-                    if (isVisible) {
-                        el.style.display = 'none';
-                        el.setAttribute('aria-hidden', 'true');
-                    } else {
-                        el.style.display = 'block';
-                        el.setAttribute('aria-hidden', 'false');
-                        // focus first input
-                        const inp = el.querySelector('input'); if (inp) inp.focus();
-                    }
-                }
-            </script>
+            <!--<script src="js/admin-panel-v2.js"></script> -->
+            <script src="js/admin-panel.js"></script>
+            <!-- Inline script removed. All modal helpers and inline form handlers moved to js/admin-panel.js -->
         </body>
         </html>

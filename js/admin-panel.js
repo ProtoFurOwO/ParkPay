@@ -882,3 +882,215 @@ function editUsuario(id) {
 function editVehiculo(id) {
     showMessage('Función de editar vehículo - Implementar según necesidades', 'info');
 }
+
+// -----------------------------
+// Static modal helpers (migrated from admin-panel.html inline script)
+// -----------------------------
+function showCreateVehicleModal() {
+    const modal = document.getElementById('createVehicleModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+    const first = modal.querySelector('input');
+    if (first) first.focus();
+}
+
+function closeStaticModal(id) {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+}
+
+function toggleCreateBox(id, hideOnly = false) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (hideOnly) {
+        el.style.display = 'none';
+        el.setAttribute('aria-hidden', 'true');
+        return;
+    }
+    const isVisible = window.getComputedStyle(el).display !== 'none';
+    if (isVisible) {
+        el.style.display = 'none';
+        el.setAttribute('aria-hidden', 'true');
+    } else {
+        el.style.display = 'block';
+        el.setAttribute('aria-hidden', 'false');
+        const inp = el.querySelector('input'); if (inp) inp.focus();
+    }
+}
+
+// Attach inline form handlers (mirror behavior previously in admin-panel.html)
+function initInlineFormHandlers() {
+    // Prevent double-attachment by using a data attribute
+    if (document.body.getAttribute('data-inline-handlers-attached') === '1') return;
+
+    const createVehicleForm = document.getElementById('createVehicleForm');
+    if (createVehicleForm) {
+        createVehicleForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            // Leer por ID porque el modal estático usa ids (vehPlaca, vehMarca...)
+            let data = {
+                placa: (document.getElementById('vehPlaca') && document.getElementById('vehPlaca').value.trim()) || '',
+                marca: (document.getElementById('vehMarca') && document.getElementById('vehMarca').value.trim()) || '',
+                modelo: (document.getElementById('vehModelo') && document.getElementById('vehModelo').value.trim()) || '',
+                color: (document.getElementById('vehColor') && document.getElementById('vehColor').value.trim()) || '',
+                propietario: (document.getElementById('vehPropietario') && document.getElementById('vehPropietario').value.trim()) || ''
+            };
+            // normalize placa to uppercase as auth.js does on registration
+            if (data.placa) data.placa = data.placa.toUpperCase();
+            if (!data.placa) { showMessage('La placa es obligatoria', 'error'); return; }
+
+            try {
+                console.log('Creating vehicle payload:', data);
+                const resp = await fetch(`${API_URL}/admin/vehiculos`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const res = await resp.json();
+                if (resp.ok) {
+                    showMessage('Vehículo creado: ' + data.placa, 'success');
+                    closeStaticModal('createVehicleModal');
+                    createVehicleForm.reset();
+                    loadVehiculos();
+                    loadStats();
+                } else {
+                    showMessage(res.error || res.message || 'Error al crear vehículo', 'error');
+                }
+            } catch (err) {
+                console.error('Error crear vehículo:', err);
+                showMessage('Error de conexión al crear vehículo', 'error');
+            }
+        });
+    }
+
+    const userForm = document.getElementById('createUserInlineForm');
+    if (userForm) {
+        userForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const nombre = userForm.nombre ? userForm.nombre.value.trim() : '';
+            const email = userForm.email ? userForm.email.value.trim() : '';
+            const fecha = userForm.fecha ? userForm.fecha.value : null;
+            const vehiculosStr = userForm.vehiculos ? userForm.vehiculos.value.trim() : '';
+            const vehiculosList = vehiculosStr ? vehiculosStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const password = userForm.password ? userForm.password.value.trim() : '';
+            if (!nombre || !email || !password) { showMessage('Nombre, email y contraseña son obligatorios', 'error'); return; }
+
+            try {
+                // split nombre completo into nombre + apellido for backend
+                const fullName = nombre || '';
+                const parts = fullName.trim().split(/\s+/).filter(Boolean);
+                const firstName = parts.length ? parts.shift() : '';
+                const lastName = parts.length ? parts.join(' ') : '';
+
+                // If auth.js password validator exists, run it to catch weak passwords early
+                if (typeof validarContraseña === 'function') {
+                    const passCheck = validarContraseña(password);
+                    if (!passCheck.valida) {
+                        showMessage(passCheck.mensaje || 'Contraseña no válida', 'error');
+                        return;
+                    }
+                }
+
+                const payload = { nombre: firstName, apellido: lastName, email, password };
+                if (fecha) payload.fecha_registro = fecha;
+                if (vehiculosList.length) payload.vehiculos = vehiculosList;
+
+                console.log('Creating user payload:', payload);
+
+                const resp = await fetch(`${API_URL}/admin/usuarios`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const res = await resp.json();
+                if (resp.ok) {
+                    showMessage('Usuario creado: ' + nombre, 'success');
+                    toggleCreateBox('createUserBox', true);
+                    userForm.reset();
+                    loadUsuarios();
+                    loadStats();
+                } else {
+                    showMessage(res.error || res.message || 'Error al crear usuario', 'error');
+                }
+            } catch (err) {
+                console.error('Error crear usuario:', err);
+                showMessage('Error de conexión al crear usuario', 'error');
+            }
+        });
+    }
+
+    const vehicleInline = document.getElementById('createVehicleInlineForm');
+    if (vehicleInline) {
+        vehicleInline.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const placa = vehicleInline.placa ? vehicleInline.placa.value.trim() : '';
+            const marca = vehicleInline.marca ? vehicleInline.marca.value.trim() : '';
+            const modelo = vehicleInline.modelo ? vehicleInline.modelo.value.trim() : '';
+            const color = vehicleInline.color ? vehicleInline.color.value.trim() : '';
+            if (!placa || !marca) { showMessage('Placa y marca son obligatorios', 'error'); return; }
+
+            try {
+                const payload = { placa: (placa || '').toUpperCase(), marca, modelo, color };
+                const resp = await fetch(`${API_URL}/admin/vehiculos`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const res = await resp.json();
+                if (resp.ok) {
+                    showMessage('Vehículo creado: ' + placa, 'success');
+                    toggleCreateBox('createVehicleBox', true);
+                    vehicleInline.reset();
+                    loadVehiculos();
+                    loadStats();
+                } else {
+                    showMessage(res.error || res.message || 'Error al crear vehículo', 'error');
+                }
+            } catch (err) {
+                console.error('Error crear vehículo (inline):', err);
+                showMessage('Error de conexión al crear vehículo', 'error');
+            }
+        });
+    }
+
+    const tarifaInline = document.getElementById('createTarifaInlineForm');
+    if (tarifaInline) {
+        tarifaInline.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const desc = tarifaInline.descripcion ? tarifaInline.descripcion.value.trim() : '';
+            const costo = tarifaInline.costo ? parseFloat(tarifaInline.costo.value) : NaN;
+            if (!desc || isNaN(costo)) { showMessage('Descripción y costo son obligatorios', 'error'); return; }
+
+            try {
+                const payload = { descripcion: desc, costo_por_hora: costo };
+                const resp = await fetch(`${API_URL}/admin/tarifas`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const res = await resp.json();
+                if (resp.ok) {
+                    showMessage('Tarifa creada: ' + desc, 'success');
+                    toggleCreateBox('createTarifaBox', true);
+                    tarifaInline.reset();
+                    loadTarifas();
+                } else {
+                    showMessage(res.error || res.message || 'Error al crear tarifa', 'error');
+                }
+            } catch (err) {
+                console.error('Error crear tarifa:', err);
+                showMessage('Error de conexión al crear tarifa', 'error');
+            }
+        });
+    }
+
+    // Mark attached
+    document.body.setAttribute('data-inline-handlers-attached', '1');
+}
+
+document.addEventListener('DOMContentLoaded', initInlineFormHandlers);
+// Also call immediately in case DOM is already parsed and the script loaded at the end
+try { initInlineFormHandlers(); } catch (e) { /* ignore */ }

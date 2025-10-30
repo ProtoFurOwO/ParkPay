@@ -248,10 +248,8 @@ async function loadVehiculos() {
                 <td>${vehiculo.color || 'N/A'}</td>
                 <td>${vehiculo.propietario}<br><small>${vehiculo.email}</small></td>
                 <td>
-                    <div class="action-buttons">
                         <button class="btn-small btn-edit" onclick="editVehiculo(${vehiculo.id_vehiculo})">✏️ Editar</button>
                         <button class="btn-small btn-delete" onclick="deleteVehiculo(${vehiculo.id_vehiculo})">🗑️ Eliminar</button>
-                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -311,10 +309,8 @@ async function loadCajones() {
                 <td>${cajon.tarifa_descripcion || 'Sin tarifa'}</td>
                 <td>$${parseFloat(cajon.costo_por_hora).toFixed(2)}</td>
                 <td>
-                    <div class="action-buttons">
                         <button class="btn-small btn-edit" onclick="editarCajon(${cajon.id_cajon})">✏️ Editar</button>
                         <button class="btn-small btn-status" onclick="cambiarEstadoCajon(${cajon.id_cajon}, '${cajon.estado}')">🔄 Estado</button>
-                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -874,11 +870,147 @@ function logoutAdmin() {
     }
 }
 
+// Funciones para manejar las actualizaciones
+async function updateUsuario(event, id) {
+    event.preventDefault();
+    
+    const nombre = document.getElementById('modalNombre').value;
+    const apellido = document.getElementById('modalApellido').value;
+    const email = document.getElementById('modalEmail').value;
+    const password = document.getElementById('modalPassword').value;
+    
+    const payload = { nombre, apellido, email };
+    if (password) {
+        payload.password = password;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/admin/usuarios/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showMessage('Usuario actualizado exitosamente', 'success');
+            closeModal();
+            loadUsuarios();
+        } else {
+            showMessage(data.error || 'Error al actualizar usuario', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('Error al actualizar usuario', 'error');
+    }
+}
+
+async function updateVehiculo(event, id) {
+    event.preventDefault();
+    
+    const placa = document.getElementById('modalPlaca').value;
+    const marca = document.getElementById('modalMarca').value;
+    const modelo = document.getElementById('modalModelo').value;
+    const color = document.getElementById('modalColor').value;
+    
+    try {
+        const response = await fetch(`${API_URL}/admin/vehiculos/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ placa, marca, modelo, color })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showMessage('Vehículo actualizado exitosamente', 'success');
+            closeModal();
+            loadVehiculos();
+        } else {
+            showMessage(data.error || 'Error al actualizar vehículo', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('Error al actualizar vehículo', 'error');
+    }
+}
+
 // Editar usuario y vehículo (funciones básicas)
 function editUsuario(id) {
-    showMessage('Función de editar usuario - Implementar según necesidades', 'info');
+    const usuario = usuarios.find(u => u.id_usuario === id);
+    if (!usuario) {
+        showMessage('Usuario no encontrado', 'error');
+        return;
+    }
+    
+    const modal = `
+        <div class="modal-overlay" onclick="closeModal(event)">
+            <div class="modal" onclick="event.stopPropagation()">
+                <h2>Editar Usuario</h2>
+                <form onsubmit="updateUsuario(event, ${id})">
+                    <div class="form-group">
+                        <label>Nombre</label>
+                        <input type="text" id="modalNombre" value="${usuario.nombre}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido</label>
+                        <input type="text" id="modalApellido" value="${usuario.apellido}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="modalEmail" value="${usuario.email}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Nueva Contraseña (opcional)</label>
+                        <input type="password" id="modalPassword" minlength="6" placeholder="Dejar vacío para no cambiar">
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Actualizar Usuario</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    document.getElementById('modalContainer').innerHTML = modal;
 }
 
 function editVehiculo(id) {
-    showMessage('Función de editar vehículo - Implementar según necesidades', 'info');
+    const vehiculo = vehiculos.find(v => v.id_vehiculo === id);
+    if (!vehiculo) {
+        showMessage('Vehículo no encontrado', 'error');
+        return;
+    }
+    
+    const modal = `
+        <div class="modal-overlay" onclick="closeModal(event)">
+            <div class="modal" onclick="event.stopPropagation()">
+                <h2>Editar Vehículo</h2>
+                <form onsubmit="updateVehiculo(event, ${id})">
+                    <div class="form-group">
+                        <label>Placa</label>
+                        <input type="text" id="modalPlaca" value="${vehiculo.placa}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Marca</label>
+                        <input type="text" id="modalMarca" value="${vehiculo.marca || ''}" placeholder="Opcional">
+                    </div>
+                    <div class="form-group">
+                        <label>Modelo</label>
+                        <input type="text" id="modalModelo" value="${vehiculo.modelo || ''}" placeholder="Opcional">
+                    </div>
+                    <div class="form-group">
+                        <label>Color</label>
+                        <input type="text" id="modalColor" value="${vehiculo.color || ''}" placeholder="Opcional">
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+                        <button type="submit" class="btn btn-success">Actualizar Vehículo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    document.getElementById('modalContainer').innerHTML = modal;
 }

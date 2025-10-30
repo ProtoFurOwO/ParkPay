@@ -234,67 +234,114 @@ tbody td {
 }
 
 .btn-small {
-    padding: 6px 12px;
+    padding: 8px 16px;
     font-size: 0.85rem;
     border: none;
-    border-radius: 4px; 
+    border-radius: 6px;
     cursor: pointer;
-    transition: filter 0.2s;
-    /* --- CAMBIO: Fuente de botón --- */
+    transition: all 0.2s ease;
     font-family: 'Montserrat', sans-serif;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.btn-small:hover {
-    filter: brightness(85%);
-}
-
-/* --- (Estos ya usan las variables correctas) --- */
+/* Botón Editar mejorado */
 .btn-edit {
     background: var(--primary-color);
     color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.btn-edit:hover {
+    background: #0052aa;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-edit:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Botón Eliminar mejorado */
 .btn-delete {
     background: var(--danger-color);
     color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-delete:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-delete:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .btn-status {
     background: var(--warning-color);
-    color: var(--selected-text-color); /* Texto oscuro para amarillo */
+    color: var(--selected-text-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-finalize {
     background: var(--success-color);
     color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Status Badges */
 .status-badge {
-    padding: 4px 10px;
-    border-radius: 4px; 
-    font-size: 0.8rem;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
     font-weight: 500;
-    text-transform: none; 
-    border: none; 
-    font-family: 'Inter', sans-serif; /* Aseguramos fuente */
+    text-transform: capitalize;
+    font-family: 'Inter', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
 }
 
-/* --- CAMBIO: Adaptando Badges a la paleta de colores --- */
+.status-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Status Disponible/Pagado/Finalizado */
 .status-disponible,
 .status-pagado,
 .status-finalizado {
-    background: rgba(16, 185, 129, 0.2); /* success */
+    background: rgba(16, 185, 129, 0.15);
     color: var(--success-color);
+    border-color: rgba(16, 185, 129, 0.3);
 }
 
+/* Status Ocupado/Expirado */
 .status-ocupado,
 .status-expirado {
-    background: rgba(239, 68, 68, 0.2); /* danger */
+    background: rgba(239, 68, 68, 0.15);
     color: var(--danger-color);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Status Mantenimiento/En Proceso */
+.status-mantenimiento,
+.status-en-proceso {
+    background: rgba(250, 204, 21, 0.15);
+    color: var(--warning-color);
+    border-color: rgba(250, 204, 21, 0.3);
 }
 
 .status-mantenimiento,
