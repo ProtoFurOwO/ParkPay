@@ -333,9 +333,49 @@ function showMessage(message, type = 'info') {
 
 // Permitir enter para procesar
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Inicializando página de salida...');
+    
+    // Event listener para el campo de código
     document.getElementById('codigoInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             procesarCheckout();
         }
     });
+    
+    // 📸 Event listener para el botón del escáner QR
+    const btnToggleScanner = document.getElementById('btnToggleScanner');
+    if (btnToggleScanner) {
+        btnToggleScanner.addEventListener('click', toggleScanner);
+        console.log('✅ Event listener del escáner QR configurado');
+    }
+    
+    // 🔍 Event listener para el botón "Procesar Salida"
+    const btnProcesarSalida = document.getElementById('btnProcesarSalida');
+    if (btnProcesarSalida) {
+        btnProcesarSalida.addEventListener('click', procesarCheckout);
+        console.log('✅ Event listener del botón "Procesar Salida" configurado');
+    }
+    
+    // 💳 Event listener para el botón "Pagar Tiempo Extra"
+    const btnPagarExtra = document.getElementById('btnPagarExtra');
+    if (btnPagarExtra) {
+        btnPagarExtra.addEventListener('click', pagarTiempoExtra);
+        console.log('✅ Event listener del botón "Pagar Tiempo Extra" configurado');
+    }
+    
+    // ✅ Event listener para el botón "Confirmar y Salir"
+    const btnConfirmar = document.getElementById('btnConfirmar');
+    if (btnConfirmar) {
+        btnConfirmar.addEventListener('click', confirmarSalida);
+        console.log('✅ Event listener del botón "Confirmar y Salir" configurado');
+    }
+    
+    // ❌ Event listener para el botón "Cancelar"
+    const btnCancelar = document.getElementById('btnCancelar');
+    if (btnCancelar) {
+        btnCancelar.addEventListener('click', cancelar);
+        console.log('✅ Event listener del botón "Cancelar" configurado');
+    }
+    
+    console.log('🎉 Todos los event listeners configurados correctamente');
 });
