@@ -509,18 +509,12 @@ async function crearReservaInstantanea() {
             monto_total: montoTotal
         });
 
-        const response = await fetch(`${API_URL}/reservas/instante`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                id_usuario: usuario.id_usuario,
-                id_vehiculo: selectedVehiculo.id_vehiculo,
-                id_cajon: selectedCajon.id_cajon,
-                duracion_minutos: duracionMinutos,
-                monto_total: montoTotal
-            })
+        const response = await window.authHelper.post('/reservas/instante', {
+            id_usuario: usuario.id_usuario,
+            id_vehiculo: selectedVehiculo.id_vehiculo,
+            id_cajon: selectedCajon.id_cajon,
+            duracion_minutos: duracionMinutos,
+            monto_total: montoTotal
         });
         
         console.log('📡 Respuesta del servidor:', response.status, response.statusText);

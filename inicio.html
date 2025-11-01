@@ -522,8 +522,8 @@ button, .btn-cancelar-reserva, .btn-extender-tiempo {
 
         async function cargarEstadisticas() {
             try {
-                // Reservas pendientes
-                const reservasRes = await fetch(`${API_URL}/reservas/usuario/${usuario.id_usuario}`);
+                // Reservas pendientes - 🔐 CON JWT
+                const reservasRes = await window.authHelper.get(`/reservas/usuario/${usuario.id_usuario}`);
                 
                 if (reservasRes.ok) {
                     const reservasData = await reservasRes.json();
@@ -541,8 +541,8 @@ button, .btn-cancelar-reserva, .btn-extender-tiempo {
                     console.log('No hay reservas disponibles o error en el servidor');
                 }
 
-                // Tickets activos
-                const ticketsRes = await fetch(`${API_URL}/tickets/usuario/${usuario.id_usuario}`);
+                // Tickets activos - 🔐 CON JWT
+                const ticketsRes = await window.authHelper.get(`/tickets/usuario/${usuario.id_usuario}`);
                 const tickets = await ticketsRes.json();
                 const ticketsActivos = tickets.filter(t => t.estado === 'ACTIVO');
                 document.getElementById('ticketsActivos').textContent = ticketsActivos.length;
@@ -552,8 +552,8 @@ button, .btn-cancelar-reserva, .btn-extender-tiempo {
                     mostrarTicketsActivos(ticketsActivos);
                 }
 
-                // Vehículos
-                const vehiculosRes = await fetch(`${API_URL}/usuarios/${usuario.id_usuario}/vehiculos`);
+                // Vehículos - 🔐 CON JWT
+                const vehiculosRes = await window.authHelper.get(`/usuarios/${usuario.id_usuario}/vehiculos`);
                 const vehiculos = await vehiculosRes.json();
                 document.getElementById('totalVehiculos').textContent = vehiculos.length;
 
