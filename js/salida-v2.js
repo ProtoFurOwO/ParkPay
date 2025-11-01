@@ -201,13 +201,32 @@ function mostrarResumen(data) {
     summaryContent.innerHTML = html;
     document.getElementById('totalAmount').textContent = `$${cobro.total || cobro.total_pagar || 0}`;
 
-    // Mostrar/Ocultar botón de pago si hay tiempo extra SIN PAGAR
-    if (tieneExtra) {
+    // 🔍 Verificar si el tiempo extra ya fue pagado
+    const extraYaPagado = cobro.extra_ya_pagado || false;
+    
+    // Mostrar/Ocultar botón de pago según estado
+    if (tieneExtra && !extraYaPagado) {
+        // Hay tiempo extra SIN pagar
         document.getElementById('paymentSection').style.display = 'block';
         document.getElementById('btnConfirmar').disabled = true;
         document.getElementById('btnConfirmar').style.background = '#94a3b8';
         tieneExtraSinPagar = true;
+    } else if (tieneExtra && extraYaPagado) {
+        // Tiempo extra YA PAGADO - Mostrar mensaje
+        document.getElementById('paymentSection').innerHTML = `
+            <div style="background: rgba(16,185,129,0.1); border: 1px solid var(--success-color); border-radius: 8px; padding: 15px; text-align: center;">
+                <p style="margin: 0; color: var(--success-color); font-weight: bold;">
+                    ✅ Tiempo extra ya pagado desde tickets
+                </p>
+                <small style="color: var(--gray-text);">${cobro.mensaje_pago || ''}</small>
+            </div>
+        `;
+        document.getElementById('paymentSection').style.display = 'block';
+        document.getElementById('btnConfirmar').disabled = false;
+        document.getElementById('btnConfirmar').style.background = '';
+        tieneExtraSinPagar = false;
     } else {
+        // Sin tiempo extra
         document.getElementById('paymentSection').style.display = 'none';
         document.getElementById('btnConfirmar').disabled = false;
         document.getElementById('btnConfirmar').style.background = '';

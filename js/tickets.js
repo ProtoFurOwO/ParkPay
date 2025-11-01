@@ -166,6 +166,15 @@ function mostrarTickets() {
                     </div>
                 </div>
             ` : ''}
+            ${ticket.estado === 'ACTIVO' ? `
+                <div style="margin: 15px 0;">
+                    <button onclick="verificarTiempoExtra('${ticket.codigo_acceso}')" 
+                            class="btn-tiempo-extra"
+                            style="background: #f59e0b; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; width: 100%; transition: all 0.3s ease;">
+                        💳 Pagar Tiempo Extra
+                    </button>
+                </div>
+            ` : ''}
             <div class="qr-container" id="qr-${ticket.id_ticket}">
                 <div class="qr-placeholder">Generando QR...</div>
             </div>
@@ -312,5 +321,150 @@ async function extenderTiempo(idTicket, minutos, costoPorHora) {
     } catch (error) {
         console.error('Error:', error);
         showMessage(error.message || 'Error al extender tiempo', 'error');
+    }
+}
+
+// 💳 Verificar y mostrar tiempo extra para pagar
+async function verificarTiempoExtra(codigoAcceso) {
+    try {
+        showMessage('Calculando tiempo extra...', 'info');
+
+        const response = await fetch(`${API_URL}/tickets/calcular-extra/${codigoAcceso}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Error al calcular tiempo extra');
+        }
+
+        const data = await response.json();
+        
+        if (!data.tiempo_extra.tiene_exceso) {
+            showMessage('No hay tiempo extra que pagar en este momento', 'info');
+            return;
+        }
+
+        // Mostrar modal de confirmación de pago
+        mostrarModalPagoExtra(data);
+
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage(error.message || 'Error al verificar tiempo extra', 'error');
+    }
+}
+
+// 🎫 Mostrar modal de pago de tiempo extra
+function mostrarModalPagoExtra(data) {
+    const { ticket, tiempo_extra } = data;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(0,0,0,0.8); display: flex; align-items: center; 
+        justify-content: center; z-index: 1000; padding: 20px; box-sizing: border-box;
+    `;
+
+    modal.innerHTML = `
+        <div style="background: var(--dark-bg, #1e293b); border-radius: 15px; padding: 25px; max-width: 400px; width: 100%; color: var(--light-text, white);">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: var(--warning-color, #f59e0b); font-size: 20px;">⚠️ Tiempo Extra</h3>
+                <p style="margin: 5px 0 0 0; color: var(--gray-text, #94a3b8); font-size: 14px;">Ticket: ${ticket.codigo_acceso}</p>
+            </div>
+            
+            <div style="background: var(--darker-bg, #0f172a); border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Tiempo reservado:</span>
+                    <span style="font-weight: bold;">${ticket.horas_reservadas} horas</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Tiempo usado:</span>
+                    <span style="font-weight: bold; color: var(--warning-color, #f59e0b);">${ticket.horas_reales} horas</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; padding-top: 8px; border-top: 1px solid var(--border-color, #334155);">
+                    <span>Tiempo extra:</span>
+                    <span style="font-weight: bold; color: var(--danger-color, #ef4444);">${tiempo_extra.horas_exceso} horas</span>
+                </div>
+                
+                <div style="background: rgba(239,68,68,0.1); border: 1px solid var(--danger-color, #ef4444); border-radius: 8px; padding: 12px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Tiempo adicional:</span>
+                        <span style="font-weight: bold;">$${tiempo_extra.monto_extra}</span>
+                    </div>
+                    ${tiempo_extra.multa > 0 ? `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>Multa (50%):</span>
+                            <span style="font-weight: bold;">$${tiempo_extra.multa}</span>
+                        </div>
+                    ` : ''}
+                    <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; padding-top: 8px; border-top: 1px solid var(--danger-color, #ef4444);">
+                        <span>TOTAL A PAGAR:</span>
+                        <span style="color: var(--danger-color, #ef4444);">$${tiempo_extra.total_extra}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="this.closest('.modal-overlay').remove()" 
+                        style="flex: 1; background: var(--border-color, #334155); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer;">
+                    Cancelar
+                </button>
+                <button onclick="pagarTiempoExtraAhora('${ticket.codigo_acceso}', ${tiempo_extra.total_extra})" 
+                        style="flex: 1; background: var(--success-color, #10b981); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    💳 Pagar Ahora
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Cerrar modal al hacer click fuera
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+// 💰 Procesar pago de tiempo extra
+async function pagarTiempoExtraAhora(codigoAcceso, montoTotal) {
+    try {
+        // Cerrar modal
+        document.querySelector('.modal-overlay')?.remove();
+        
+        showMessage('Procesando pago...', 'info');
+
+        const response = await fetch(`${API_URL}/tickets/pagar-extra`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({
+                codigo_acceso: codigoAcceso,
+                monto_pagado: montoTotal
+            })
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Error al procesar pago');
+        }
+
+        const resultado = await response.json();
+        showMessage('✅ Pago procesado exitosamente. Ahora puede salir directamente.', 'success');
+        
+        // Recargar tickets para mostrar estado actualizado
+        setTimeout(() => {
+            cargarTickets();
+        }, 2000);
+
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage(error.message || 'Error al procesar pago', 'error');
     }
 }

@@ -372,6 +372,16 @@ router.post('/checkout', async (req, res) => {
     }
 
     const montoTotal = montoOriginal + montoExtra;
+    
+    // 🔍 Verificar si el tiempo extra ya fue pagado
+    const yaPagado = parseFloat(ticket.monto_extra || 0) >= montoExtra;
+    
+    if (yaPagado && exceso > 0) {
+      console.log(`✅ Tiempo extra ya pagado para ticket ${ticket.codigo_acceso}`);
+      detallesCobro.extra_ya_pagado = true;
+      detallesCobro.mensaje_pago = 'Tiempo extra ya pagado';
+      montoExtra = 0; // No cobrar de nuevo
+    }
 
     // 🔧 NO FINALIZAR EL TICKET AÚN - Solo calcular el costo
     // El ticket se finalizará cuando se confirme el pago y salida
@@ -403,7 +413,76 @@ router.post('/checkout', async (req, res) => {
   }
 });
 
-// � Pagar tiempo extra
+// 🔍 Calcular tiempo extra actual de un ticket (sin finalizar)
+router.get('/calcular-extra/:codigo_acceso', async (req, res) => {
+  try {
+    const { codigo_acceso } = req.params;
+
+    // Obtener ticket con información de tarifa
+    const ticketQuery = await pool.query(`
+      SELECT t.*, tar.costo_por_hora, c.numero_cajon, c.ubicacion_piso,
+             v.placa,
+             EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - t.fecha_hora_entrada)) / 3600 as horas_reales
+      FROM TicketsEstancia t
+      JOIN CajonesEstacionamiento c ON t.id_cajon = c.id_cajon
+      JOIN Tarifas tar ON c.id_tarifa = tar.id_tarifa
+      JOIN Vehiculos v ON t.id_vehiculo = v.id_vehiculo
+      WHERE t.codigo_acceso = $1 AND t.estado = 'ACTIVO'
+    `, [codigo_acceso]);
+
+    if (ticketQuery.rows.length === 0) {
+      return res.status(404).json({ error: 'Ticket no encontrado o ya finalizado' });
+    }
+
+    const ticket = ticketQuery.rows[0];
+    const costoPorHora = parseFloat(ticket.costo_por_hora);
+    const horasReservadas = parseFloat(ticket.horas_estimadas);
+    const horasReales = parseFloat(ticket.horas_reales);
+    const exceso = horasReales - horasReservadas;
+
+    let tiempoExtra = {
+      tiene_exceso: exceso > 0,
+      horas_exceso: exceso > 0 ? exceso.toFixed(2) : 0,
+      monto_original: (horasReservadas * costoPorHora).toFixed(2),
+      monto_extra: 0,
+      multa: 0,
+      total_extra: 0
+    };
+
+    if (exceso > 0) {
+      const horasExcesoCompletas = Math.ceil(exceso);
+      const montoExceso = horasExcesoCompletas * costoPorHora;
+      let multa = 0;
+
+      if (exceso >= 2) {
+        multa = montoExceso * 0.5;
+      }
+
+      tiempoExtra.monto_extra = montoExceso.toFixed(2);
+      tiempoExtra.multa = multa.toFixed(2);
+      tiempoExtra.total_extra = (montoExceso + multa).toFixed(2);
+      tiempoExtra.horas_cobradas = horasExcesoCompletas;
+    }
+
+    res.json({
+      ticket: {
+        codigo_acceso: ticket.codigo_acceso,
+        cajon: `${ticket.numero_cajon} - ${ticket.ubicacion_piso}`,
+        placa: ticket.placa,
+        horas_reservadas: horasReservadas,
+        horas_reales: horasReales.toFixed(2),
+        estado: ticket.estado
+      },
+      tiempo_extra: tiempoExtra
+    });
+
+  } catch (error) {
+    console.error('Error al calcular tiempo extra:', error);
+    res.status(500).json({ error: 'Error al calcular tiempo extra' });
+  }
+});
+
+// 💳 Pagar tiempo extra
 router.post('/pagar-extra', async (req, res) => {
   const client = await pool.connect();
   try {
