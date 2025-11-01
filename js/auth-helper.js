@@ -24,7 +24,10 @@ class AuthHelper {
 
     // Obtener token JWT desde localStorage
     getToken() {
-        return localStorage.getItem(this.tokenKey);
+        const token = localStorage.getItem(this.tokenKey);
+        console.log('🔑 GetToken called - tokenKey:', this.tokenKey);
+        console.log('🔑 Token from localStorage:', token ? 'PRESENTE' : 'AUSENTE');
+        return token;
     }
 
     // Obtener datos de usuario
@@ -53,6 +56,10 @@ class AuthHelper {
     // 🔐 REQUEST SEGURO CON JWT - ANTI BURP SUITE
     async secureRequest(endpoint, options = {}) {
         const token = this.getToken();
+        
+        // 🐛 DEBUG: Log del token
+        console.log('🎫 AuthHelper - Token disponible:', token ? 'SÍ' : 'NO');
+        console.log('🎫 Token (primeros 20 chars):', token ? token.substring(0, 20) + '...' : 'NINGUNO');
         
         if (!token) {
             throw new Error('No hay token de autenticación');
