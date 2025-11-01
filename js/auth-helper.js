@@ -37,7 +37,11 @@ class AuthHelper {
     isAuthenticated() {
         const token = this.getToken();
         const user = this.getUser();
-        return !!(token && user);
+        
+        // TAMBIÉN verificar las claves del código existente
+        const usuarioExistente = localStorage.getItem('usuario');
+        
+        return !!(token && user) || !!usuarioExistente;
     }
 
     // Verificar si es administrador
@@ -140,9 +144,13 @@ class AuthHelper {
             const data = await response.json();
 
             if (response.ok && data.token) {
-                // Guardar token y datos de usuario
+                // Guardar token y datos de usuario (COMPATIBILIDAD CON CÓDIGO EXISTENTE)
                 localStorage.setItem(this.tokenKey, data.token);
                 localStorage.setItem(this.userKey, JSON.stringify(data.usuario));
+                
+                // TAMBIÉN guardar en las claves que usa el resto del código
+                localStorage.setItem('usuario', JSON.stringify(data.usuario));
+                localStorage.setItem('vehiculos', JSON.stringify(data.vehiculos || []));
                 
                 console.log('✅ Login exitoso con JWT');
                 return data;
@@ -160,6 +168,11 @@ class AuthHelper {
     logout() {
         localStorage.removeItem(this.tokenKey);
         localStorage.removeItem(this.userKey);
+        
+        // TAMBIÉN limpiar las claves del código existente
+        localStorage.removeItem('usuario');
+        localStorage.removeItem('vehiculos');
+        
         console.log('✅ Logout exitoso');
     }
 
