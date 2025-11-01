@@ -4,8 +4,13 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
+// 🔥 DEPLOY FIX v2.1 - JWT SECURITY ENABLED
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// 🚀 CONFIGURACIÓN PARA RENDER (PROXY TRUST)
+app.set('trust proxy', 1); // Confiar en primer proxy (necesario para Render)
 
 // 🛡️ SEGURIDAD ANTI-BURP SUITE
 // Rate limiting general
