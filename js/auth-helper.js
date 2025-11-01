@@ -215,8 +215,17 @@ class AuthHelper {
 // Instancia global del helper
 window.authHelper = new AuthHelper();
 
+// 🔑 FUNCIONES GLOBALES PARA COMPATIBILIDAD
+window.secureRequest = (endpoint, options) => window.authHelper.secureRequest(endpoint, options);
+window.login = (email, password) => window.authHelper.login(email, password);
+window.logout = () => window.authHelper.logout();
+window.isAuthenticated = () => window.authHelper.isAuthenticated();
+window.getCurrentUser = () => window.authHelper.getCurrentUser();
+window.isAdmin = () => window.authHelper.isAdmin();
+
 // Log de inicialización
 console.log('🔐 AuthHelper inicializado');
 console.log(`🌐 API URL: ${window.authHelper.apiUrl}`);
+console.log('🔑 Funciones globales disponibles: secureRequest, login, logout, isAuthenticated, getCurrentUser, isAdmin');
 console.log(`👤 Autenticado: ${window.authHelper.isAuthenticated()}`);
 console.log(`👑 Admin: ${window.authHelper.isAdmin()}`);
