@@ -7,38 +7,104 @@
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
-        /* Estilos para opciones de reserva */
-        input[type="radio"] {
-            display: none;
-        }
-        
-        input[type="radio"]:checked + .reservation-option {
-            border-color: #1e40af !important;
-            background: #eff6ff !important;
-            transform: scale(1.02);
-        }
-        
-        .reservation-option:hover {
-            border-color: #60a5fa !important;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.15);
-        }
-
-        /* Animación suave para campos condicionales */
-        #futureReservationFields {
-            animation: slideDown 0.3s ease-out;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
+            .reservation-option {
+                background: var(--dark-bg);
+                border: 2px solid var(--border-color); /* Borde por defecto */
+                border-radius: 15px;
+                padding: 20px;
+                margin-bottom: 15px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                color: var(--light-text);
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+
+            /* Estilos para el texto dentro de la opción */
+            .reservation-option h4 {
+                font-family: 'Montserrat', sans-serif;
+                color: var(--light-text);
+                margin: 0 0 5px 0;
+                font-size: 1.1rem;
+                transition: color 0.3s ease;
             }
-        }
+
+            .reservation-option p {
+                font-family: 'Inter', sans-serif;
+                color: var(--gray-text);
+                font-size: 0.9rem;
+                margin: 0;
+            }
+
+
+            /* --- ESTILOS PROPORCIONADOS (ADAPTADOS) --- */
+
+            input[type="radio"] {
+                display: none; /* Se mantiene igual */
+            }
+
+            /* --- CAMBIO: Estado "Seleccionado" ahora usa el AMARILLO del logo --- */
+            input[type="radio"]:checked + .reservation-option {
+                border-color: var(--selected-color) !important; /* Amarillo brillante */
+                background: rgba(253, 224, 71, 0.05) !important; /* Fondo amarillo muy sutil */
+                transform: scale(1.02);
+                /* Sombra de "glow" amarilla */
+                box-shadow: 0 4px 20px rgba(253, 224, 71, 0.15); 
+            }
+
+            /* --- CAMBIO: Título se vuelve amarillo al seleccionar --- */
+            input[type="radio"]:checked + .reservation-option h4 {
+                color: var(--selected-color);
+            }
+
+            /* --- CAMBIO: Estado "Hover" ahora usa el AZUL del logo --- */
+            .reservation-option:hover {
+                border-color: var(--primary-color) !important; /* Azul del logo */
+                transform: translateY(-2px);
+                /* Sombra de "glow" azul */
+                box-shadow: 0 4px 12px rgba(0, 97, 201, 0.2);
+            }
+            #futureReservationFields {
+                animation: slideDown 0.3s ease-out;
+            }
+
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .bottom-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background: var(--dark-bg); /* Fondo oscuro */
+                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+                display: flex;
+                justify-content: space-around;
+                padding: 10px 0;
+                z-index: 100;
+                border-top: 1px solid var(--border-color); /* Borde sutil */
+            }
+
+            .nav-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-decoration: none;
+                color: var(--gray-text); /* --- CAMBIO: Variable --- */
+                font-size: 12px;
+                padding: 5px 15px;
+                transition: all 0.3s ease;
+                font-family: 'Inter', sans-serif;
+            }
+            .nav-item.active {
+                color: var(--selected-color); /* AMARILLO del logo */
+                font-weight: bold;
+            }
     </style>
 </head>
 <body>
@@ -76,7 +142,7 @@
                                 <input type="radio" name="reservationType" value="ahora" checked onchange="onReservationTypeChange()">
                                 <div style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center; transition: all 0.3s;" class="reservation-option">
                                     <div style="font-size: 32px; margin-bottom: 5px;">⚡</div>
-                                    <div style="font-weight: 600; color: #1e40af;">Ahora mismo</div>
+                                    <div style="font-weight: 600; color: #acbef8;">Ahora mismo</div>
                                     <div style="font-size: 12px; color: #64748b;">30 min para llegar</div>
                                 </div>
                             </label>
@@ -84,7 +150,7 @@
                                 <input type="radio" name="reservationType" value="despues" onchange="onReservationTypeChange()">
                                 <div style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center; transition: all 0.3s;" class="reservation-option">
                                     <div style="font-size: 32px; margin-bottom: 5px;">📅</div>
-                                    <div style="font-weight: 600; color: #1e40af;">Para después</div>
+                                    <div style="font-weight: 600; color: #acbef8;">Para después</div>
                                     <div style="font-size: 12px; color: #64748b;">Elegir fecha/hora</div>
                                 </div>
                             </label>
@@ -93,9 +159,9 @@
 
                     <!-- Campo de fecha/hora (solo visible para "después") -->
                     <div class="form-group" id="futureReservationFields" style="display: none; margin-bottom: 20px;">
-                        <label for="reservationDateTime" style="display: block; margin-bottom: 8px; font-weight: 600; color: #334155;">📆 Fecha y Hora de Llegada</label>
+                        <label for="reservationDateTime" style="display: block; margin-bottom: 8px; font-weight: 600; color: #acbef8;">📆 Fecha y Hora de Llegada</label>
                         <input type="datetime-local" id="reservationDateTime" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;" onchange="calculateCost()">
-                        <p style="font-size: 12px; color: #64748b; margin-top: 5px;">Puedes escanear el QR desde esta hora hasta 3 horas después</p>
+                        <p style="font-size: 12px; color: #acbef8; margin-top: 5px;">Puedes escanear el QR desde esta hora hasta 3 horas después</p>
                     </div>
 
                     <div class="form-group">
@@ -194,12 +260,12 @@
     </div>
 
     <!-- Bottom Navigation -->
-    <nav class="bottom-nav" style="position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-around; padding: 10px 0; z-index: 100;">
+    <nav class="bottom-nav" style="position: fixed; bottom: 0; left: 0; width: 100%; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-around; padding: 10px 0; z-index: 100;">
         <a href="inicio.html" class="nav-item" style="display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #64748b; font-size: 12px; padding: 5px 15px;">
             <div style="font-size: 24px; margin-bottom: 4px;">🏠</div>
             <span>Inicio</span>
         </a>
-        <a href="estacionamiento.html" class="nav-item active" style="display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #1e40af; font-size: 12px; padding: 5px 15px;">
+        <a href="estacionamiento.html" class="nav-item active" style="display: flex; flex-direction: column; align-items: center; text-decoration: none; font-size: 12px; padding: 5px 15px;">
             <div style="font-size: 24px; margin-bottom: 4px;">🚗</div>
             <span>Estacionar</span>
         </a>

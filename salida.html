@@ -7,22 +7,55 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <link rel="stylesheet" href="css/styles.css">
     <style>
+        /* --- NUEVAS FUENTES --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700&display=swap');
+
+        /* --- PALETA DEL LOGO --- */
+        :root {
+            --primary-color: #0061c9;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #facc15;
+            --dark-bg: #1e293b;
+            --darker-bg: #0f172a;
+            --light-text: #f1f5f9;
+            --gray-text: #94a3b8;
+            --selected-color: #fde047;
+            --selected-text-color: #0f172a;
+            --border-color: #334155;
+        }
+
+        /* --- FUENTES GLOBALES --- */
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+        }
+
+        button {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
         body {
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
             min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            color: var(--light-text);
         }
 
         .checkout-container {
             max-width: 500px;
             margin: 0 auto;
             padding: 20px;
-            padding-bottom: 100px;
+            padding-bottom: 100px; /* Espacio para el nav inferior */
         }
 
         .header-checkout {
-            color: white;
+            color: var(--light-text);
             padding: 20px;
             text-align: center;
             margin-bottom: 20px;
@@ -32,242 +65,98 @@
             margin: 0;
             font-size: 28px;
         }
+        
+        /* --- ESTILO MOVIDO DE EN LÍNEA --- */
+        .header-checkout p {
+            color: var(--gray-text); 
+            margin-top: 5px; 
+            font-family: 'Inter', sans-serif;
+        }
 
         .checkout-card {
-            background: white;
+            background: var(--dark-bg);
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
             margin-bottom: 20px;
         }
-
-        .input-group {
-            margin-bottom: 20px;
+        
+        /* --- ESTILO MOVIDO DE EN LÍNEA --- */
+        .checkout-card h3 {
+            margin-top: 0; 
+            color: var(--light-text);
         }
 
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #334155;
-            font-weight: 500;
-        }
-
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display:block; margin-bottom:8px; color:var(--light-text); font-weight:500; }
         .input-group input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 16px;
-            font-family: monospace;
-            text-transform: uppercase;
+            width: 100%; padding: 15px; border: 2px solid var(--border-color); background: var(--darker-bg);
+            color: var(--light-text); border-radius: 10px; font-size: 16px; font-family: monospace; text-transform: uppercase;
         }
+        .input-group input:focus { outline: none; border-color: var(--primary-color); }
 
-        .btn-checkout {
-            background: #1e40af;
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            width: 100%;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .btn-checkout { background: var(--primary-color); color: white; border: none; padding: 15px; border-radius: 10px; font-size: 16px; width: 100%; cursor: pointer; transition: all 0.3s ease; }
+        .btn-checkout:hover { background: #004a9e; transform: translateY(-2px); }
+        .btn-checkout:disabled { background: var(--border-color); color: var(--gray-text); cursor: not-allowed; transform: none; }
+
+        .summary-section { display: none; }
+        .summary-section.active { display:block; }
+        
+        /* --- ESTILO MOVIDO DE EN LÍNEA --- */
+        .summary-section h2 {
+            color: var(--primary-color); 
+            margin-top: 0;
         }
+        
+        .summary-row { display:flex; justify-content: space-between; padding: 12px 0; border-bottom:1px solid var(--border-color); }
+        .summary-row:last-child { border-bottom:none; }
+        .summary-label { color:var(--gray-text); font-size:14px; }
+        .summary-value { font-weight:600; color:var(--light-text); }
 
-        .btn-checkout:hover {
-            background: #1e3a8a;
-            transform: translateY(-2px);
-        }
+        .divider { border:none; border-top:1px solid var(--border-color); margin:20px 0; }
+        .total-row { background: var(--darker-bg); padding:15px; border-radius:10px; margin-top:15px; border: 2px solid var(--primary-color); }
+        .total-label { font-size:18px; font-weight:bold; color:var(--primary-color); }
+        .total-value { font-size:24px; font-weight:bold; color:var(--primary-color); }
 
-        .btn-checkout:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .summary-section {
-            display: none;
-        }
-
-        .summary-section.active {
-            display: block;
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .summary-row:last-child {
-            border-bottom: none;
-        }
-
-        .summary-label {
-            color: #64748b;
-            font-size: 14px;
-        }
-
-        .summary-value {
-            font-weight: 500;
-            color: #334155;
-        }
-
-        .divider {
-            border: none;
-            border-top: 2px solid #e2e8f0;
-            margin: 20px 0;
-        }
-
-        .total-row {
-            background: #eff6ff;
-            padding: 15px;
-            border-radius: 10px;
+        .extra-charge-row { background: rgba(239,68,68,0.1); border:1px solid var(--danger-color); padding:12px; border-radius:8px; margin:10px 0; }
+        
+        /* --- ESTILOS MOVIDOS DE EN LÍNEA --- */
+        #paymentSection .extra-charge-row {
+            text-align: center; 
             margin-top: 15px;
         }
-
-        .total-label {
-            font-size: 18px;
-            font-weight: bold;
-            color: #1e40af;
+        .extra-charge-row p {
+            margin: 0; 
+            color: var(--danger-color); 
+            font-weight: bold; 
+            font-family: 'Inter', sans-serif;
         }
-
-        .total-value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #1e40af;
+        #btnConfirmar {
+            margin-top: 20px;
         }
+        
+        .warning-badge { background:var(--warning-color); color:var(--selected-text-color); padding:4px 12px; border-radius:20px; font-size:12px; font-weight:bold; font-family:'Inter',sans-serif; }
 
-        .extra-charge-row {
-            background: #fef2f2;
-            padding: 12px;
-            border-radius: 8px;
-            margin: 10px 0;
-        }
+        /* Estilos del escáner QR */
+        #reader { border-radius:15px; overflow:hidden; margin:20px 0; display:none; border:2px solid var(--border-color); }
+        .scanner-toggle { background:var(--selected-color); color:var(--selected-text-color); border:none; padding:12px 20px; border-radius:10px; font-size:14px; cursor:pointer; margin:10px 0; width:100%; transition:all 0.3s ease; }
+        .scanner-toggle:hover { filter: brightness(90%); }
 
-        .warning-badge {
-            background: #fbbf24;
-            color: #78350f;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
+        .btn-pay-extra { background:var(--success-color); color:white; border:none; padding:15px; border-radius:10px; font-size:16px; width:100%; cursor:pointer; transition:all 0.3s ease; margin-top:10px; }
+        .btn-pay-extra:hover { background:#059669; transform: translateY(-2px); }
 
-        /* ESTILOS DEL ESCÁNER QR */
-        #reader {
-            border-radius: 15px;
-            overflow: hidden;
-            margin: 20px 0;
-            display: none;
-        }
+        .btn-cancel { background:var(--border-color); color:var(--light-text); border:none; padding:12px; border-radius:10px; font-size:14px; width:100%; cursor:pointer; margin-top:10px; }
+        .btn-cancel:hover { background:#475569; }
 
-        .scanner-toggle {
-            background: #6366f1;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 10px;
-            font-size: 14px;
-            cursor: pointer;
-            margin: 10px 0;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
+        #messageBox { position: fixed; top:20px; right:20px; padding:15px 20px; border-radius:8px; color:white; font-weight:bold; z-index:2000; display:none; font-family:'Inter',sans-serif; }
+        #messageBox.success { background:var(--success-color); }
+        #messageBox.error { background:var(--danger-color); }
 
-        .scanner-toggle:hover {
-            background: #4f46e5;
-        }
-
-        /* BOTÓN DE PAGO PARA TIEMPO EXTRA */
-        .btn-pay-extra {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            width: 100%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-        }
-
-        .btn-pay-extra:hover {
-            background: #059669;
-            transform: translateY(-2px);
-        }
-
-        .btn-cancel {
-            background: #64748b;
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            width: 100%;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .btn-cancel:hover {
-            background: #475569;
-        }
-
-        #messageBox {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
-            z-index: 2000;
-            display: none;
-        }
-
-        #messageBox.success {
-            background: #10b981;
-        }
-
-        #messageBox.error {
-            background: #ef4444;
-        }
-
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: white;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            z-index: 100;
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-decoration: none;
-            color: #64748b;
-            font-size: 12px;
-            padding: 5px 15px;
-        }
-
-        .nav-item.active {
-            color: #1e40af;
-        }
-
-        .nav-icon {
-            font-size: 24px;
-            margin-bottom: 4px;
-        }
+        /* --- ESTILOS DEL ELEMENTO FALTANTE --- */
+        .bottom-nav { position: fixed; bottom:0; left:0; width:100%; background:var(--dark-bg); box-shadow: 0 -2px 10px rgba(0,0,0,0.2); display:flex; justify-content:space-around; padding:10px 0; z-index:100; border-top:1px solid var(--border-color); }
+        .nav-item { display:flex; flex-direction:column; align-items:center; text-decoration:none; color:var(--gray-text); font-size:12px; padding:5px 15px; font-family:'Inter',sans-serif; }
+        .nav-item.active { color:var(--selected-color); font-weight:bold; }
+        .nav-icon { font-size:24px; margin-bottom:4px; }
     </style>
 </head>
 <body>
@@ -276,37 +165,29 @@
     <div class="checkout-container">
         <div class="header-checkout">
             <h1>🚪 Salida</h1>
-            <p style="color: #94a3b8; margin-top: 5px;">Procesar salida del estacionamiento</p>
+            <p>Procesar salida del estacionamiento</p>
         </div>
         
-        <!-- ESCÁNER QR -->
         <div class="checkout-card">
-            <h3 style="margin-top: 0;">📱 Escanear Código QR</h3>
-            <button class="scanner-toggle" id="btnToggleScanner" onclick="toggleScanner()">
+            <h3>📱 Escanear Código QR</h3>
+            <button class="scanner-toggle" id="btnToggleScanner">
                 📸 Activar Escáner QR
             </button>
             <div id="reader"></div>
         </div>
-
-        <!-- Formulario para ingresar código -->
+        
         <div class="checkout-card" id="inputSection">
             <div class="input-group">
                 <label for="codigoInput">Código de Acceso</label>
-                <input 
-                    type="text" 
-                    id="codigoInput" 
-                    placeholder="TICKET-XXXXX-XXXXX"
-                    autocomplete="off"
-                >
+                <input type="text" id="codigoInput" placeholder="TICKET-XXXXX-XXXXX" autocomplete="off" />
             </div>
-            <button class="btn-checkout" onclick="procesarCheckout()">
+            <button class="btn-checkout" id="btnProcesarSalida">
                 Procesar Salida
             </button>
         </div>
 
-        <!-- Resumen de cobro -->
         <div class="checkout-card summary-section" id="summarySection">
-            <h2 style="color: #1e40af; margin-top: 0;">🧾 Resumen de Salida</h2>
+            <h2>🧾 Resumen de Salida</h2>
             
             <div id="summaryContent"></div>
 
@@ -315,48 +196,25 @@
                 <div class="total-value" id="totalAmount">$0.00</div>
             </div>
 
-            <!-- Botón de pago si hay tiempo extra -->
             <div id="paymentSection" style="display: none;">
-                <div class="extra-charge-row" style="text-align: center; margin-top: 15px;">
-                    <p style="margin: 0; color: #dc2626; font-weight: bold;">⚠️ Debe pagar el tiempo extra antes de salir</p>
+                <div class="extra-charge-row">
+                    <p>⚠️ Debe pagar el tiempo extra antes de salir</p>
                 </div>
-                <button class="btn-pay-extra" onclick="pagarTiempoExtra()">
-                    💳 Pagar Tiempo Extra
-                </button>
+                <button class="btn-pay-extra" id="btnPagarExtra">💳 Pagar Tiempo Extra</button>
             </div>
 
-            <!-- Botones de confirmar/cancelar -->
             <div id="confirmSection">
-                <button class="btn-checkout" id="btnConfirmar" onclick="confirmarSalida()" style="margin-top: 20px;">
+                <button class="btn-checkout" id="btnConfirmar">
                     Confirmar y Salir
                 </button>
-                <button class="btn-cancel" onclick="cancelar()">
+                <button class="btn-cancel" id="btnCancelar">
                     Cancelar
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
-        <a href="inicio.html" class="nav-item">
-            <div class="nav-icon">🏠</div>
-            <span>Inicio</span>
-        </a>
-        <a href="estacionamiento.html" class="nav-item">
-            <div class="nav-icon">🚗</div>
-            <span>Estacionar</span>
-        </a>
-        <a href="tickets.html" class="nav-item">
-            <div class="nav-icon">🎫</div>
-            <span>Tickets</span>
-        </a>
-        <a href="perfil.html" class="nav-item">
-            <div class="nav-icon">👤</div>
-            <span>Perfil</span>
-        </a>
-    </nav>
-
     <script src="js/salida-v2.js"></script>
-</body>
+    
+    </body>
 </html>

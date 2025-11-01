@@ -6,317 +6,393 @@
     <title>Mi Perfil - ParkPay</title>
     <link rel="stylesheet" href="css/styles.css">
     <style>
-        .profile-container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            padding-bottom: 80px; /* Espacio para bottom nav */
-        }
+       /* --- NUEVAS FUENTES --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700&display=swap');
 
-        .profile-header {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            color: white;
-            padding: 30px 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.3);
-        }
+/* --- PALETA DEL LOGO (COPIADA DE LA PÁGINA ANTERIOR) --- */
+:root {
+    --primary-color: #0061c9;   /* Azul vibrante, extraído del fondo del logo */
+    --success-color: #10b981;   /* Verde estándar */
+    --danger-color: #ef4444;    /* Rojo estándar */
+    --warning-color: #facc15;   /* Amarillo de las líneas del logo */
+    --dark-bg: #1e293b;         /* Gris asfalto/azulado (Fondo de contenedores) */
+    --darker-bg: #0f172a;       /* Fondo principal del body */
+    --light-text: #f1f5f9;
+    --gray-text: #94a3b8;
+    --selected-color: #fde047;  /* Amarillo brillante para selección */
+    --selected-text-color: #0f172a; /* Texto oscuro para contrastar con el amarillo */
+    --border-color: #334155;
+}
 
-        .profile-header h1 {
-            margin: 0 0 10px 0;
-            font-size: 24px;
-        }
+/* --- ESTILOS GLOBALES DE FUENTE (AÑADIDO) --- */
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--darker-bg); /* Asumiendo fondo oscuro */
+    color: var(--light-text);
+}
 
-        .profile-header .email {
-            opacity: 0.9;
-            font-size: 14px;
-        }
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+}
 
-        .profile-header .member-since {
-            opacity: 0.7;
-            font-size: 12px;
-            margin-top: 5px;
-        }
+/* --- NUEVA FUENTE PARA BOTONES --- */
+button, .btn-add, .btn-logout, .btn-submit {
+     font-family: 'Montserrat', sans-serif;
+     font-weight: 600;
+     text-transform: uppercase;
+     letter-spacing: 0.5px;
+}
+/* --- FIN DE ESTILOS GLOBALES --- */
 
-        .section {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
 
-        .section-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #1e40af;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+.profile-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    padding-bottom: 100px; /* Espacio para bottom nav */
+}
 
-        .vehicle-card {
-            background: #f8fafc;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 10px;
-            transition: all 0.3s ease;
-        }
+/* --- CAMBIO: Usando azul del logo --- */
+.profile-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #004a9e 100%);
+    color: var(--light-text);
+    padding: 30px 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0, 97, 201, 0.3); /* Sombra azul actualizada */
+}
 
-        .vehicle-card:hover {
-            border-color: #3b82f6;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-        }
+.profile-header h1 {
+    margin: 0 0 10px 0;
+    font-size: 24px;
+}
 
-        .vehicle-plate {
-            font-size: 20px;
-            font-weight: bold;
-            color: #1e40af;
-            margin-bottom: 8px;
-        }
+.profile-header .email {
+    opacity: 0.9;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+}
 
-        .vehicle-info {
-            color: #64748b;
-            font-size: 14px;
-        }
+.profile-header .member-since {
+    opacity: 0.7;
+    font-size: 12px;
+    margin-top: 5px;
+    font-family: 'Inter', sans-serif;
+}
 
-        .vehicle-info span {
-            display: inline-block;
-            margin-right: 15px;
-        }
+/* --- CAMBIO: Sección invertida a tema oscuro --- */
+.section {
+    background: var(--dark-bg);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color); /* Borde sutil */
+}
 
-        .btn-add {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
+.section-title {
+    font-size: 18px;
+    margin-bottom: 15px;
+    color: var(--primary-color); /* --- CAMBIO: Azul del logo --- */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-        .btn-add:hover {
-            background: #059669;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-        }
+/* --- CAMBIO: Tarjeta de vehículo invertida a tema oscuro --- */
+.vehicle-card {
+    background: var(--darker-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
 
-        .btn-logout {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            width: 100%;
-            margin-top: 10px;
-            transition: all 0.3s ease;
-        }
+.vehicle-card:hover {
+    border-color: var(--primary-color); /* --- CAMBIO: Azul del logo --- */
+    box-shadow: 0 4px 12px rgba(0, 97, 201, 0.2); /* Sombra azul */
+}
 
-        .btn-logout:hover {
-            background: #dc2626;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-        }
+.vehicle-plate {
+    font-size: 20px;
+    color: var(--primary-color); /* --- CAMBIO: Azul del logo --- */
+    margin-bottom: 8px;
+    font-family: 'Montserrat', sans-serif; /* Fuente de título */
+}
 
-        /* Modal para agregar vehículo */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
+.vehicle-info {
+    color: var(--gray-text); /* --- CAMBIO: Variable --- */
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+}
 
-        .modal.active {
-            display: flex;
-        }
+.vehicle-info span {
+    display: inline-block;
+    margin-right: 15px;
+}
 
-        .modal-content {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
+/* --- CAMBIO: Botones con variables --- */
+.btn-add {
+    background: var(--success-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
 
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
+.btn-add:hover {
+    background: #059669; /* Más oscuro */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
 
-        .modal-header h2 {
-            margin: 0;
-            color: #1e40af;
-        }
+.btn-logout {
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100%;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
 
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #64748b;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-        }
+.btn-logout:hover {
+    background: #dc2626; /* Más oscuro */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+/* Modal para agregar vehículo */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* --- CAMBIO: Fondo de modal más oscuro y con blur --- */
+    background: rgba(15, 23, 42, 0.7); /* Usando --darker-bg con alfa */
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #334155;
-            font-weight: 500;
-        }
+.modal.active {
+    display: flex;
+}
 
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s ease;
-        }
+/* --- CAMBIO: Contenido del modal en tema oscuro --- */
+.modal-content {
+    background: var(--dark-bg);
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+}
 
-        .form-group input:focus {
-            outline: none;
-            border-color: #3b82f6;
-        }
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
 
-        .form-group small {
-            color: #64748b;
-            font-size: 12px;
-        }
+.modal-header h2 {
+    margin: 0;
+    color: var(--primary-color); /* --- CAMBIO: Azul del logo --- */
+}
 
-        .btn-submit {
-            background: #1e40af;
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--gray-text); /* --- CAMBIO: Variable --- */
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    transition: color 0.3s ease;
+}
 
-        .btn-submit:hover {
-            background: #1e3a8a;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
-        }
+.close-modal:hover {
+    color: var(--light-text);
+}
 
-        .btn-submit:disabled {
-            background: #94a3b8;
-            cursor: not-allowed;
-            transform: none;
-        }
+/* --- CAMBIO: Formulario en tema oscuro --- */
+.form-group {
+    margin-bottom: 20px;
+}
 
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #64748b;
-        }
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--light-text);
+    font-weight: 500;
+}
 
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--border-color);
+    background: var(--darker-bg);
+    color: var(--light-text);
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+    font-family: 'Inter', sans-serif;
+}
 
-        /* Bottom Navigation */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: white;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            z-index: 100;
-        }
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color); /* --- CAMBIO: Azul del logo --- */
+}
 
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-decoration: none;
-            color: #64748b;
-            font-size: 12px;
-            padding: 5px 15px;
-            transition: all 0.3s ease;
-        }
+.form-group small {
+    color: var(--gray-text); /* --- CAMBIO: Variable --- */
+    font-size: 12px;
+}
 
-        .nav-item.active {
-            color: #1e40af;
-        }
+/* --- CAMBIO: Botón de submit --- */
+.btn-submit {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+    transition: all 0.3s ease;
+}
 
-        .nav-icon {
-            font-size: 24px;
-            margin-bottom: 4px;
-        }
+.btn-submit:hover {
+    background: #004a9e; /* Tono más oscuro del azul */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 97, 201, 0.3);
+}
 
-        #messageBox {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
-            z-index: 2000;
-            display: none;
-            animation: slideIn 0.3s ease;
-        }
+.btn-submit:disabled {
+    background: var(--border-color); /* --- CAMBIO: Color deshabilitado --- */
+    color: var(--gray-text);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
 
-        #messageBox.success {
-            background: #10b981;
-        }
+/* --- CAMBIO: Estado vacío adaptado a tema oscuro --- */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--gray-text);
+}
 
-        #messageBox.error {
-            background: #ef4444;
-        }
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+    color: var(--border-color);
+}
 
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
+/* --- CAMBIO: Barra de navegación invertida a tema oscuro --- */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--dark-bg);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    z-index: 100;
+    border-top: 1px solid var(--border-color);
+}
 
-        @media (max-width: 768px) {
-            .profile-container {
-                padding: 15px;
-            }
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: var(--gray-text);
+    font-size: 12px;
+    padding: 5px 15px;
+    transition: all 0.3s ease;
+    font-family: 'Inter', sans-serif;
+}
 
-            .profile-header {
-                padding: 20px 15px;
-            }
-        }
+/* --- CAMBIO: Ítem activo "Llamativo" con AMARILLO --- */
+.nav-item.active {
+    color: var(--selected-color);
+    font-weight: bold;
+}
+
+.nav-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+/* --- CAMBIO: Mensajes unificados --- */
+#messageBox {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    z-index: 2000;
+    display: none;
+    animation: fadeIn 0.3s ease; /* Usando fadeIn para consistencia */
+    font-family: 'Inter', sans-serif;
+}
+
+#messageBox.success {
+    background: var(--success-color);
+}
+
+#messageBox.error {
+    background: var(--danger-color);
+}
+
+#messageBox.info {
+    background: var(--primary-color); /* --- AÑADIDO --- */
+}
+
+#messageBox.warning {
+    background: var(--warning-color); /* --- AÑADIDO --- */
+    color: var(--selected-text-color);
+}
+
+/* --- CAMBIO: Animación a fadeIn (más simple) --- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 15px;
+        padding-bottom: 100px;
+    }
+
+    .profile-header {
+        padding: 20px 15px;
+    }
+}
     </style>
 </head>
 <body>

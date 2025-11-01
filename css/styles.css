@@ -1,16 +1,22 @@
-/* Variables CSS */
+/* --- NUEVAS FUENTES --- */
+/* Importamos las fuentes 'Inter' (para el cuerpo) y 'Montserrat' (para títulos) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700&display=swap');
+
 :root {
-    --primary-color: #2563eb;
-    --success-color: #10b981;
-    --danger-color: #ef4444;
-    --warning-color: #f59e0b;
-    --dark-bg: #1e293b;
-    --darker-bg: #0f172a;
-    --light-text: #f1f5f9;
-    --gray-text: #94a3b8;
-    --available-color: #22c55e;
-    --occupied-color: #ef4444;
-    --selected-color: #3b82f6;
+    /* --- PALETA AJUSTADA AL LOGO --- */
+    --primary-color: #0061c9;   /* Azul vibrante, extraído del fondo del logo */
+    --success-color: #10b981;   /* Verde estándar (se mantiene por usabilidad) */
+    --danger-color: #ef4444;    /* Rojo estándar (se mantiene por usabilidad) */
+    --warning-color: #facc15;   /* Amarillo más brillante, como las líneas del logo */
+    --dark-bg: #1e293b;         /* Gris asfalto/azulado (se mantiene) */
+    --darker-bg: #0f172a;       /* Más oscuro (se mantiene) */
+    --light-text: #f1f5f9;       /* (se mantiene) */
+    --gray-text: #94a3b8;       /* (se mantiene) */
+    --available-color: #22c55e;  /* Verde estándar (se mantiene) */
+    --occupied-color: #ef4444;  /* Rojo estándar (se mantiene) */
+    --selected-color: #fde047;  /* ¡AMARILLO VIBRANTE del logo para máxima visibilidad! */
+    --selected-text-color: #0f172a; /* Texto oscuro para contrastar con el amarillo */
+    --border-color: #334155;    /* (se mantiene) */
 }
 
 * {
@@ -20,10 +26,17 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
+    /* --- NUEVA FUENTE BASE --- */
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--darker-bg); /* Fondo sólido */
     color: var(--light-text);
     min-height: 100vh;
+}
+
+/* --- NUEVA FUENTE PARA TÍTULOS --- */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700; /* Un poco más audaz */
 }
 
 .container {
@@ -38,15 +51,16 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    background: rgba(30, 41, 59, 0.8);
-    border-radius: 10px;
+    background: var(--dark-bg); /* Sólido */
+    border-radius: 8px; /* Más sutil */
     margin-bottom: 30px;
-    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color); /* Borde en lugar de sombra */
 }
 
 .header h1 {
-    font-size: 2rem;
-    color: var(--primary-color);
+    font-size: 1.8rem; /* Ligeramente más pequeño */
+    color: var(--light-text); /* Menos color, más limpio */
+    font-weight: 600;
 }
 
 .user-info {
@@ -60,39 +74,45 @@ body {
     background: var(--danger-color);
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 4px; /* Más sutil */
     cursor: pointer;
     font-size: 0.9rem;
-    transition: all 0.3s;
+    transition: background 0.2s;
+    /* --- NUEVA FUENTE PARA BOTONES --- */
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
 }
 
 .btn-logout:hover {
     background: #dc2626;
-    transform: translateY(-2px);
+    /* Eliminado: transform: translateY(-2px); */
 }
 
 /* Auth Box - Login/Register */
 .auth-box {
     max-width: 500px;
     margin: 50px auto;
-    background: rgba(30, 41, 59, 0.9);
+    background: var(--dark-bg); /* Sólido */
     padding: 40px;
-    border-radius: 15px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    /* Eliminados: box-shadow, backdrop-filter */
 }
 
 .auth-box h1 {
     text-align: center;
-    font-size: 3rem;
-    color: var(--primary-color);
+    font-size: 2.5rem; /* Más sutil */
+    color: var(--primary-color); /* <-- AHORA USA EL AZUL DEL LOGO */
     margin-bottom: 10px;
 }
 
 .subtitle {
+    font-weight: bold;
     text-align: center;
-    color: var(--gray-text);
+    color: white;
     margin-bottom: 30px;
+    font-size: large;
 }
 
 .form-container {
@@ -105,8 +125,8 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; } /* Eliminado: transform */
+    to { opacity: 1; }
 }
 
 .form-group {
@@ -124,12 +144,13 @@ body {
 .form-group select {
     width: 100%;
     padding: 12px;
-    background: rgba(15, 23, 42, 0.8);
-    border: 2px solid rgba(100, 116, 139, 0.3);
-    border-radius: 8px;
+    background: var(--darker-bg); /* Sólido */
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
     color: var(--light-text);
     font-size: 1rem;
-    transition: all 0.3s;
+    transition: border-color 0.2s;
+    font-family: 'Inter', sans-serif; /* Aseguramos la fuente en inputs */
 }
 
 .form-group select {
@@ -137,15 +158,15 @@ body {
 }
 
 .form-group select option {
-    background: var(--darker-bg);
+    background: var(--dark-bg); /* Diferente al input */
     color: var(--light-text);
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    border-color: var(--primary-color); /* <-- AHORA USA EL AZUL DEL LOGO */
+    /* Eliminado: box-shadow */
 }
 
 .form-row {
@@ -157,12 +178,12 @@ body {
 hr {
     margin: 25px 0;
     border: none;
-    border-top: 1px solid rgba(100, 116, 139, 0.3);
+    border-top: 1px solid var(--border-color);
 }
 
 h3 {
     margin-bottom: 15px;
-    color: var(--primary-color);
+    color: var(--primary-color); /* <-- AHORA USA EL AZUL DEL LOGO */
 }
 
 /* Buttons */
@@ -170,23 +191,26 @@ h3 {
     width: 100%;
     padding: 14px;
     border: none;
-    border-radius: 8px;
+    border-radius: 4px;
     font-size: 1rem;
-    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: background 0.2s;
     margin-top: 10px;
+    /* --- NUEVA FUENTE Y ESTILO PARA BOTONES --- */
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px; /* Le da un toque más pro */
 }
 
 .btn-primary {
-    background: var(--primary-color);
+    background: var(--primary-color); /* <-- AHORA USA EL AZUL DEL LOGO */
     color: white;
 }
 
 .btn-primary:hover {
-    background: #1d4ed8;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
+    background: #004a9e; /* Un tono más oscuro del azul del logo */
+    /* Eliminados: transform, box-shadow */
 }
 
 .btn-success {
@@ -196,17 +220,16 @@ h3 {
 
 .btn-success:hover {
     background: #059669;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+    /* Eliminados: transform, box-shadow */
 }
 
 .btn-secondary {
-    background: rgba(100, 116, 139, 0.5);
+    background: var(--border-color); /* Color sólido */
     color: white;
 }
 
 .btn-secondary:hover {
-    background: rgba(100, 116, 139, 0.7);
+    background: #475569; /* Un poco más claro */
 }
 
 .switch-form {
@@ -216,8 +239,8 @@ h3 {
 }
 
 .switch-form a {
-    color: var(--primary-color);
-    text-decoration: none;
+    color: #ffffff ; /* <-- AHORA USA EL AZUL DEL LOGO */
+    text-decoration: underline;
     font-weight: 600;
 }
 
@@ -234,17 +257,18 @@ h3 {
 
 /* Side Panel */
 .side-panel {
-    background: rgba(30, 41, 59, 0.8);
+    background: var(--dark-bg); /* Sólido */
     padding: 25px;
-    border-radius: 15px;
-    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    /* Eliminado: backdrop-filter */
     height: fit-content;
 }
 
 .vehicle-info, .booking-form, .legend {
     margin-bottom: 25px;
     padding-bottom: 25px;
-    border-bottom: 1px solid rgba(100, 116, 139, 0.3);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .vehicle-info:last-child, .legend:last-child {
@@ -252,7 +276,7 @@ h3 {
 }
 
 .vehicle-info h3, .booking-form h3, .legend h4 {
-    color: var(--primary-color);
+    color: var(--primary-color); /* <-- AHORA USA EL AZUL DEL LOGO */
     margin-bottom: 15px;
 }
 
@@ -269,17 +293,18 @@ h3 {
 
 /* Booking Form */
 .selected-spot-info {
-    background: rgba(59, 130, 246, 0.1);
-    border-left: 4px solid var(--primary-color);
+    /* --- COLOR AJUSTADO AL NUEVO AMARILLO --- */
+    background: rgba(253, 224, 71, 0.1); /* Fondo amarillo sutil */
+    border-left: 3px solid var(--selected-color); /* Borde amarillo */
     padding: 15px;
     margin-bottom: 20px;
-    border-radius: 5px;
+    border-radius: 4px;
 }
 
 .cost-summary {
-    background: rgba(15, 23, 42, 0.5);
+    background: var(--darker-bg); /* Sólido */
     padding: 15px;
-    border-radius: 8px;
+    border-radius: 4px;
     margin: 20px 0;
 }
 
@@ -291,7 +316,7 @@ h3 {
 }
 
 .cost-row.total {
-    border-top: 2px solid rgba(100, 116, 139, 0.3);
+    border-top: 1px solid var(--border-color); /* Más sutil */
     margin-top: 10px;
     padding-top: 15px;
     font-size: 1.1rem;
@@ -307,10 +332,10 @@ h3 {
 }
 
 .spot-legend {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    width: 30px;  /* Más pequeño */
+    height: 30px;
+    border-radius: 4px;
+    /* Eliminado: border */
 }
 
 .spot-legend.available {
@@ -322,21 +347,22 @@ h3 {
 }
 
 .spot-legend.selected {
-    background: var(--selected-color);
-    border-color: white;
+    background: var(--selected-color); /* <-- AHORA USA EL AMARILLO DEL LOGO */
+    border: 2px solid white; /* Mantenemos esto por claridad */
 }
 
 .spot-legend.incompatible {
-    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-    opacity: 0.6;
+    background: #475569; /* Sólido */
+    /* Eliminado: opacity */
 }
 
 /* Parking Map */
 .parking-map {
-    background: rgba(30, 41, 59, 0.8);
+    background: var(--dark-bg); /* Sólido */
     padding: 30px;
-    border-radius: 15px;
-    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    /* Eliminado: backdrop-filter */
 }
 
 .floor-section {
@@ -344,10 +370,10 @@ h3 {
 }
 
 .floor-section h2 {
-    color: var(--primary-color);
+    color: var(--primary-color); /* <-- AHORA USA EL AZUL DEL LOGO */
     margin-bottom: 20px;
-    font-size: 1.8rem;
-    border-bottom: 3px solid var(--primary-color);
+    font-size: 1.6rem;
+    border-bottom: 2px solid var(--primary-color); /* <-- AHORA USA EL AZUL DEL LOGO */
     padding-bottom: 10px;
 }
 
@@ -359,47 +385,43 @@ h3 {
 
 .spot {
     aspect-ratio: 1;
-    border-radius: 10px;
+    border-radius: 8px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     cursor: pointer;
-    transition: all 0.3s;
-    border: 3px solid rgba(255, 255, 255, 0.1);
+    transition: background 0.2s, border-color 0.2s, color 0.2s; /* Añadido color a la transición */
+    border: 2px solid transparent; /* Para evitar saltos */
     font-weight: bold;
     position: relative;
+    font-family: 'Montserrat', sans-serif; /* Fuente de título para los spots */
 }
 
-.spot:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+.spot:hover:not(.occupied):not(.incompatible) {
+    /* Eliminados: transform, box-shadow */
+    filter: brightness(115%); /* Hover sutil */
 }
 
 .spot.available {
-    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    background: var(--available-color);
+}
+.spot.available:hover {
+    background: #16a34a; /* Tono más oscuro del gradiente original */
+    filter: none;
 }
 
 .spot.occupied {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    background: var(--occupied-color);
     cursor: not-allowed;
-    opacity: 0.6;
-}
-
-.spot.occupied:hover {
-    transform: none;
+    opacity: 0.7; /* Opacidad es aceptable para "deshabilitado" */
 }
 
 .spot.incompatible {
-    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    background: #475569; /* Sólido */
     cursor: not-allowed;
-    opacity: 0.5;
-    position: relative;
-}
-
-.spot.incompatible:hover {
-    transform: none;
     opacity: 0.6;
+    position: relative;
 }
 
 .spot.incompatible::after {
@@ -411,13 +433,14 @@ h3 {
 }
 
 .spot.selected {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: var(--selected-color); /* <-- AHORA USA EL AMARILLO DEL LOGO */
     border-color: white;
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+    color: var(--selected-text-color); /* <-- NUEVO: TEXTO OSCURO PARA CONTRASTE */
+    /* Eliminado: box-shadow */
 }
 
 .spot-number {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     margin-bottom: 5px;
 }
 
@@ -434,19 +457,17 @@ h3 {
     right: 20px;
     min-width: 300px;
     padding: 15px 20px;
-    border-radius: 10px;
+    border-radius: 8px;
     color: white;
     font-weight: 500;
     display: none;
-    animation: slideIn 0.3s;
+    animation: fadeIn 0.3s; /* Animación simple */
     z-index: 1000;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    /* Eliminado: box-shadow */
+    font-family: 'Inter', sans-serif; /* Aseguramos la fuente */
 }
 
-@keyframes slideIn {
-    from { transform: translateX(400px); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
+/* @keyframes slideIn ya no es necesario, usamos fadeIn */
 
 .message-box.success {
     background: var(--success-color);
@@ -459,11 +480,18 @@ h3 {
 }
 
 .message-box.info {
-    background: var(--primary-color);
+    background: var(--primary-color); /* <-- AHORA USA EL AZUL DEL LOGO */
     display: block;
 }
 
-/* Responsive */
+.message-box.warning { /* --- AÑADIDO: ESTILO PARA WARNING --- */
+    background: var(--warning-color);
+    color: var(--selected-text-color); /* Texto oscuro para contraste */
+    display: block;
+}
+
+
+/* Responsive (sin cambios, ya es minimalista) */
 @media (max-width: 1024px) {
     .main-content {
         grid-template-columns: 1fr;

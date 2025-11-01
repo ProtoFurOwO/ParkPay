@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const pool = require('../config/database');
-const { verificarToken, verificarAdmin } = require('../middleware/auth');
+const { verificarToken, verificarAdmin, rateLimitByIP } = require('../middleware/auth');
 
 // ═══════════════════════════════════════════════════════════════
 // AUTENTICACIÓN DE ADMINISTRADOR (usando email @parkpay.com)
@@ -128,7 +128,8 @@ router.post('/login', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 // ESTADÍSTICAS DEL DASHBOARD
 // ═══════════════════════════════════════════════════════════════
-router.get('/stats', async (req, res) => {
+// 🔐 ESTADÍSTICAS PROTEGIDAS (Solo admins con JWT)
+router.get('/stats', verificarToken, verificarAdmin, async (req, res) => {
   try {
     // Total usuarios (sin contar admins - excluir @parkpay.com)
     const usuarios = await pool.query("SELECT COUNT(*) as total FROM Usuarios WHERE email NOT LIKE '%@parkpay.com'");
@@ -163,8 +164,8 @@ router.get('/stats', async (req, res) => {
 // CRUD USUARIOS
 // ═══════════════════════════════════════════════════════════════
 
-// Obtener todos los usuarios (sin admins)
-router.get('/usuarios', async (req, res) => {
+// 🔐 Obtener todos los usuarios (PROTEGIDO - Solo admins con JWT)
+router.get('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -189,7 +190,7 @@ router.get('/usuarios', async (req, res) => {
 });
 
 // Crear usuario
-// 🔒 PROTEGIDO
+// 🔐 Crear nuevo usuario (PROTEGIDO)
 router.post('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const { nombre, apellido, email, password } = req.body;
@@ -223,9 +224,9 @@ router.post('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
   }
 });
 
-// 🔒 PROTEGIDO
+// Eliminar usuario
+// 🔐 Eliminar usuario (PROTEGIDO)
 router.delete('/usuarios/:id', verificarToken, verificarAdmin, async (req, res) => {
-router.delete('/usuarios/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -261,7 +262,8 @@ router.delete('/usuarios/:id', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 
 // Obtener todos los vehículos
-router.get('/vehiculos', async (req, res) => {
+// 🔐 Obtener todos los vehículos (PROTEGIDO)
+router.get('/vehiculos', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -285,9 +287,9 @@ router.get('/vehiculos', async (req, res) => {
   }
 });
 
-// 🔒 PROTEGIDO
+// Eliminar vehículo
+// 🔐 Eliminar vehículo (PROTEGIDO)
 router.delete('/vehiculos/:id', verificarToken, verificarAdmin, async (req, res) => {
-router.delete('/vehiculos/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -316,7 +318,8 @@ router.delete('/vehiculos/:id', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 
 // Obtener todos los cajones
-router.get('/cajones', async (req, res) => {
+// 🔐 Obtener todos los cajones (PROTEGIDO)
+router.get('/cajones', verificarToken, verificarAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -374,9 +377,9 @@ router.patch('/cajones/:id/estado', async (req, res) => {
   }
 });
 
-// 🔒 PROTEGIDO
+// Editar cajón completo (tipo y tarifa)
+// 🔐 Actualizar estado de cajón (PROTEGIDO)
 router.put('/cajones/:id', verificarToken, verificarAdmin, async (req, res) => {
-router.put('/cajones/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { tipo, id_tarifa } = req.body;
@@ -565,8 +568,7 @@ router.patch('/tickets/:id/finalizar', async (req, res) => {
 });
 
 // Eliminar ticket
-// 🔒 PROTEGIDO
-router.delete('/tickets/:id', verificarToken, verificarAdmin, async (req, res) => {
+router.delete('/tickets/:id', async (req, res) => {
   const client = await pool.connect();
   
   try {
@@ -635,8 +637,7 @@ router.get('/tarifas', async (req, res) => {
   }
 });
 
-// 🔒 PROTEGIDO
-router.post('/tarifas', verificarToken, verificarAdmin, async (req, res) => {
+// Crear tarifa
 router.post('/tarifas', async (req, res) => {
   try {
     const { descripcion, costo_por_hora } = req.body;
@@ -663,8 +664,7 @@ router.post('/tarifas', async (req, res) => {
   }
 });
 
-// 🔒 PROTEGIDO
-router.put('/tarifas/:id', verificarToken, verificarAdmin, async (req, res) => {
+// Actualizar tarifa
 router.put('/tarifas/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -692,8 +692,7 @@ router.put('/tarifas/:id', async (req, res) => {
     res.status(500).json({ error: 'Error al actualizar tarifa' });
   }
 });
-// 🔒 PROTEGIDO
-router.delete('/tarifas/:id', verificarToken, verificarAdmin, async (req, res) => {
+
 // Eliminar tarifa
 router.delete('/tarifas/:id', async (req, res) => {
   try {

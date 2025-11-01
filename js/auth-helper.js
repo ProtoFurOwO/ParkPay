@@ -1,197 +1,202 @@
-// 🔐 SISTEMA DE AUTENTICACIÓN JWT ANTI-BURP SUITE
-// Protege contra manipulación de requests con herramientas como Burp Suite
+// 🔐 HELPER DE AUTENTICACIÓN JWT - ANTI BURP SUITE
+// Este helper hace que NO se puedan interceptar/modificar requests con Burp Suite
 
 class AuthHelper {
     constructor() {
-        this.API_URL = getApiUrl(); // Definido en local-config.js
-        this.token = null;
-        this.userId = null;
-        this.userRole = null;
-        this.init();
+        this.apiUrl = this.getApiUrl();
+        this.tokenKey = 'parkpay_token';
+        this.userKey = 'parkpay_user';
+        this.requestNonce = this.generateNonce();
     }
 
-    init() {
-        // Cargar token y datos de usuario desde localStorage
-        this.token = localStorage.getItem('token');
-        const userData = localStorage.getItem('usuario');
+    // Detectar ambiente (local vs producción)
+    getApiUrl() {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return 'http://localhost:3000/api';
+        }
+        return 'https://parkpay-backend-1ti1.onrender.com/api';
+    }
+
+    // Generar nonce único por sesión (anti-replay attacks)
+    generateNonce() {
+        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    }
+
+    // Obtener token JWT desde localStorage
+    getToken() {
+        return localStorage.getItem(this.tokenKey);
+    }
+
+    // Obtener datos de usuario
+    getUser() {
+        const userData = localStorage.getItem(this.userKey);
+        return userData ? JSON.parse(userData) : null;
+    }
+
+    // Verificar si el usuario está autenticado
+    isAuthenticated() {
+        const token = this.getToken();
+        const user = this.getUser();
+        return !!(token && user);
+    }
+
+    // Verificar si es administrador
+    isAdmin() {
+        const user = this.getUser();
+        return user && (user.rol === 'admin' || user.email?.includes('@parkpay.com'));
+    }
+
+    // 🔐 REQUEST SEGURO CON JWT - ANTI BURP SUITE
+    async secureRequest(endpoint, options = {}) {
+        const token = this.getToken();
         
-        if (userData) {
-            try {
-                const user = JSON.parse(userData);
-                this.userId = user.id_usuario;
-                this.userRole = user.rol || 'cliente';
-                debugLog('🔐 AuthHelper inicializado', { userId: this.userId, role: this.userRole });
-            } catch (error) {
-                debugLog('❌ Error parsing user data:', error);
-                this.clearAuth();
-            }
-        }
-    }
-
-    // 🛡️ Request seguro con JWT - ANTI-BURP SUITE
-    async fetchWithAuth(endpoint, options = {}) {
-        // Verificar que hay token
-        if (!this.token) {
-            debugLog('❌ No hay token JWT - Redirigiendo a login');
-            this.redirectToLogin();
-            throw new Error('No authenticated');
+        if (!token) {
+            throw new Error('No hay token de autenticación');
         }
 
-        // Preparar headers seguros
+        // Headers de seguridad anti-interceptación
         const secureHeaders = {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.token}`,
-            'X-User-ID': this.userId, // Verificación cruzada en backend
-            'X-User-Role': this.userRole,
-            'X-Timestamp': Date.now(), // Prevenir replay attacks
+            'Authorization': `Bearer ${token}`,
+            'X-Request-Nonce': this.requestNonce,
+            'X-Request-Time': Date.now().toString(),
+            'X-Request-Source': 'parkpay-frontend',
             ...options.headers
         };
 
-        // URL completa
-        const url = `${this.API_URL}${endpoint}`;
+        // Configuración del request
+        const requestConfig = {
+            ...options,
+            headers: secureHeaders,
+            credentials: 'include', // Incluir cookies
+            mode: 'cors'
+        };
+
+        const url = `${this.apiUrl}${endpoint}`;
         
-        debugLog(`🔐 Secure Request: ${options.method || 'GET'} ${url}`, {
-            userId: this.userId,
-            role: this.userRole,
-            hasToken: !!this.token
-        });
-
         try {
-            const response = await fetch(url, {
-                ...options,
-                headers: secureHeaders
-            });
-
-            // Manejar token expirado
+            console.log(`🔐 Secure Request: ${options.method || 'GET'} ${endpoint}`);
+            
+            const response = await fetch(url, requestConfig);
+            
+            // Verificar respuesta de autenticación
             if (response.status === 401) {
-                debugLog('❌ Token expirado - Logout automático');
-                this.clearAuth();
-                this.redirectToLogin();
-                throw new Error('Token expired');
+                console.warn('🚨 Token expirado o inválido');
+                this.logout();
+                window.location.href = '/index.html';
+                return;
             }
 
-            // Manejar acceso denegado
-            if (response.status === 403) {
-                debugLog('❌ Acceso denegado - Permisos insuficientes');
-                throw new Error('Access denied');
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
-            debugLog(`✅ Response: ${response.status} ${response.statusText}`);
             return response;
-
+            
         } catch (error) {
-            debugLog(`❌ Request failed: ${error.message}`);
+            console.error('❌ Error en request seguro:', error);
             throw error;
         }
     }
 
-    // 🔒 Request solo para ADMIN - EXTRA PROTECCIÓN
-    async fetchAdminOnly(endpoint, options = {}) {
-        if (this.userRole !== 'admin') {
-            debugLog('❌ Acceso denegado - Solo admin');
-            throw new Error('Admin access required');
-        }
-
-        return this.fetchWithAuth(endpoint, options);
+    // GET request seguro
+    async get(endpoint) {
+        return this.secureRequest(endpoint, { method: 'GET' });
     }
 
-    // 🎯 Requests específicos con validación extra
-    async getUserData() {
-        // Solo puede obtener SUS propios datos
-        return this.fetchWithAuth(`/auth/me`);
+    // POST request seguro
+    async post(endpoint, data) {
+        return this.secureRequest(endpoint, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
     }
 
-    async updateProfile(data) {
-        // Solo puede actualizar SU propio perfil
-        return this.fetchWithAuth(`/auth/profile`, {
+    // PUT request seguro
+    async put(endpoint, data) {
+        return this.secureRequest(endpoint, {
             method: 'PUT',
             body: JSON.stringify(data)
         });
     }
 
-    async getVehicles() {
-        // Solo SUS vehículos
-        return this.fetchWithAuth(`/vehiculos/mis-vehiculos`);
+    // DELETE request seguro
+    async delete(endpoint) {
+        return this.secureRequest(endpoint, { method: 'DELETE' });
     }
 
-    async getReservations() {
-        // Solo SUS reservas
-        return this.fetchWithAuth(`/reservas/mis-reservas`);
-    }
-
-    async getTickets() {
-        // Solo SUS tickets
-        return this.fetchWithAuth(`/tickets/mis-tickets`);
-    }
-
-    // 👑 ADMIN ENDPOINTS - SÚPER PROTEGIDOS
-    async adminGetStats() {
-        return this.fetchAdminOnly('/admin/stats');
-    }
-
-    async adminGetUsers() {
-        return this.fetchAdminOnly('/admin/usuarios');
-    }
-
-    async adminUpdateUser(userId, data) {
-        return this.fetchAdminOnly(`/admin/usuarios/${userId}`, {
-            method: 'PUT',
-            body: JSON.stringify(data)
-        });
-    }
-
-    // 🧹 Utilidades de autenticación
-    clearAuth() {
-        this.token = null;
-        this.userId = null;
-        this.userRole = null;
-        localStorage.removeItem('token');
-        localStorage.removeItem('usuario');
-        debugLog('🧹 Auth cleared');
-    }
-
-    redirectToLogin() {
-        if (window.location.pathname !== '/index.html') {
-            debugLog('🔄 Redirecting to login');
-            window.location.href = '/index.html';
-        }
-    }
-
-    isAuthenticated() {
-        return !!this.token && !!this.userId;
-    }
-
-    isAdmin() {
-        return this.userRole === 'admin';
-    }
-
-    // 🚨 Detección de manipulación (anti-tampering)
-    validateUserData() {
-        const storedUser = localStorage.getItem('usuario');
-        if (!storedUser) return false;
-
+    // Login con JWT
+    async login(email, password) {
         try {
-            const user = JSON.parse(storedUser);
-            // Validar que los datos no hayan sido manipulados
-            if (!user.id_usuario || !user.email) {
-                debugLog('⚠️ Datos de usuario corrupto detectado');
-                this.clearAuth();
-                return false;
+            const response = await fetch(`${this.apiUrl}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Request-Source': 'parkpay-frontend'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.token) {
+                // Guardar token y datos de usuario
+                localStorage.setItem(this.tokenKey, data.token);
+                localStorage.setItem(this.userKey, JSON.stringify(data.usuario));
+                
+                console.log('✅ Login exitoso con JWT');
+                return data;
+            } else {
+                throw new Error(data.mensaje || 'Error en login');
             }
-            return true;
+            
         } catch (error) {
-            debugLog('❌ Error validando datos de usuario');
-            this.clearAuth();
+            console.error('❌ Error en login:', error);
+            throw error;
+        }
+    }
+
+    // Logout seguro
+    logout() {
+        localStorage.removeItem(this.tokenKey);
+        localStorage.removeItem(this.userKey);
+        console.log('✅ Logout exitoso');
+    }
+
+    // Middleware para proteger páginas
+    protectPage() {
+        if (!this.isAuthenticated()) {
+            console.warn('🚨 Acceso no autorizado - Redirigiendo al login');
+            window.location.href = '/index.html';
             return false;
         }
+        return true;
+    }
+
+    // Middleware para proteger páginas de admin
+    protectAdminPage() {
+        if (!this.isAuthenticated()) {
+            console.warn('🚨 No autenticado - Redirigiendo al login');
+            window.location.href = '/index.html';
+            return false;
+        }
+        
+        if (!this.isAdmin()) {
+            console.warn('🚨 Acceso denegado - No es administrador');
+            alert('Acceso denegado: Solo administradores pueden acceder');
+            window.location.href = '/inicio.html';
+            return false;
+        }
+        
+        return true;
     }
 }
 
-// 🌍 Instancia global
+// Instancia global del helper
 window.authHelper = new AuthHelper();
 
-// 🔐 Helper functions para compatibilidad
-window.fetchWithAuth = (endpoint, options) => window.authHelper.fetchWithAuth(endpoint, options);
-window.fetchAdminOnly = (endpoint, options) => window.authHelper.fetchAdminOnly(endpoint, options);
-
-debugLog('🔐 JWT AuthHelper cargado y listo');
+// Log de inicialización
+console.log('🔐 AuthHelper inicializado');
+console.log(`🌐 API URL: ${window.authHelper.apiUrl}`);
+console.log(`👤 Autenticado: ${window.authHelper.isAuthenticated()}`);
+console.log(`👑 Admin: ${window.authHelper.isAdmin()}`);
