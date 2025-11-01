@@ -38,10 +38,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }, 10000); // 10 segundos
 });
 
-// Cargar vehículos del usuario
+// Cargar vehículos del usuario - 🔐 CON JWT
 async function loadUserVehicles() {
     try {
-        const response = await fetch(`${API_URL}/usuarios/${usuario.id_usuario}/vehiculos`);
+        const response = await window.authHelper.get(`/usuarios/${usuario.id_usuario}/vehiculos`);
         const data = await response.json();
         
         if (response.ok) {
@@ -145,10 +145,10 @@ function displayVehicleInfo() {
     `;
 }
 
-// Cargar cajones del estacionamiento
+// Cargar cajones del estacionamiento - 🔐 CON JWT
 async function loadCajones() {
     try {
-        const response = await fetch(`${API_URL}/cajones`);
+        const response = await window.authHelper.get('/cajones');
         const data = await response.json();
         
         if (response.ok) {

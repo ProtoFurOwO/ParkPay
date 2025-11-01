@@ -37,10 +37,10 @@ function cargarPerfilUsuario() {
     document.getElementById('memberSince').textContent = `Miembro desde ${fechaFormateada}`;
 }
 
-// Cargar vehículos del usuario
+// Cargar vehículos del usuario - 🔐 CON JWT
 async function cargarVehiculos() {
     try {
-        const response = await fetch(`${API_URL}/usuarios/${usuario.id_usuario}/vehiculos`);
+        const response = await window.authHelper.get(`/usuarios/${usuario.id_usuario}/vehiculos`);
         
         if (!response.ok) {
             throw new Error('Error al cargar vehículos');
@@ -127,13 +127,7 @@ async function submitVehicle(event) {
     };
 
     try {
-        const response = await fetch(`${API_URL}/usuarios/${usuario.id_usuario}/vehiculos`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData)
-        });
+        const response = await window.authHelper.post(`/usuarios/${usuario.id_usuario}/vehiculos`, formData);
 
         const data = await response.json();
 
@@ -149,7 +143,8 @@ async function submitVehicle(event) {
         await cargarVehiculos();
         
         // Actualizar localStorage si es necesario
-        const vehiculosActualizados = await fetch(`${API_URL}/usuarios/${usuario.id_usuario}/vehiculos`).then(r => r.json());
+        const vehiculosResponse = await window.authHelper.get(`/usuarios/${usuario.id_usuario}/vehiculos`);
+        const vehiculosActualizados = await vehiculosResponse.json();
         localStorage.setItem('vehiculos', JSON.stringify(vehiculosActualizados));
 
     } catch (error) {
@@ -161,11 +156,10 @@ async function submitVehicle(event) {
     }
 }
 
-// Cerrar sesión
+// Cerrar sesión - 🔐 CON JWT
 function logout() {
     if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-        localStorage.removeItem('usuario');
-        localStorage.removeItem('vehiculos');
+        window.authHelper.logout();
         window.location.href = 'index.html';
     }
 }
