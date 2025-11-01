@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const securityLogger = require('./security-logger');
 const pool = require('../config/database');
 
 // Configuración JWT
@@ -185,6 +186,10 @@ const rateLimitByIP = (maxRequests = 100, windowMs = 15 * 60 * 1000) => {
 
         if (clientData.count >= maxRequests) {
             console.warn(`🚨 Rate limit excedido para IP: ${clientIP}`);
+            
+            // Log del evento de seguridad
+            securityLogger.logRateLimitExceeded('IP', clientIP, clientIP);
+            
             return res.status(429).json({
                 error: 'Demasiadas solicitudes',
                 mensaje: 'Ha excedido el límite de solicitudes por minuto'
@@ -196,10 +201,102 @@ const rateLimitByIP = (maxRequests = 100, windowMs = 15 * 60 * 1000) => {
     };
 };
 
+// 🛡️ RATE LIMITING POR USUARIO AUTENTICADO
+const userRequestCounts = new Map();
+
+const rateLimitByUser = (maxRequests = 50, windowMs = 15 * 60 * 1000) => {
+    return (req, res, next) => {
+        // Solo aplicar si hay usuario autenticado
+        if (!req.usuario || !req.usuario.id_usuario) {
+            return next();
+        }
+
+        const userId = req.usuario.id_usuario;
+        const currentTime = Date.now();
+        
+        if (!userRequestCounts.has(userId)) {
+            userRequestCounts.set(userId, { count: 1, resetTime: currentTime + windowMs });
+            return next();
+        }
+
+        const userData = userRequestCounts.get(userId);
+        
+        if (currentTime > userData.resetTime) {
+            // Reset del contador
+            userData.count = 1;
+            userData.resetTime = currentTime + windowMs;
+            return next();
+        }
+
+        if (userData.count >= maxRequests) {
+            console.warn(`🚨 Rate limit excedido para usuario: ${userId} (${req.usuario.email})`);
+            
+            // Log del evento de seguridad
+            securityLogger.logRateLimitExceeded('USER', userId, req.ip);
+            
+            return res.status(429).json({
+                error: 'Demasiadas solicitudes por usuario',
+                mensaje: 'Ha excedido el límite de solicitudes por usuario. Espere antes de intentar nuevamente.',
+                nextRetry: new Date(userData.resetTime).toISOString()
+            });
+        }
+
+        userData.count++;
+        next();
+    };
+};
+
+// 🛡️ MIDDLEWARE COMBINADO DE PROTECCIÓN ANTI-BURP
+const proteccionAntiBurp = (req, res, next) => {
+    // 1. Rate limiting por IP (100 req/15min)
+    rateLimitByIP(100, 15 * 60 * 1000)(req, res, (err) => {
+        if (err) return;
+        
+        // 2. Rate limiting por usuario autenticado (50 req/15min)
+        rateLimitByUser(50, 15 * 60 * 1000)(req, res, next);
+    });
+};
+
+// 🚨 DETECCIÓN DE ATAQUES AUTOMATIZADOS
+const detectarBurpSuite = (req, res, next) => {
+    const userAgent = req.get('User-Agent') || '';
+    const suspiciousHeaders = [
+        'Burp Suite Professional',
+        'Burp Suite Community',
+        'python-requests',
+        'curl/',
+        'Postman',
+        'HTTPie'
+    ];
+
+    // Detectar herramientas automatizadas
+    const isSuspicious = suspiciousHeaders.some(header => 
+        userAgent.toLowerCase().includes(header.toLowerCase())
+    );
+
+    if (isSuspicious) {
+        console.warn(`🚨 ATAQUE DETECTADO: User-Agent sospechoso: ${userAgent} desde IP: ${req.ip}`);
+        
+        // Log del ataque
+        securityLogger.logBurpSuiteDetected(req.ip, userAgent, req.originalUrl, req.method);
+        
+        return res.status(403).json({
+            error: 'Acceso denegado',
+            mensaje: 'Herramienta automatizada detectada. Acceso no autorizado.',
+            codigo: 'AUTOMATED_TOOL_DETECTED'
+        });
+    }
+
+    next();
+};
+
 module.exports = {
     verificarToken,
     verificarAdmin,
     generarToken,
     rateLimitByIP,
+    rateLimitByUser,
+    proteccionAntiBurp,
+    detectarBurpSuite,
     JWT_SECRET
 };

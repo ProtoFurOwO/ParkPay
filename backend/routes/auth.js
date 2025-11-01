@@ -3,7 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const pool = require('../config/database');
 const sgMail = require('@sendgrid/mail');
-const { generarToken, rateLimitByIP } = require('../middleware/auth');
+const { generarToken, rateLimitByIP, detectarBurpSuite, proteccionAntiBurp } = require('../middleware/auth');
 
 // Configurar SendGrid con la API Key desde variable de entorno
 if (process.env.SENDGRID_API_KEY) {
@@ -162,7 +162,7 @@ router.post('/register', async (req, res) => {
 });
 
 // LOGIN CON JWT - ANTI BURP SUITE
-router.post('/login', rateLimitByIP(3, 10 * 60 * 1000), async (req, res) => {
+router.post('/login', detectarBurpSuite, rateLimitByIP(3, 10 * 60 * 1000), async (req, res) => {
   try {
     const { email, password } = req.body;
 

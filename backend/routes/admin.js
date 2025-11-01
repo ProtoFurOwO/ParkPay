@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const pool = require('../config/database');
-const { verificarToken, verificarAdmin, rateLimitByIP, generarToken } = require('../middleware/auth');
+const { verificarToken, verificarAdmin, rateLimitByIP, proteccionAntiBurp, detectarBurpSuite, generarToken } = require('../middleware/auth');
 
 // ═══════════════════════════════════════════════════════════════
 // AUTENTICACIÓN DE ADMINISTRADOR (usando email @parkpay.com)
@@ -78,7 +78,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Login de administrador - 🔐 PROTEGIDO CON RATE LIMITING
-router.post('/login', rateLimitByIP(3, 10 * 60 * 1000), async (req, res) => {
+router.post('/login', detectarBurpSuite, rateLimitByIP(3, 10 * 60 * 1000), async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -171,7 +171,7 @@ router.get('/stats', verificarToken, verificarAdmin, async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 
 // 🔐 Obtener todos los usuarios (PROTEGIDO - Solo admins con JWT)
-router.get('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
+router.get('/usuarios', proteccionAntiBurp, verificarToken, verificarAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -197,7 +197,7 @@ router.get('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
 
 // Crear usuario
 // 🔐 Crear nuevo usuario (PROTEGIDO)
-router.post('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
+router.post('/usuarios', proteccionAntiBurp, verificarToken, verificarAdmin, async (req, res) => {
   try {
     const { nombre, apellido, email, password, vehiculo } = req.body;
 
@@ -357,7 +357,7 @@ router.get('/vehiculos', verificarToken, verificarAdmin, async (req, res) => {
 });
 
 // 🔐 Crear nuevo vehículo (PROTEGIDO)
-router.post('/vehiculos', verificarToken, verificarAdmin, async (req, res) => {
+router.post('/vehiculos', proteccionAntiBurp, verificarToken, verificarAdmin, async (req, res) => {
   try {
     const { placa, tipo, marca, modelo, color, id_usuario } = req.body;
 
