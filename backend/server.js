@@ -72,7 +72,7 @@ app.use(cors({
     'http://localhost:5500' // Live Server
   ],
   credentials: true, // Permitir credentials (cookies, auth headers)
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], // ✅ Agregado PATCH
   allowedHeaders: [
     'Content-Type', 
     'Authorization', 
