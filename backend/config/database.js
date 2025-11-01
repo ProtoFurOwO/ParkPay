@@ -25,15 +25,25 @@ if (isSupabase) {
 // Configuración del pool
 const poolConfig = isSupabase 
   ? {
-      // Configuración para Supabase (requiere SSL)
-      connectionString: process.env.DATABASE_URL,
+      // Configuración DIRECTA para Supabase (más confiable que connectionString)
+      host: 'aws-1-us-east-1.pooler.supabase.com',
+      port: 6543,
+      database: 'postgres', 
+      user: 'postgres.pksregqvhbfnlxpjhglc',
+      password: 'Timeshirt#21', // Sin encoding aquí
       ssl: {
-        rejectUnauthorized: false // Supabase usa certificados autofirmados
+        rejectUnauthorized: false
       },
-      // Configuración adicional para Render
-      max: 10, // Máximo de conexiones
+      // Configuración optimizada para Render + Supabase
+      max: 5, // Reducido para evitar límites
+      min: 1, // Mantener mínimo 1 conexión
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
+      connectionTimeoutMillis: 20000, // Aumentado para Render
+      acquireTimeoutMillis: 30000, // Tiempo para obtener conexión
+      createTimeoutMillis: 30000,
+      destroyTimeoutMillis: 5000,
+      reapIntervalMillis: 1000,
+      createRetryIntervalMillis: 200,
     }
   : {
       // Configuración para Local (sin SSL)
