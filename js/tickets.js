@@ -22,10 +22,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     await cargarTickets();
 });
 
-// Cargar tickets del usuario
+// Cargar tickets del usuario - 🔐 CON JWT
 async function cargarTickets() {
     try {
-        const response = await fetch(`${API_URL}/tickets/usuario/${usuario.id_usuario}`);
+        const response = await window.authHelper.get(`/tickets/usuario/${usuario.id_usuario}`);
         
         if (!response.ok) {
             throw new Error('Error al cargar tickets');

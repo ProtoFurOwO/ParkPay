@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
+const { verificarToken } = require('../middleware/auth');
 
 // Crear un nuevo ticket (entrada al estacionamiento)
 router.post('/', async (req, res) => {
