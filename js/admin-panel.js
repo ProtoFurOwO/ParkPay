@@ -1114,6 +1114,48 @@ function initInlineFormHandlers() {
     document.body.setAttribute('data-inline-handlers-attached', '1');
 }
 
+// 🚗 VALIDACIÓN EN TIEMPO REAL DE PLACAS
+function validarPlacasEnTiempoReal(input) {
+    const placas = input.value.split(',').map(p => p.trim()).filter(Boolean);
+    const validacionDiv = document.getElementById('placasValidacion');
+    
+    let errores = [];
+    placas.forEach(placa => {
+        if (placa.length > 10) {
+            errores.push(`"${placa}" (${placa.length} chars)`);
+        }
+    });
+    
+    if (errores.length > 0) {
+        validacionDiv.textContent = `❌ Placas muy largas: ${errores.join(', ')}`;
+        validacionDiv.style.display = 'block';
+        input.style.borderColor = '#ff6b6b';
+    } else {
+        validacionDiv.style.display = 'none';
+        input.style.borderColor = '';
+    }
+}
+
+function validarPlacaIndividual(input) {
+    const placa = input.value.trim();
+    const validacionId = input.id === 'vPlaca' ? 'placaIndividualValidacion' : 'placaVehValidacion';
+    const validacionDiv = document.getElementById(validacionId);
+    
+    if (placa.length > 10) {
+        validacionDiv.textContent = `❌ Muy larga: ${placa.length}/10 caracteres`;
+        validacionDiv.style.display = 'block';
+        input.style.borderColor = '#ff6b6b';
+    } else if (placa.length > 7) {
+        validacionDiv.textContent = `⚠️ Advertencia: ${placa.length}/10 caracteres`;
+        validacionDiv.style.color = '#f59e0b';
+        validacionDiv.style.display = 'block';
+        input.style.borderColor = '#f59e0b';
+    } else {
+        validacionDiv.style.display = 'none';
+        input.style.borderColor = '';
+    }
+}
+
 document.addEventListener('DOMContentLoaded', initInlineFormHandlers);
 // Also call immediately in case DOM is already parsed and the script loaded at the end
 try { initInlineFormHandlers(); } catch (e) { /* ignore */ }

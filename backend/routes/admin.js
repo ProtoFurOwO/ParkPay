@@ -198,8 +198,6 @@ router.get('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
 // Crear usuario
 // 🔐 Crear nuevo usuario (PROTEGIDO)
 router.post('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
-  const client = await pool.connect();
-  
   try {
     const { nombre, apellido, email, password, vehiculos } = req.body;
 
@@ -218,13 +216,11 @@ router.post('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
       }
     }
 
-    await client.query('BEGIN');
-
     // Hashear contraseña
     const password_hash = await bcrypt.hash(password, 10);
 
     // Crear usuario
-    const userResult = await client.query(
+    const userResult = await pool.query(
       `INSERT INTO Usuarios (nombre, apellido, email, password_hash)
        VALUES ($1, $2, $3, $4)
        RETURNING id_usuario, nombre, apellido, email, fecha_registro`,
@@ -232,28 +228,32 @@ router.post('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
     );
 
     const usuario = userResult.rows[0];
+    let vehiculosCreados = 0;
 
     // Si hay vehículos, crearlos
     if (vehiculos && Array.isArray(vehiculos) && vehiculos.length > 0) {
       for (const placa of vehiculos) {
-        await client.query(
-          `INSERT INTO Vehiculos (placa, id_usuario)
-           VALUES ($1, $2)`,
-          [placa.toUpperCase(), usuario.id_usuario]
-        );
+        try {
+          await pool.query(
+            `INSERT INTO Vehiculos (placa, id_usuario)
+             VALUES ($1, $2)`,
+            [placa.toUpperCase(), usuario.id_usuario]
+          );
+          vehiculosCreados++;
+        } catch (vehiculoError) {
+          console.warn(`Error al crear vehículo ${placa}:`, vehiculoError);
+          // Continuar con los demás vehículos
+        }
       }
     }
-
-    await client.query('COMMIT');
 
     res.status(201).json({
       message: 'Usuario creado exitosamente',
       usuario: usuario,
-      vehiculos_creados: vehiculos ? vehiculos.length : 0
+      vehiculos_creados: vehiculosCreados
     });
 
   } catch (error) {
-    await client.query('ROLLBACK');
     console.error('Error al crear usuario:', error);
     if (error.code === '23505') {
       if (error.constraint && error.constraint.includes('email')) {
@@ -266,8 +266,6 @@ router.post('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
     } else {
       res.status(500).json({ error: 'Error al crear usuario' });
     }
-  } finally {
-    client.release();
   }
 });
 
@@ -331,6 +329,69 @@ router.get('/vehiculos', verificarToken, verificarAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error al obtener vehículos:', error);
     res.status(500).json({ error: 'Error al obtener vehículos' });
+  }
+});
+
+// 🔐 Crear nuevo vehículo (PROTEGIDO)
+router.post('/vehiculos', verificarToken, verificarAdmin, async (req, res) => {
+  try {
+    const { placa, marca, modelo, color, id_usuario } = req.body;
+
+    if (!placa) {
+      return res.status(400).json({ error: 'La placa es requerida' });
+    }
+
+    // 🚗 VALIDACIÓN DE PLACA: Máximo 10 caracteres
+    if (placa.length > 10) {
+      return res.status(400).json({ 
+        error: `Placa "${placa}" excede 10 caracteres (tiene ${placa.length}). Máximo permitido: 10 caracteres.` 
+      });
+    }
+
+    // Verificar si la placa ya existe
+    const placaCheck = await pool.query(
+      'SELECT id_vehiculo FROM Vehiculos WHERE placa = $1',
+      [placa.toUpperCase()]
+    );
+
+    if (placaCheck.rows.length > 0) {
+      return res.status(400).json({ error: 'La placa ya está registrada' });
+    }
+
+    // Si no se proporciona id_usuario, crear vehículo sin usuario asignado (modo admin)
+    let usuarioFinal = id_usuario || null;
+
+    if (id_usuario) {
+      // Verificar que el usuario existe
+      const userCheck = await pool.query(
+        'SELECT id_usuario FROM Usuarios WHERE id_usuario = $1',
+        [id_usuario]
+      );
+
+      if (userCheck.rows.length === 0) {
+        return res.status(404).json({ error: 'Usuario no encontrado' });
+      }
+    }
+
+    const result = await pool.query(
+      `INSERT INTO Vehiculos (placa, marca, modelo, color, id_usuario)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING *`,
+      [placa.toUpperCase(), marca || null, modelo || null, color || null, usuarioFinal]
+    );
+
+    res.status(201).json({
+      message: 'Vehículo creado exitosamente',
+      vehiculo: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Error al crear vehículo:', error);
+    if (error.code === '23505') {
+      res.status(400).json({ error: 'La placa ya existe' });
+    } else {
+      res.status(500).json({ error: 'Error al crear vehículo' });
+    }
   }
 });
 

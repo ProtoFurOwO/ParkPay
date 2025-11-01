@@ -528,7 +528,8 @@
                             </div>
                             <div class="col">
                                 <label for="uVehiculos">Vehículos (opc) - Max 10 chars</label>
-                                <input id="uVehiculos" name="vehiculos" type="text" placeholder="ABC-123, DEF-456 (max 10 chars c/u)" maxlength="50" title="Placas separadas por coma. Máximo 10 caracteres por placa." />
+                                <input id="uVehiculos" name="vehiculos" type="text" placeholder="ABC-123, DEF-456 (max 10 chars c/u)" maxlength="50" title="Placas separadas por coma. Máximo 10 caracteres por placa." onkeyup="validarPlacasEnTiempoReal(this)" />
+                                <small id="placasValidacion" style="color: #ff6b6b; font-size: 12px; display: none;"></small>
                             </div>
                         </div>
                         <div class="row">
@@ -572,7 +573,8 @@
                         <div class="row">
                             <div class="col">
                                 <label for="vPlaca">Placa</label>
-                                <input id="vPlaca" name="placa" type="text" placeholder="ABC-123" required />
+                                <input id="vPlaca" name="placa" type="text" placeholder="ABC-123 (max 10)" maxlength="10" required onkeyup="validarPlacaIndividual(this)" />
+                                <small id="placaIndividualValidacion" style="color: #ff6b6b; font-size: 12px; display: none;"></small>
                             </div>
                             <div class="col">
                                 <label for="vMarca">Marca</label>
@@ -741,7 +743,8 @@
                         <form id="createVehicleForm">
                             <div class="modal-field">
                                 <label for="vehPlaca">Placa</label>
-                                <input id="vehPlaca" name="placa" type="text" placeholder="ABC-123" required />
+                                <input id="vehPlaca" name="placa" type="text" placeholder="ABC-123 (max 10)" maxlength="10" required onkeyup="validarPlacaIndividual(this)" />
+                                <small id="placaVehValidacion" style="color: #ff6b6b; font-size: 12px; display: none;"></small>
                             </div>
                             <div class="modal-field">
                                 <label for="vehMarca">Marca</label>
