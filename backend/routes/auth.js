@@ -98,6 +98,13 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Tipo de vehículo inválido' });
     }
 
+    // 🚗 VALIDACIÓN DE PLACA: Máximo 10 caracteres
+    if (placa.length > 10) {
+      return res.status(400).json({ 
+        error: `Placa "${placa}" excede 10 caracteres (tiene ${placa.length}). Máximo permitido: 10 caracteres.` 
+      });
+    }
+
     // Verificar si el email ya existe
     const emailCheck = await client.query(
       'SELECT id_usuario FROM Usuarios WHERE email = $1',

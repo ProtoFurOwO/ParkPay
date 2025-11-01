@@ -34,6 +34,13 @@ router.post('/:id_usuario/vehiculos', verificarToken, async (req, res) => {
       return res.status(400).json({ error: 'El tipo de vehículo es requerido' });
     }
 
+    // 🚗 VALIDACIÓN DE PLACA: Máximo 10 caracteres
+    if (placa.length > 10) {
+      return res.status(400).json({ 
+        error: `Placa "${placa}" excede 10 caracteres (tiene ${placa.length}). Máximo permitido: 10 caracteres.` 
+      });
+    }
+
     // Verificar si la placa ya existe
     const placaCheck = await pool.query(
       'SELECT id_vehiculo FROM Vehiculos WHERE placa = $1',

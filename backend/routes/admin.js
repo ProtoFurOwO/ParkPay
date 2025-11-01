@@ -198,35 +198,76 @@ router.get('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
 // Crear usuario
 // 🔐 Crear nuevo usuario (PROTEGIDO)
 router.post('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
+  const client = await pool.connect();
+  
   try {
-    const { nombre, apellido, email, password } = req.body;
+    const { nombre, apellido, email, password, vehiculos } = req.body;
 
     if (!nombre || !apellido || !email || !password) {
       return res.status(400).json({ error: 'Todos los campos son requeridos' });
     }
 
+    // 🚗 VALIDACIÓN DE PLACAS: Máximo 10 caracteres
+    if (vehiculos && Array.isArray(vehiculos)) {
+      for (const placa of vehiculos) {
+        if (placa.length > 10) {
+          return res.status(400).json({ 
+            error: `Placa "${placa}" excede 10 caracteres (tiene ${placa.length}). Máximo permitido: 10 caracteres.` 
+          });
+        }
+      }
+    }
+
+    await client.query('BEGIN');
+
     // Hashear contraseña
     const password_hash = await bcrypt.hash(password, 10);
 
-    const result = await pool.query(
+    // Crear usuario
+    const userResult = await client.query(
       `INSERT INTO Usuarios (nombre, apellido, email, password_hash)
        VALUES ($1, $2, $3, $4)
        RETURNING id_usuario, nombre, apellido, email, fecha_registro`,
       [nombre, apellido, email, password_hash]
     );
 
+    const usuario = userResult.rows[0];
+
+    // Si hay vehículos, crearlos
+    if (vehiculos && Array.isArray(vehiculos) && vehiculos.length > 0) {
+      for (const placa of vehiculos) {
+        await client.query(
+          `INSERT INTO Vehiculos (placa, id_usuario)
+           VALUES ($1, $2)`,
+          [placa.toUpperCase(), usuario.id_usuario]
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+
     res.status(201).json({
       message: 'Usuario creado exitosamente',
-      usuario: result.rows[0]
+      usuario: usuario,
+      vehiculos_creados: vehiculos ? vehiculos.length : 0
     });
 
   } catch (error) {
+    await client.query('ROLLBACK');
     console.error('Error al crear usuario:', error);
     if (error.code === '23505') {
-      res.status(400).json({ error: 'El correo electrónico ya existe' });
+      if (error.constraint && error.constraint.includes('email')) {
+        res.status(400).json({ error: 'El correo electrónico ya existe' });
+      } else if (error.constraint && error.constraint.includes('placa')) {
+        res.status(400).json({ error: 'Una de las placas ya existe' });
+      } else {
+        res.status(400).json({ error: 'Datos duplicados' });
+      }
     } else {
       res.status(500).json({ error: 'Error al crear usuario' });
     }
+  } finally {
+    client.release();
   }
 });
 

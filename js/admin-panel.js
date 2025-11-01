@@ -980,6 +980,17 @@ function initInlineFormHandlers() {
             const fecha = userForm.fecha ? userForm.fecha.value : null;
             const vehiculosStr = userForm.vehiculos ? userForm.vehiculos.value.trim() : '';
             const vehiculosList = vehiculosStr ? vehiculosStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+            
+            // 🚗 VALIDACIÓN DE PLACAS: Máximo 10 caracteres
+            if (vehiculosList.length > 0) {
+                for (const placa of vehiculosList) {
+                    if (placa.length > 10) {
+                        showMessage(`Placa "${placa}" excede 10 caracteres (tiene ${placa.length}). Máximo permitido: 10 caracteres.`, 'error');
+                        return;
+                    }
+                }
+            }
+            
             const password = userForm.password ? userForm.password.value.trim() : '';
             if (!nombre || !email || !password) { showMessage('Nombre, email y contraseña son obligatorios', 'error'); return; }
 
@@ -1035,7 +1046,14 @@ function initInlineFormHandlers() {
             const marca = vehicleInline.marca ? vehicleInline.marca.value.trim() : '';
             const modelo = vehicleInline.modelo ? vehicleInline.modelo.value.trim() : '';
             const color = vehicleInline.color ? vehicleInline.color.value.trim() : '';
+            
             if (!placa || !marca) { showMessage('Placa y marca son obligatorios', 'error'); return; }
+            
+            // 🚗 VALIDACIÓN DE PLACA: Máximo 10 caracteres
+            if (placa.length > 10) {
+                showMessage(`Placa "${placa}" excede 10 caracteres (tiene ${placa.length}). Máximo permitido: 10 caracteres.`, 'error');
+                return;
+            }
 
             try {
                 const payload = { placa: (placa || '').toUpperCase(), marca, modelo, color };
