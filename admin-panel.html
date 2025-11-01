@@ -527,9 +527,24 @@
                                 <input id="uFecha" name="fecha" type="date" />
                             </div>
                             <div class="col">
-                                <label for="uVehiculos">Vehículos (opc) - Max 10 chars</label>
-                                <input id="uVehiculos" name="vehiculos" type="text" placeholder="ABC-123, DEF-456 (max 10 chars c/u)" maxlength="50" title="Placas separadas por coma. Máximo 10 caracteres por placa." onkeyup="validarPlacasEnTiempoReal(this)" />
-                                <small id="placasValidacion" style="color: #ff6b6b; font-size: 12px; display: none;"></small>
+                                <label for="uPlaca">Placa Vehículo (opc) - Max 10 chars</label>
+                                <input id="uPlaca" name="placa" type="text" placeholder="ABC-123 (max 10)" maxlength="10" onkeyup="validarPlacaIndividual(this)" />
+                                <small id="placaUsuarioValidacion" style="color: #ff6b6b; font-size: 12px; display: none;"></small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label for="uTipoVehiculo">Tipo Vehículo (si hay placa)</label>
+                                <select id="uTipoVehiculo" name="tipo_vehiculo">
+                                    <option value="">Sin vehículo</option>
+                                    <option value="AUTOMOVIL">🚗 Automóvil</option>
+                                    <option value="MOTOCICLETA">🏍️ Motocicleta</option>
+                                    <option value="ELECTRICO">⚡ Eléctrico</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <label for="uMarca">Marca (opc)</label>
+                                <input id="uMarca" name="marca" type="text" placeholder="Toyota, Honda..." />
                             </div>
                         </div>
                         <div class="row">
@@ -577,15 +592,25 @@
                                 <small id="placaIndividualValidacion" style="color: #ff6b6b; font-size: 12px; display: none;"></small>
                             </div>
                             <div class="col">
-                                <label for="vMarca">Marca</label>
-                                <input id="vMarca" name="marca" type="text" placeholder="Toyota" required />
+                                <label for="vTipo">Tipo</label>
+                                <select id="vTipo" name="tipo" required>
+                                    <option value="AUTOMOVIL">🚗 Automóvil</option>
+                                    <option value="MOTOCICLETA">🏍️ Motocicleta</option>
+                                    <option value="ELECTRICO">⚡ Eléctrico</option>
+                                </select>
                             </div>
                         </div>
                         <div class="row">
                             <div class="col">
+                                <label for="vMarca">Marca</label>
+                                <input id="vMarca" name="marca" type="text" placeholder="Toyota" required />
+                            </div>
+                            <div class="col">
                                 <label for="vModelo">Modelo</label>
                                 <input id="vModelo" name="modelo" type="text" placeholder="Corolla" />
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="col">
                                 <label for="vColor">Color</label>
                                 <input id="vColor" name="color" type="text" placeholder="Blanco" />

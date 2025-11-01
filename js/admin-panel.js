@@ -978,21 +978,27 @@ function initInlineFormHandlers() {
             const nombre = userForm.nombre ? userForm.nombre.value.trim() : '';
             const email = userForm.email ? userForm.email.value.trim() : '';
             const fecha = userForm.fecha ? userForm.fecha.value : null;
-            const vehiculosStr = userForm.vehiculos ? userForm.vehiculos.value.trim() : '';
-            const vehiculosList = vehiculosStr ? vehiculosStr.split(',').map(s => s.trim()).filter(Boolean) : [];
-            
-            // 🚗 VALIDACIÓN DE PLACAS: Máximo 10 caracteres
-            if (vehiculosList.length > 0) {
-                for (const placa of vehiculosList) {
-                    if (placa.length > 10) {
-                        showMessage(`Placa "${placa}" excede 10 caracteres (tiene ${placa.length}). Máximo permitido: 10 caracteres.`, 'error');
-                        return;
-                    }
-                }
-            }
-            
+            const placa = userForm.placa ? userForm.placa.value.trim() : '';
+            const tipoVehiculo = userForm.tipo_vehiculo ? userForm.tipo_vehiculo.value : '';
+            const marca = userForm.marca ? userForm.marca.value.trim() : '';
             const password = userForm.password ? userForm.password.value.trim() : '';
-            if (!nombre || !email || !password) { showMessage('Nombre, email y contraseña son obligatorios', 'error'); return; }
+            
+            if (!nombre || !email || !password) { 
+                showMessage('Nombre, email y contraseña son obligatorios', 'error'); 
+                return; 
+            }
+
+            // 🚗 VALIDACIÓN DE PLACA: Máximo 10 caracteres
+            if (placa && placa.length > 10) {
+                showMessage(`Placa "${placa}" excede 10 caracteres (tiene ${placa.length}). Máximo permitido: 10 caracteres.`, 'error');
+                return;
+            }
+
+            // Si hay placa, debe haber tipo
+            if (placa && !tipoVehiculo) {
+                showMessage('Si proporciona una placa, debe seleccionar el tipo de vehículo', 'error');
+                return;
+            }
 
             try {
                 // split nombre completo into nombre + apellido for backend
@@ -1012,7 +1018,15 @@ function initInlineFormHandlers() {
 
                 const payload = { nombre: firstName, apellido: lastName, email, password };
                 if (fecha) payload.fecha_registro = fecha;
-                if (vehiculosList.length) payload.vehiculos = vehiculosList;
+                
+                // Si hay placa, agregar vehículo
+                if (placa && tipoVehiculo) {
+                    payload.vehiculo = {
+                        placa: placa.toUpperCase(),
+                        tipo: tipoVehiculo,
+                        marca: marca || null
+                    };
+                }
 
                 console.log('Creating user payload:', payload);
 
@@ -1043,11 +1057,15 @@ function initInlineFormHandlers() {
         vehicleInline.addEventListener('submit', async function (e) {
             e.preventDefault();
             const placa = vehicleInline.placa ? vehicleInline.placa.value.trim() : '';
+            const tipo = vehicleInline.tipo ? vehicleInline.tipo.value.trim() : '';
             const marca = vehicleInline.marca ? vehicleInline.marca.value.trim() : '';
             const modelo = vehicleInline.modelo ? vehicleInline.modelo.value.trim() : '';
             const color = vehicleInline.color ? vehicleInline.color.value.trim() : '';
             
-            if (!placa || !marca) { showMessage('Placa y marca son obligatorios', 'error'); return; }
+            if (!placa || !tipo || !marca) { 
+                showMessage('Placa, tipo y marca son obligatorios', 'error'); 
+                return; 
+            }
             
             // 🚗 VALIDACIÓN DE PLACA: Máximo 10 caracteres
             if (placa.length > 10) {
@@ -1056,7 +1074,7 @@ function initInlineFormHandlers() {
             }
 
             try {
-                const payload = { placa: (placa || '').toUpperCase(), marca, modelo, color };
+                const payload = { placa: (placa || '').toUpperCase(), tipo, marca, modelo, color };
                 const resp = await secureRequest(`${API_URL}/admin/vehiculos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1138,12 +1156,24 @@ function validarPlacasEnTiempoReal(input) {
 
 function validarPlacaIndividual(input) {
     const placa = input.value.trim();
-    const validacionId = input.id === 'vPlaca' ? 'placaIndividualValidacion' : 'placaVehValidacion';
+    let validacionId;
+    
+    // Determinar qué div de validación usar según el ID del input
+    if (input.id === 'vPlaca') {
+        validacionId = 'placaIndividualValidacion';
+    } else if (input.id === 'vehPlaca') {
+        validacionId = 'placaVehValidacion';
+    } else if (input.id === 'uPlaca') {
+        validacionId = 'placaUsuarioValidacion';
+    }
+    
     const validacionDiv = document.getElementById(validacionId);
+    if (!validacionDiv) return; // Si no existe el div, salir
     
     if (placa.length > 10) {
         validacionDiv.textContent = `❌ Muy larga: ${placa.length}/10 caracteres`;
         validacionDiv.style.display = 'block';
+        validacionDiv.style.color = '#ff6b6b';
         input.style.borderColor = '#ff6b6b';
     } else if (placa.length > 7) {
         validacionDiv.textContent = `⚠️ Advertencia: ${placa.length}/10 caracteres`;

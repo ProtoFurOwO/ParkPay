@@ -199,20 +199,38 @@ router.get('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
 // 🔐 Crear nuevo usuario (PROTEGIDO)
 router.post('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
   try {
-    const { nombre, apellido, email, password, vehiculos } = req.body;
+    const { nombre, apellido, email, password, vehiculo } = req.body;
 
     if (!nombre || !apellido || !email || !password) {
       return res.status(400).json({ error: 'Todos los campos son requeridos' });
     }
 
-    // 🚗 VALIDACIÓN DE PLACAS: Máximo 10 caracteres
-    if (vehiculos && Array.isArray(vehiculos)) {
-      for (const placa of vehiculos) {
-        if (placa.length > 10) {
-          return res.status(400).json({ 
-            error: `Placa "${placa}" excede 10 caracteres (tiene ${placa.length}). Máximo permitido: 10 caracteres.` 
-          });
-        }
+    // 🚗 VALIDACIÓN DE VEHÍCULO: Si hay vehículo, validar placa
+    if (vehiculo) {
+      if (!vehiculo.placa || !vehiculo.tipo) {
+        return res.status(400).json({ error: 'Si proporciona vehículo, placa y tipo son obligatorios' });
+      }
+      
+      if (vehiculo.placa.length > 10) {
+        return res.status(400).json({ 
+          error: `Placa "${vehiculo.placa}" excede 10 caracteres (tiene ${vehiculo.placa.length}). Máximo permitido: 10 caracteres.` 
+        });
+      }
+
+      // Verificar que el tipo sea válido
+      const tiposValidos = ['AUTOMOVIL', 'MOTOCICLETA', 'ELECTRICO'];
+      if (!tiposValidos.includes(vehiculo.tipo)) {
+        return res.status(400).json({ error: 'Tipo de vehículo inválido' });
+      }
+
+      // Verificar si la placa ya existe
+      const placaCheck = await pool.query(
+        'SELECT id_vehiculo FROM Vehiculos WHERE placa = $1',
+        [vehiculo.placa.toUpperCase()]
+      );
+
+      if (placaCheck.rows.length > 0) {
+        return res.status(400).json({ error: 'La placa ya está registrada' });
       }
     }
 
@@ -228,29 +246,35 @@ router.post('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
     );
 
     const usuario = userResult.rows[0];
-    let vehiculosCreados = 0;
+    let vehiculoCreado = null;
 
-    // Si hay vehículos, crearlos
-    if (vehiculos && Array.isArray(vehiculos) && vehiculos.length > 0) {
-      for (const placa of vehiculos) {
-        try {
-          await pool.query(
-            `INSERT INTO Vehiculos (placa, id_usuario)
-             VALUES ($1, $2)`,
-            [placa.toUpperCase(), usuario.id_usuario]
-          );
-          vehiculosCreados++;
-        } catch (vehiculoError) {
-          console.warn(`Error al crear vehículo ${placa}:`, vehiculoError);
-          // Continuar con los demás vehículos
-        }
+    // Si hay vehículo, crearlo
+    if (vehiculo) {
+      try {
+        const vehiculoResult = await pool.query(
+          `INSERT INTO Vehiculos (placa, tipo, marca, modelo, color, id_usuario)
+           VALUES ($1, $2, $3, $4, $5, $6)
+           RETURNING *`,
+          [
+            vehiculo.placa.toUpperCase(), 
+            vehiculo.tipo, 
+            vehiculo.marca || null, 
+            vehiculo.modelo || null, 
+            vehiculo.color || null, 
+            usuario.id_usuario
+          ]
+        );
+        vehiculoCreado = vehiculoResult.rows[0];
+      } catch (vehiculoError) {
+        console.warn('Error al crear vehículo:', vehiculoError);
+        // El usuario se creó exitosamente, pero el vehículo falló
       }
     }
 
     res.status(201).json({
       message: 'Usuario creado exitosamente',
       usuario: usuario,
-      vehiculos_creados: vehiculosCreados
+      vehiculo: vehiculoCreado
     });
 
   } catch (error) {
@@ -259,7 +283,7 @@ router.post('/usuarios', verificarToken, verificarAdmin, async (req, res) => {
       if (error.constraint && error.constraint.includes('email')) {
         res.status(400).json({ error: 'El correo electrónico ya existe' });
       } else if (error.constraint && error.constraint.includes('placa')) {
-        res.status(400).json({ error: 'Una de las placas ya existe' });
+        res.status(400).json({ error: 'La placa ya existe' });
       } else {
         res.status(400).json({ error: 'Datos duplicados' });
       }
@@ -335,10 +359,14 @@ router.get('/vehiculos', verificarToken, verificarAdmin, async (req, res) => {
 // 🔐 Crear nuevo vehículo (PROTEGIDO)
 router.post('/vehiculos', verificarToken, verificarAdmin, async (req, res) => {
   try {
-    const { placa, marca, modelo, color, id_usuario } = req.body;
+    const { placa, tipo, marca, modelo, color, id_usuario } = req.body;
 
     if (!placa) {
       return res.status(400).json({ error: 'La placa es requerida' });
+    }
+
+    if (!tipo) {
+      return res.status(400).json({ error: 'El tipo de vehículo es requerido' });
     }
 
     // 🚗 VALIDACIÓN DE PLACA: Máximo 10 caracteres
@@ -346,6 +374,12 @@ router.post('/vehiculos', verificarToken, verificarAdmin, async (req, res) => {
       return res.status(400).json({ 
         error: `Placa "${placa}" excede 10 caracteres (tiene ${placa.length}). Máximo permitido: 10 caracteres.` 
       });
+    }
+
+    // Validar que el tipo sea válido
+    const tiposValidos = ['AUTOMOVIL', 'MOTOCICLETA', 'ELECTRICO'];
+    if (!tiposValidos.includes(tipo)) {
+      return res.status(400).json({ error: 'Tipo de vehículo inválido' });
     }
 
     // Verificar si la placa ya existe
@@ -374,10 +408,10 @@ router.post('/vehiculos', verificarToken, verificarAdmin, async (req, res) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO Vehiculos (placa, marca, modelo, color, id_usuario)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO Vehiculos (placa, tipo, marca, modelo, color, id_usuario)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [placa.toUpperCase(), marca || null, modelo || null, color || null, usuarioFinal]
+      [placa.toUpperCase(), tipo, marca || null, modelo || null, color || null, usuarioFinal]
     );
 
     res.status(201).json({
