@@ -209,8 +209,8 @@ router.post('/login', rateLimitByIP(3, 10 * 60 * 1000), async (req, res) => {
   }
 });
 
-// SOLICITAR RECUPERACIÓN DE CONTRASEÑA
-router.post('/solicitar-recuperacion', async (req, res) => {
+// SOLICITAR RECUPERACIÓN DE CONTRASEÑA - 🔐 PROTEGIDA CON RATE LIMITING
+router.post('/solicitar-recuperacion', rateLimitByIP(2, 15 * 60 * 1000), async (req, res) => {
   try {
     const { email } = req.body;
 

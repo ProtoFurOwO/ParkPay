@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
+const { verificarToken } = require('../middleware/auth');
 
 // ============================================================================
 // ENDPOINT 1: BUSCAR CAJONES DISPONIBLES
@@ -34,17 +35,37 @@ router.get('/disponibles', async (req, res) => {
 
 
 // ============================================================================
-// ENDPOINT 2: CREAR RESERVA "AL INSTANTE"
+// ENDPOINT 2: CREAR RESERVA "AL INSTANTE" - 🔐 PROTEGIDA CON JWT
 // ============================================================================
 // POST /api/reservas/instante
 // Body: { id_usuario, id_vehiculo, id_cajon, duracion_minutos, monto_total }
-router.post('/instante', async (req, res) => {
+router.post('/instante', verificarToken, async (req, res) => {
     try {
         const { id_usuario, id_vehiculo, id_cajon, duracion_minutos, monto_total } = req.body;
 
         if (!id_usuario || !id_vehiculo || !id_cajon || !duracion_minutos || !monto_total) {
             return res.status(400).json({ error: 'Faltan datos requeridos' });
         }
+
+        // 🛡️ VALIDACIÓN DE PRECIO - ANTI BURP SUITE
+        // NO confiar en el monto que envía el frontend
+        const horas = Math.ceil(duracion_minutos / 60);
+        const tarifaPorHora = 15; // $15 MXN por hora (valor fijo del servidor)
+        const montoReal = horas * tarifaPorHora;
+
+        // Verificar que el monto enviado sea correcto (tolerancia de ±1 peso)
+        if (Math.abs(monto_total - montoReal) > 1) {
+            console.warn(`🚨 INTENTO DE FRAUDE: Usuario ${id_usuario} intentó pagar $${monto_total} en lugar de $${montoReal}`);
+            return res.status(400).json({ 
+                error: 'Monto inválido detectado',
+                monto_correcto: montoReal,
+                monto_enviado: monto_total,
+                mensaje: 'El precio debe calcularse correctamente'
+            });
+        }
+
+        // Usar el monto calculado por el servidor (NO el del frontend)
+        const montoSeguro = montoReal;
 
         // Crear reserva con ventana de 30 minutos desde AHORA (el trigger generará el código)
         const result = await pool.query(
@@ -62,7 +83,7 @@ router.post('/instante', async (req, res) => {
                 NOW() + INTERVAL '30 minutes', 
                 $4, $5
             ) RETURNING *`,
-            [id_usuario, id_vehiculo, id_cajon, duracion_minutos, monto_total]
+            [id_usuario, id_vehiculo, id_cajon, duracion_minutos, montoSeguro]
         );
 
         const reserva = result.rows[0];
@@ -88,11 +109,11 @@ router.post('/instante', async (req, res) => {
 
 
 // ============================================================================
-// ENDPOINT 3: CREAR RESERVA "FUTURA"
+// ENDPOINT 3: CREAR RESERVA "FUTURA" - 🔐 PROTEGIDA CON JWT
 // ============================================================================
 // POST /api/reservas/futura
 // Body: { id_usuario, id_vehiculo, id_cajon, fecha_inicio, fecha_fin, duracion_minutos, monto_total }
-router.post('/futura', async (req, res) => {
+router.post('/futura', verificarToken, async (req, res) => {
     try {
         const { 
             id_usuario, 
@@ -107,6 +128,25 @@ router.post('/futura', async (req, res) => {
         if (!id_usuario || !id_vehiculo || !id_cajon || !fecha_inicio || !fecha_fin || !duracion_minutos || !monto_total) {
             return res.status(400).json({ error: 'Faltan datos requeridos' });
         }
+
+        // 🛡️ VALIDACIÓN DE PRECIO - ANTI BURP SUITE PARA RESERVAS FUTURAS
+        const horas = Math.ceil(duracion_minutos / 60);
+        const tarifaPorHora = 15; // $15 MXN por hora (valor fijo del servidor)
+        const montoReal = horas * tarifaPorHora;
+
+        // Verificar que el monto enviado sea correcto
+        if (Math.abs(monto_total - montoReal) > 1) {
+            console.warn(`🚨 INTENTO DE FRAUDE EN RESERVA FUTURA: Usuario ${id_usuario} intentó pagar $${monto_total} en lugar de $${montoReal}`);
+            return res.status(400).json({ 
+                error: 'Monto inválido detectado',
+                monto_correcto: montoReal,
+                monto_enviado: monto_total,
+                mensaje: 'El precio debe calcularse correctamente'
+            });
+        }
+
+        // Usar el monto calculado por el servidor
+        const montoSeguro = montoReal;
 
         // Validar que la fecha de inicio sea en el futuro
         const inicioDate = new Date(fecha_inicio);
@@ -144,7 +184,7 @@ router.post('/futura', async (req, res) => {
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7
             ) RETURNING *`,
-            [id_usuario, id_vehiculo, id_cajon, fecha_inicio, fecha_fin, duracion_minutos, monto_total]
+            [id_usuario, id_vehiculo, id_cajon, fecha_inicio, fecha_fin, duracion_minutos, montoSeguro]
         );
 
         const reserva = result.rows[0];
@@ -322,10 +362,10 @@ router.post('/escanear', async (req, res) => {
 
 
 // ============================================================================
-// ENDPOINT 5: VER MIS RESERVAS
+// ENDPOINT 5: VER MIS RESERVAS - 🔐 PROTEGIDA CON JWT
 // ============================================================================
 // GET /api/reservas/usuario/:id_usuario
-router.get('/usuario/:id_usuario', async (req, res) => {
+router.get('/usuario/:id_usuario', verificarToken, async (req, res) => {
     try {
         const { id_usuario } = req.params;
 
@@ -367,10 +407,10 @@ router.get('/usuario/:id_usuario', async (req, res) => {
 
 
 // ============================================================================
-// ENDPOINT 6: CANCELAR RESERVA
+// ENDPOINT 6: CANCELAR RESERVA - 🔐 PROTEGIDA CON JWT
 // ============================================================================
 // PUT /api/reservas/:id_reserva/cancelar
-router.put('/:id_reserva/cancelar', async (req, res) => {
+router.put('/:id_reserva/cancelar', verificarToken, async (req, res) => {
     try {
         const { id_reserva } = req.params;
 
@@ -467,11 +507,11 @@ router.get('/admin/estadisticas', async (req, res) => {
 
 
 // ============================================================================
-// ENDPOINT 9: EXTENDER TIEMPO DE VENTANA DE ESCANEO
+// ENDPOINT 9: EXTENDER TIEMPO DE VENTANA DE ESCANEO - 🔐 PROTEGIDA CON JWT
 // ============================================================================
 // PUT /api/reservas/:id_reserva/extender
 // Body: { minutos: 10 }
-router.put('/:id_reserva/extender', async (req, res) => {
+router.put('/:id_reserva/extender', verificarToken, async (req, res) => {
     try {
         const { id_reserva } = req.params;
         const { minutos } = req.body;

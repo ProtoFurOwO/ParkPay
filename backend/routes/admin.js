@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const pool = require('../config/database');
-const { verificarToken, verificarAdmin, rateLimitByIP } = require('../middleware/auth');
+const { verificarToken, verificarAdmin, rateLimitByIP, generarToken } = require('../middleware/auth');
 
 // ═══════════════════════════════════════════════════════════════
 // AUTENTICACIÓN DE ADMINISTRADOR (usando email @parkpay.com)
@@ -77,8 +77,8 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login de administrador
-router.post('/login', async (req, res) => {
+// Login de administrador - 🔐 PROTEGIDO CON RATE LIMITING
+router.post('/login', rateLimitByIP(3, 10 * 60 * 1000), async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -114,8 +114,14 @@ router.post('/login', async (req, res) => {
     // Retornar datos sin contraseña
     const { password_hash, ...adminData } = admin;
 
+    // 🔐 GENERAR TOKEN JWT PARA ADMIN
+    const token = generarToken(adminData);
+
+    console.log(`✅ Login de admin exitoso: ${adminData.email}`);
+
     res.json({
       message: 'Login exitoso',
+      token: token, // ← NUEVO: Token JWT para admin
       admin: adminData
     });
 

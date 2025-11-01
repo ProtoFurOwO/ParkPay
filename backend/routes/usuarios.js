@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
+const { verificarToken } = require('../middleware/auth');
 
-// Obtener vehículos de un usuario
-router.get('/:id_usuario/vehiculos', async (req, res) => {
+// Obtener vehículos de un usuario - 🔐 PROTEGIDA CON JWT
+router.get('/:id_usuario/vehiculos', verificarToken, async (req, res) => {
   try {
     const { id_usuario } = req.params;
 
@@ -19,8 +20,8 @@ router.get('/:id_usuario/vehiculos', async (req, res) => {
   }
 });
 
-// Agregar un nuevo vehículo a un usuario
-router.post('/:id_usuario/vehiculos', async (req, res) => {
+// Agregar un nuevo vehículo a un usuario - 🔐 PROTEGIDA CON JWT 
+router.post('/:id_usuario/vehiculos', verificarToken, async (req, res) => {
   try {
     const { id_usuario } = req.params;
     const { placa, tipo, marca, modelo, color } = req.body;
