@@ -8,6 +8,14 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 // 🔐 MIDDLEWARE DE VERIFICACIÓN JWT - ANTI BURP SUITE
 const verificarToken = async (req, res, next) => {
     try {
+        // 🐛 DEBUG: Log para producción
+        console.log('🔐 Verificando token JWT...');
+        console.log('Headers recibidos:', {
+            authorization: req.headers.authorization ? 'PRESENTE' : 'AUSENTE',
+            'x-request-source': req.headers['x-request-source'],
+            'user-agent': req.headers['user-agent']
+        });
+        
         // Obtener token del header Authorization
         const authHeader = req.headers.authorization;
         
@@ -48,6 +56,9 @@ const verificarToken = async (req, res, next) => {
         }
 
         // Verificar y decodificar el token JWT
+        console.log('🔑 JWT_SECRET disponible:', JWT_SECRET ? 'SÍ' : 'NO');
+        console.log('🎫 Token recibido (primeros 20 chars):', token.substring(0, 20) + '...');
+        
         const decoded = jwt.verify(token, JWT_SECRET);
         
         // Verificar que el usuario aún existe en la base de datos
