@@ -48,18 +48,33 @@ router.post('/instante', verificarToken, async (req, res) => {
         }
 
         // 🛡️ VALIDACIÓN DE PRECIO - ANTI BURP SUITE
-        // NO confiar en el monto que envía el frontend
+        // NO confiar en el monto que envía el frontend - obtener tarifa real de BD
+        
+        // 1. Obtener la tarifa real del cajón desde la base de datos
+        const tarifaResult = await pool.query(`
+            SELECT c.id_cajon, c.numero_cajon, t.costo_por_hora 
+            FROM cajonesestacionamiento c
+            JOIN tarifas t ON c.id_tarifa = t.id_tarifa 
+            WHERE c.id_cajon = $1
+        `, [id_cajon]);
+
+        if (tarifaResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Cajón no encontrado' });
+        }
+
+        const cajonInfo = tarifaResult.rows[0];
+        const tarifaPorHora = parseFloat(cajonInfo.costo_por_hora);
         const horas = Math.ceil(duracion_minutos / 60);
-        const tarifaPorHora = 15; // $15 MXN por hora (valor fijo del servidor)
         const montoReal = horas * tarifaPorHora;
 
         // Verificar que el monto enviado sea correcto (tolerancia de ±1 peso)
         if (Math.abs(monto_total - montoReal) > 1) {
-            console.warn(`🚨 INTENTO DE FRAUDE: Usuario ${id_usuario} intentó pagar $${monto_total} en lugar de $${montoReal}`);
+            console.warn(`🚨 INTENTO DE FRAUDE: Usuario ${id_usuario} intentó pagar $${monto_total} en lugar de $${montoReal} (Tarifa: $${tarifaPorHora}/hora)`);
             return res.status(400).json({ 
                 error: 'Monto inválido detectado',
                 monto_correcto: montoReal,
                 monto_enviado: monto_total,
+                tarifa_por_hora: tarifaPorHora,
                 mensaje: 'El precio debe calcularse correctamente'
             });
         }
@@ -130,13 +145,26 @@ router.post('/futura', verificarToken, async (req, res) => {
         }
 
         // 🛡️ VALIDACIÓN DE PRECIO - ANTI BURP SUITE PARA RESERVAS FUTURAS
+        // Obtener tarifa real del cajón desde la base de datos
+        const tarifaResult = await pool.query(`
+            SELECT c.id_cajon, c.numero_cajon, t.costo_por_hora 
+            FROM cajonesestacionamiento c
+            JOIN tarifas t ON c.id_tarifa = t.id_tarifa 
+            WHERE c.id_cajon = $1
+        `, [id_cajon]);
+
+        if (tarifaResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Cajón no encontrado' });
+        }
+
+        const cajonInfo = tarifaResult.rows[0];
+        const tarifaPorHora = parseFloat(cajonInfo.costo_por_hora);
         const horas = Math.ceil(duracion_minutos / 60);
-        const tarifaPorHora = 15; // $15 MXN por hora (valor fijo del servidor)
         const montoReal = horas * tarifaPorHora;
 
         // Verificar que el monto enviado sea correcto
         if (Math.abs(monto_total - montoReal) > 1) {
-            console.warn(`🚨 INTENTO DE FRAUDE EN RESERVA FUTURA: Usuario ${id_usuario} intentó pagar $${monto_total} en lugar de $${montoReal}`);
+            console.warn(`🚨 INTENTO DE FRAUDE EN RESERVA FUTURA: Usuario ${id_usuario} intentó pagar $${monto_total} en lugar de $${montoReal} (Tarifa: $${tarifaPorHora}/hora)`);
             return res.status(400).json({ 
                 error: 'Monto inválido detectado',
                 monto_correcto: montoReal,
