@@ -155,7 +155,7 @@ router.post('/register', async (req, res) => {
 });
 
 // LOGIN CON JWT - ANTI BURP SUITE
-router.post('/login', rateLimitByIP(10, 15 * 60 * 1000), async (req, res) => {
+router.post('/login', rateLimitByIP(3, 10 * 60 * 1000), async (req, res) => {
   try {
     const { email, password } = req.body;
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
+const { verificarToken } = require('../middleware/auth');
 
 // ═══════════════════════════════════════════════════════════════
 // FUNCIÓN AUXILIAR: Liberar cajones vencidos automáticamente
@@ -64,7 +65,7 @@ async function liberarCajonesVencidos() {
 }
 
 // Obtener todos los cajones con su estado y tarifa
-router.get('/', async (req, res) => {
+router.get('/', verificarToken, async (req, res) => {
   try {
     // Primero liberar cajones vencidos
     await liberarCajonesVencidos();
