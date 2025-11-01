@@ -62,7 +62,26 @@ app.use(helmet({
 }));
 
 app.use(generalLimiter); // Rate limiting global
-app.use(cors());
+
+// 🌐 CONFIGURACIÓN CORS ESPECÍFICA PARA CREDENTIALS
+app.use(cors({
+  origin: [
+    'https://parkpay.vercel.app',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:5500' // Live Server
+  ],
+  credentials: true, // Permitir credentials (cookies, auth headers)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Request-Nonce', 
+    'X-Request-Time', 
+    'X-Request-Source'
+  ]
+}));
+
 app.use(express.json());
 
 // Rutas
