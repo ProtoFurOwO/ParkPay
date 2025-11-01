@@ -92,8 +92,25 @@ async function handleRegisterAdmin(event) {
         if (response.ok) {
             showMessage('¡Administrador registrado exitosamente! Redirigiendo...', 'success');
             
-            // Guardar datos del admin
-            localStorage.setItem('admin', JSON.stringify(data.admin));
+            // 🔐 Después del registro, hacer login automático para obtener token
+            try {
+                const loginResponse = await fetch(`${API_URL}/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const loginData = await loginResponse.json();
+                
+                if (loginResponse.ok && loginData.token) {
+                    // Guardar datos del admin Y el token JWT
+                    localStorage.setItem('admin', JSON.stringify(loginData.admin));
+                    localStorage.setItem('parkpay_token', loginData.token);
+                    localStorage.setItem('token', loginData.token); // Compatible con versión antigua
+                }
+            } catch (error) {
+                console.error('Error en login automático:', error);
+            }
             
             setTimeout(() => {
                 window.location.href = 'admin-panel.html';
@@ -131,8 +148,14 @@ async function handleLoginAdmin(event) {
         if (response.ok) {
             showMessage('¡Bienvenido! Redirigiendo...', 'success');
             
-            // Guardar datos del admin
+            // 🔐 Guardar datos del admin Y el token JWT
             localStorage.setItem('admin', JSON.stringify(data.admin));
+            
+            // 🔑 IMPORTANTE: Guardar token JWT para auth-helper.js
+            if (data.token) {
+                localStorage.setItem('parkpay_token', data.token);
+                localStorage.setItem('token', data.token); // Compatible con versión antigua
+            }
             
             setTimeout(() => {
                 window.location.href = 'admin-panel.html';

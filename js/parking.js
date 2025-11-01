@@ -341,7 +341,7 @@ async function confirmBooking() {
     }
     
     try {
-        const response = await fetch(`${API_URL}/tickets`, {
+        const response = await secureRequest(`${API_URL}/tickets`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -580,7 +580,7 @@ async function crearReservaFutura() {
             monto_total: montoTotal
         });
 
-        const response = await fetch(`${API_URL}/reservas/futura`, {
+        const response = await secureRequest(`${API_URL}/reservas/futura`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

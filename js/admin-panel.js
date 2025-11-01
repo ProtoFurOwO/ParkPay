@@ -34,7 +34,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
 async function loadStats() {
     try {
-        const response = await fetch(`${API_URL}/admin/stats`);
+        const response = await secureRequest(`${API_URL}/admin/stats`, {
+            method: 'GET'
+        });
         const stats = await response.json();
         
         document.getElementById('statUsuarios').textContent = stats.total_usuarios;
@@ -45,6 +47,7 @@ async function loadStats() {
         
     } catch (error) {
         console.error('Error al cargar estadísticas:', error);
+        showMessage('Error al cargar estadísticas', 'error');
     }
 }
 
@@ -96,7 +99,9 @@ function showTab(tabName) {
 
 async function loadUsuarios() {
     try {
-        const response = await fetch(`${API_URL}/admin/usuarios`);
+        const response = await secureRequest(`${API_URL}/admin/usuarios`, {
+            method: 'GET'
+        });
         usuarios = await response.json();
         
         const tbody = document.querySelector('#tablaUsuarios tbody');
@@ -174,7 +179,7 @@ async function createUsuario(event) {
     const password = document.getElementById('modalPassword').value;
     
     try {
-        const response = await fetch(`${API_URL}/admin/usuarios`, {
+        const response = await secureRequest(`${API_URL}/admin/usuarios`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nombre, apellido, email, password })
@@ -202,7 +207,7 @@ async function deleteUsuario(id) {
     }
     
     try {
-        const response = await fetch(`${API_URL}/admin/usuarios/${id}`, {
+        const response = await secureRequest(`${API_URL}/admin/usuarios/${id}`, {
             method: 'DELETE'
         });
         
@@ -227,7 +232,7 @@ async function deleteUsuario(id) {
 
 async function loadVehiculos() {
     try {
-        const response = await fetch(`${API_URL}/admin/vehiculos`);
+        const response = await secureRequest(`${API_URL}/admin/vehiculos`);
         vehiculos = await response.json();
         
         const tbody = document.querySelector('#tablaVehiculos tbody');
@@ -269,7 +274,7 @@ async function deleteVehiculo(id) {
     }
     
     try {
-        const response = await fetch(`${API_URL}/admin/vehiculos/${id}`, {
+        const response = await secureRequest(`${API_URL}/admin/vehiculos/${id}`, {
             method: 'DELETE'
         });
         
@@ -294,7 +299,7 @@ async function deleteVehiculo(id) {
 
 async function loadCajones() {
     try {
-        const response = await fetch(`${API_URL}/admin/cajones`);
+        const response = await secureRequest(`${API_URL}/admin/cajones`);
         cajones = await response.json();
         
         const tbody = document.querySelector('#tablaCajones tbody');
@@ -357,7 +362,7 @@ async function editarCajon(id) {
     const cajon = cajones.find(c => c.id_cajon === id);
     
     // Cargar tarifas disponibles
-    const tarifasResponse = await fetch(`${API_URL}/admin/tarifas`);
+    const tarifasResponse = await secureRequest(`${API_URL}/admin/tarifas`);
     const tarifasDisponibles = await tarifasResponse.json();
     
     const tarifasOptions = tarifasDisponibles.map(t => 
@@ -414,7 +419,7 @@ async function updateCajon(event, id) {
         const payload = { tipo, id_tarifa };
         console.log('📤 Enviando:', payload);
         
-        const response = await fetch(`${API_URL}/admin/cajones/${id}`, {
+        const response = await secureRequest(`${API_URL}/admin/cajones/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -444,7 +449,7 @@ async function updateEstadoCajon(event, id) {
     const estado = document.getElementById('modalEstado').value;
     
     try {
-        const response = await fetch(`${API_URL}/admin/cajones/${id}/estado`, {
+        const response = await secureRequest(`${API_URL}/admin/cajones/${id}/estado`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ estado })
@@ -476,7 +481,7 @@ async function updateEstadoCajon(event, id) {
 
 async function loadReservas() {
     try {
-        const response = await fetch(`${API_URL}/admin/reservas`);
+        const response = await secureRequest(`${API_URL}/admin/reservas`);
         const reservas = await response.json();
         
         const tbody = document.querySelector('#tablaReservas tbody');
@@ -534,7 +539,7 @@ async function cancelarReservaAdmin(idReserva) {
     if (!confirm('¿Estás seguro de cancelar esta reserva?')) return;
     
     try {
-        const response = await fetch(`${API_URL}/reservas/${idReserva}/cancelar`, {
+        const response = await secureRequest(`${API_URL}/reservas/${idReserva}/cancelar`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -559,7 +564,7 @@ async function cancelarReservaAdmin(idReserva) {
 
 async function loadTickets() {
     try {
-        const response = await fetch(`${API_URL}/admin/tickets`);
+        const response = await secureRequest(`${API_URL}/admin/tickets`);
         tickets = await response.json();
         
         const tbody = document.querySelector('#tablaTickets tbody');
@@ -632,7 +637,7 @@ async function confirmarFinalizarTicket(event, id) {
     const monto_cobrado = parseFloat(document.getElementById('modalMonto').value);
     
     try {
-        const response = await fetch(`${API_URL}/admin/tickets/${id}/finalizar`, {
+        const response = await secureRequest(`${API_URL}/admin/tickets/${id}/finalizar`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ monto_cobrado })
@@ -661,7 +666,7 @@ async function deleteTicket(id) {
     }
     
     try {
-        const response = await fetch(`${API_URL}/admin/tickets/${id}`, {
+        const response = await secureRequest(`${API_URL}/admin/tickets/${id}`, {
             method: 'DELETE'
         });
         
@@ -687,7 +692,7 @@ async function deleteTicket(id) {
 
 async function loadTarifas() {
     try {
-        const response = await fetch(`${API_URL}/admin/tarifas`);
+        const response = await secureRequest(`${API_URL}/admin/tarifas`);
         tarifas = await response.json();
         
         const tbody = document.querySelector('#tablaTarifas tbody');
@@ -747,7 +752,7 @@ async function createTarifa(event) {
     const costo_por_hora = parseFloat(document.getElementById('modalCosto').value);
     
     try {
-        const response = await fetch(`${API_URL}/admin/tarifas`, {
+        const response = await secureRequest(`${API_URL}/admin/tarifas`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ descripcion, costo_por_hora })
@@ -802,7 +807,7 @@ async function updateTarifa(event, id) {
     const costo_por_hora = parseFloat(document.getElementById('modalCosto').value);
     
     try {
-        const response = await fetch(`${API_URL}/admin/tarifas/${id}`, {
+        const response = await secureRequest(`${API_URL}/admin/tarifas/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ descripcion, costo_por_hora })
@@ -829,7 +834,7 @@ async function deleteTarifa(id) {
     }
     
     try {
-        const response = await fetch(`${API_URL}/admin/tarifas/${id}`, {
+        const response = await secureRequest(`${API_URL}/admin/tarifas/${id}`, {
             method: 'DELETE'
         });
         
@@ -944,7 +949,7 @@ function initInlineFormHandlers() {
 
             try {
                 console.log('Creating vehicle payload:', data);
-                const resp = await fetch(`${API_URL}/admin/vehiculos`, {
+                const resp = await secureRequest(`${API_URL}/admin/vehiculos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -1000,7 +1005,7 @@ function initInlineFormHandlers() {
 
                 console.log('Creating user payload:', payload);
 
-                const resp = await fetch(`${API_URL}/admin/usuarios`, {
+                const resp = await secureRequest(`${API_URL}/admin/usuarios`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -1034,7 +1039,7 @@ function initInlineFormHandlers() {
 
             try {
                 const payload = { placa: (placa || '').toUpperCase(), marca, modelo, color };
-                const resp = await fetch(`${API_URL}/admin/vehiculos`, {
+                const resp = await secureRequest(`${API_URL}/admin/vehiculos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -1066,7 +1071,7 @@ function initInlineFormHandlers() {
 
             try {
                 const payload = { descripcion: desc, costo_por_hora: costo };
-                const resp = await fetch(`${API_URL}/admin/tarifas`, {
+                const resp = await secureRequest(`${API_URL}/admin/tarifas`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
