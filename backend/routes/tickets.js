@@ -373,32 +373,19 @@ router.post('/checkout', async (req, res) => {
 
     const montoTotal = montoOriginal + montoExtra;
 
-    // Actualizar ticket con información de salida
-    await client.query(`
-      UPDATE TicketsEstancia 
-      SET fecha_hora_salida = CURRENT_TIMESTAMP,
-          estado = 'FINALIZADO',
-          monto_cobrado = $1,
-          monto_extra = $2
-      WHERE id_ticket = $3
-    `, [montoTotal, montoExtra, ticket.id_ticket]);
-
-    // Liberar cajón
-    await client.query(
-      'UPDATE CajonesEstacionamiento SET estado = $1 WHERE id_cajon = $2',
-      ['Disponible', ticket.id_cajon]
-    );
+    // 🔧 NO FINALIZAR EL TICKET AÚN - Solo calcular el costo
+    // El ticket se finalizará cuando se confirme el pago y salida
 
     await client.query('COMMIT');
 
     res.json({
-      message: 'Checkout exitoso',
+      message: 'Cálculo de checkout exitoso',
       ticket: {
         codigo_acceso: ticket.codigo_acceso,
         cajon: `${ticket.numero_cajon} - ${ticket.ubicacion_piso}`,
         placa: ticket.placa,
         entrada: ticket.fecha_hora_entrada,
-        salida: new Date()
+        id_ticket: ticket.id_ticket  // Agregar ID para referencia
       },
       cobro: {
         ...detallesCobro,
@@ -411,6 +398,122 @@ router.post('/checkout', async (req, res) => {
     await client.query('ROLLBACK');
     console.error('Error en checkout:', error);
     res.status(500).json({ error: 'Error al procesar salida' });
+  } finally {
+    client.release();
+  }
+});
+
+// � Pagar tiempo extra
+router.post('/pagar-extra', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { codigo_acceso, monto_pagado } = req.body;
+
+    if (!codigo_acceso) {
+      return res.status(400).json({ error: 'Código de acceso requerido' });
+    }
+
+    await client.query('BEGIN');
+
+    // Verificar ticket
+    const ticketQuery = await client.query(`
+      SELECT * FROM TicketsEstancia 
+      WHERE codigo_acceso = $1 AND estado = 'ACTIVO'
+    `, [codigo_acceso]);
+
+    if (ticketQuery.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Ticket no encontrado' });
+    }
+
+    const ticket = ticketQuery.rows[0];
+
+    // 🔧 ACTUALIZAR: Usar campos existentes de la tabla
+    // Solo actualizar el monto_extra para registrar que fue pagado
+    await client.query(`
+      UPDATE TicketsEstancia 
+      SET monto_extra = $1
+      WHERE id_ticket = $2
+    `, [monto_pagado || 0, ticket.id_ticket]);
+
+    await client.query('COMMIT');
+
+    console.log(`💳 Pago extra procesado para ticket ${codigo_acceso}: $${monto_pagado}`);
+
+    res.json({
+      message: 'Pago procesado exitosamente',
+      monto_pagado: monto_pagado
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error al procesar pago extra:', error);
+    res.status(500).json({ error: 'Error al procesar el pago' });
+  } finally {
+    client.release();
+  }
+});
+
+// �🔐 Finalizar ticket definitivamente (POST /finalizar para frontend)
+router.post('/finalizar', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { codigo_acceso } = req.body;
+
+    if (!codigo_acceso) {
+      return res.status(400).json({ error: 'Código de acceso requerido' });
+    }
+
+    await client.query('BEGIN');
+
+    // Verificar que el ticket existe y está activo
+    const ticketQuery = await client.query(`
+      SELECT t.*, c.id_cajon, c.numero_cajon, c.ubicacion_piso
+      FROM TicketsEstancia t
+      JOIN CajonesEstacionamiento c ON t.id_cajon = c.id_cajon
+      WHERE t.codigo_acceso = $1 AND t.estado = 'ACTIVO'
+    `, [codigo_acceso]);
+
+    if (ticketQuery.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Ticket no encontrado o ya finalizado' });
+    }
+
+    const ticket = ticketQuery.rows[0];
+
+    // Finalizar el ticket
+    await client.query(`
+      UPDATE TicketsEstancia 
+      SET fecha_hora_salida = CURRENT_TIMESTAMP,
+          estado = 'FINALIZADO'
+      WHERE id_ticket = $1
+    `, [ticket.id_ticket]);
+
+    // Liberar el cajón
+    await client.query(`
+      UPDATE CajonesEstacionamiento 
+      SET estado = 'Disponible' 
+      WHERE id_cajon = $1
+    `, [ticket.id_cajon]);
+
+    await client.query('COMMIT');
+
+    console.log(`✅ Ticket ${codigo_acceso} finalizado exitosamente. Cajón ${ticket.numero_cajon} liberado.`);
+
+    res.json({
+      message: 'Salida procesada exitosamente',
+      ticket: {
+        codigo_acceso: codigo_acceso,
+        cajon: `${ticket.numero_cajon} - ${ticket.ubicacion_piso}`,
+        fecha_salida: new Date(),
+        estado: 'FINALIZADO'
+      }
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error al finalizar ticket:', error);
+    res.status(500).json({ error: 'Error al procesar la salida' });
   } finally {
     client.release();
   }

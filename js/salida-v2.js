@@ -231,8 +231,27 @@ async function pagarTiempoExtra() {
     btn.textContent = 'Procesando pago...';
 
     try {
-        // Simular pago (aquí conectarías con tu sistema de pagos real)
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        console.log('💳 Procesando pago extra para:', checkoutData.ticket.codigo_acceso);
+
+        // 🔧 USAR API REAL para pagar tiempo extra
+        const response = await fetch(`${API_URL}/tickets/pagar-extra`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                codigo_acceso: checkoutData.ticket.codigo_acceso,
+                monto_pagado: parseFloat(checkoutData.cobro.monto_extra || 0)
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al procesar pago');
+        }
+
+        const resultado = await response.json();
+        console.log('✅ Pago procesado:', resultado);
 
         // Marcar como pagado
         tieneExtraSinPagar = false;
@@ -245,9 +264,6 @@ async function pagarTiempoExtra() {
         document.getElementById('paymentSection').style.display = 'none';
 
         showMessage('✅ Pago procesado exitosamente', 'success');
-
-        // TODO: Aquí deberías actualizar el ticket en el backend para marcar el pago extra
-        // await fetch(`${API_URL}/tickets/pagar-extra`, { ... });
 
     } catch (error) {
         console.error('Error al pagar:', error);
