@@ -95,29 +95,14 @@ async function handleLogin(event) {
     }
     
     try {
-        const response = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ email, password })
-        });
+        // Usar authHelper para login con JWT
+        const data = await window.authHelper.login(email, password);
         
-        const data = await response.json();
+        showMessage('¡Bienvenido! Redirigiendo...', 'success');
         
-        if (response.ok) {
-            // Guardar datos del usuario en localStorage
-            localStorage.setItem('usuario', JSON.stringify(data.usuario));
-            localStorage.setItem('vehiculos', JSON.stringify(data.vehiculos));
-            
-            showMessage('¡Bienvenido! Redirigiendo...', 'success');
-            
-            setTimeout(() => {
-                window.location.href = 'inicio.html';
-            }, 1500);
-        } else {
-            showMessage(data.error || 'Error al iniciar sesión', 'error');
-        }
+        setTimeout(() => {
+            window.location.href = 'inicio.html';
+        }, 1500);
     } catch (error) {
         console.error('Error:', error);
         showMessage('Error de conexión. Verifica que el servidor esté corriendo.', 'error');
