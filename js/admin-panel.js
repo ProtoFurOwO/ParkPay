@@ -262,9 +262,141 @@ async function loadVehiculos() {
             tbody.appendChild(tr);
         });
         
+        // Cargar usuarios en selector cuando se carga vehículos
+        await loadUsuariosEnSelector();
+        
     } catch (error) {
         console.error('Error al cargar vehículos:', error);
         showMessage('Error al cargar vehículos', 'error');
+    }
+}
+
+// Función para cargar usuarios en el selector de vehículos
+async function loadUsuariosEnSelector() {
+    try {
+        const response = await secureRequest(`${API_URL}/admin/usuarios`);
+        const usuariosData = await response.json();
+        
+        const selector = document.getElementById('vUsuario');
+        if (selector) {
+            selector.innerHTML = '<option value="">Seleccionar usuario...</option>';
+            
+            usuariosData.forEach(usuario => {
+                const option = document.createElement('option');
+                option.value = usuario.id_usuario;
+                option.textContent = `${usuario.nombre} ${usuario.apellido} (${usuario.email})`;
+                selector.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error al cargar usuarios:', error);
+        const selector = document.getElementById('vUsuario');
+        if (selector) {
+            selector.innerHTML = '<option value="">Error al cargar usuarios</option>';
+        }
+    }
+}
+
+// Función para cargar usuarios en el selector de edición
+async function loadUsuariosEnSelectorEdit() {
+    try {
+        const response = await secureRequest(`${API_URL}/admin/usuarios`);
+        const usuariosData = await response.json();
+        
+        const selector = document.getElementById('editVUsuario');
+        if (selector) {
+            // Mantener la opción seleccionada actual
+            const currentValue = selector.value;
+            selector.innerHTML = '<option value="">Seleccionar usuario...</option>';
+            
+            usuariosData.forEach(usuario => {
+                const option = document.createElement('option');
+                option.value = usuario.id_usuario;
+                option.textContent = `${usuario.nombre} ${usuario.apellido} (${usuario.email})`;
+                selector.appendChild(option);
+            });
+            
+            // Restaurar la selección
+            if (currentValue) {
+                selector.value = currentValue;
+            }
+        }
+    } catch (error) {
+        console.error('Error al cargar usuarios para edición:', error);
+        const selector = document.getElementById('editVUsuario');
+        if (selector) {
+            selector.innerHTML = '<option value="">Error al cargar usuarios</option>';
+        }
+    }
+}
+
+// Función para mostrar el modal de edición
+function showEditVehicleModal() {
+    const modal = document.getElementById('editVehicleModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+    const first = modal.querySelector('input');
+    if (first) first.focus();
+}
+
+// Función para actualizar vehículo
+async function updateVehiculo(event) {
+    event.preventDefault();
+    
+    if (!window.editingVehicleId) {
+        showMessage('Error: ID de vehículo no encontrado', 'error');
+        return;
+    }
+    
+    const formData = new FormData(event.target);
+    const data = {
+        placa: formData.get('placa').trim(),
+        marca: formData.get('marca').trim(),
+        modelo: formData.get('modelo').trim(),
+        color: formData.get('color').trim(),
+        tipo_vehiculo: formData.get('tipo_vehiculo'),
+        id_usuario: parseInt(formData.get('id_usuario'))
+    };
+    
+    // Validaciones
+    if (!data.placa) {
+        showMessage('La placa es requerida', 'error');
+        return;
+    }
+    
+    if (!data.tipo_vehiculo) {
+        showMessage('El tipo de vehículo es requerido', 'error');
+        return;
+    }
+    
+    if (!data.id_usuario) {
+        showMessage('Debe seleccionar un usuario', 'error');
+        return;
+    }
+    
+    try {
+        const response = await secureRequest(`${API_URL}/admin/vehiculos/${window.editingVehicleId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showMessage(result.message || 'Vehículo actualizado exitosamente', 'success');
+            closeStaticModal('editVehicleModal');
+            loadVehiculos();
+            window.editingVehicleId = null;
+        } else {
+            showMessage(result.message || 'Error al actualizar vehículo', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('Error al actualizar vehículo', 'error');
     }
 }
 
@@ -885,7 +1017,29 @@ function editUsuario(id) {
 }
 
 function editVehiculo(id) {
-    showMessage('Función de editar vehículo - Implementar según necesidades', 'info');
+    // Buscar el vehículo en los datos
+    const vehiculo = vehiculos.find(v => v.id_vehiculo === id);
+    if (!vehiculo) {
+        showMessage('Vehículo no encontrado', 'error');
+        return;
+    }
+    
+    // Llenar el modal de edición con los datos del vehículo
+    document.getElementById('editVPlaca').value = vehiculo.placa;
+    document.getElementById('editVMarca').value = vehiculo.marca || '';
+    document.getElementById('editVModelo').value = vehiculo.modelo || '';
+    document.getElementById('editVColor').value = vehiculo.color || '';
+    document.getElementById('editVTipo').value = vehiculo.tipo_vehiculo;
+    document.getElementById('editVUsuario').value = vehiculo.id_usuario;
+    
+    // Cargar usuarios en el selector de edición
+    loadUsuariosEnSelectorEdit();
+    
+    // Establecer el ID del vehículo que se está editando
+    window.editingVehicleId = id;
+    
+    // Mostrar el modal
+    showEditVehicleModal();
 }
 
 // -----------------------------
@@ -1058,12 +1212,13 @@ function initInlineFormHandlers() {
             e.preventDefault();
             const placa = vehicleInline.placa ? vehicleInline.placa.value.trim() : '';
             const tipo = vehicleInline.tipo ? vehicleInline.tipo.value.trim() : '';
+            const id_usuario = vehicleInline.id_usuario ? vehicleInline.id_usuario.value.trim() : '';
             const marca = vehicleInline.marca ? vehicleInline.marca.value.trim() : '';
             const modelo = vehicleInline.modelo ? vehicleInline.modelo.value.trim() : '';
             const color = vehicleInline.color ? vehicleInline.color.value.trim() : '';
             
-            if (!placa || !tipo || !marca) { 
-                showMessage('Placa, tipo y marca son obligatorios', 'error'); 
+            if (!placa || !tipo || !id_usuario || !marca) { 
+                showMessage('Placa, tipo, usuario y marca son obligatorios', 'error'); 
                 return; 
             }
             
@@ -1074,7 +1229,7 @@ function initInlineFormHandlers() {
             }
 
             try {
-                const payload = { placa: (placa || '').toUpperCase(), tipo, marca, modelo, color };
+                const payload = { placa: (placa || '').toUpperCase(), tipo, id_usuario, marca, modelo, color };
                 const resp = await secureRequest(`${API_URL}/admin/vehiculos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

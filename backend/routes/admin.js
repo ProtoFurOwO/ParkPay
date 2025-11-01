@@ -429,6 +429,80 @@ router.post('/vehiculos', verificarToken, verificarAdmin, async (req, res) => {
   }
 });
 
+// Actualizar vehículo
+// 🔐 Actualizar vehículo (PROTEGIDO)
+router.put('/vehiculos/:id', verificarToken, verificarAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { placa, marca, modelo, color, tipo_vehiculo, id_usuario } = req.body;
+
+    // Validaciones
+    if (!placa?.trim()) {
+      return res.status(400).json({ error: 'La placa es requerida' });
+    }
+
+    if (!tipo_vehiculo) {
+      return res.status(400).json({ error: 'El tipo de vehículo es requerido' });
+    }
+
+    if (!id_usuario) {
+      return res.status(400).json({ error: 'El usuario es requerido' });
+    }
+
+    // Validar tipos de vehículo permitidos
+    const tiposPermitidos = ['AUTOMOVIL', 'MOTOCICLETA', 'ELECTRICO'];
+    if (!tiposPermitidos.includes(tipo_vehiculo.toUpperCase())) {
+      return res.status(400).json({ 
+        error: 'Tipo de vehículo inválido. Debe ser: AUTOMOVIL, MOTOCICLETA o ELECTRICO' 
+      });
+    }
+
+    // Verificar que el usuario existe
+    const usuarioExiste = await pool.query(
+      'SELECT id_usuario FROM Usuarios WHERE id_usuario = $1',
+      [id_usuario]
+    );
+
+    if (usuarioExiste.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    // Verificar que la placa no esté en uso por otro vehículo
+    const placaExiste = await pool.query(
+      'SELECT id_vehiculo FROM Vehiculos WHERE placa = $1 AND id_vehiculo != $2',
+      [placa.toUpperCase(), id]
+    );
+
+    if (placaExiste.rows.length > 0) {
+      return res.status(400).json({ error: 'Esta placa ya está registrada' });
+    }
+
+    // Actualizar vehículo
+    const result = await pool.query(
+      `UPDATE Vehiculos 
+       SET placa = $1, marca = $2, modelo = $3, color = $4, 
+           tipo_vehiculo = $5, id_usuario = $6, fecha_actualizacion = NOW()
+       WHERE id_vehiculo = $7 
+       RETURNING id_vehiculo, placa, marca, modelo, color, tipo_vehiculo, id_usuario`,
+      [placa.toUpperCase(), marca || null, modelo || null, color || null, 
+       tipo_vehiculo.toUpperCase(), id_usuario, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Vehículo no encontrado' });
+    }
+
+    res.json({ 
+      message: 'Vehículo actualizado exitosamente',
+      vehiculo: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Error al actualizar vehículo:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
 // Eliminar vehículo
 // 🔐 Eliminar vehículo (PROTEGIDO)
 router.delete('/vehiculos/:id', verificarToken, verificarAdmin, async (req, res) => {
