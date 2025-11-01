@@ -83,7 +83,15 @@ class AuthHelper {
             mode: 'cors'
         };
 
-        const url = `${this.apiUrl}${endpoint}`;
+        // 🛠️ FIX: Detectar si endpoint ya es URL completa o solo ruta
+        let url;
+        if (endpoint.startsWith('http://') || endpoint.startsWith('https://')) {
+            // Ya es URL completa, usarla tal como está
+            url = endpoint;
+        } else {
+            // Es solo una ruta, agregar base URL
+            url = `${this.apiUrl}${endpoint}`;
+        }
         
         try {
             console.log(`🔐 Secure Request: ${options.method || 'GET'} ${endpoint}`);
