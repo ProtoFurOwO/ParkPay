@@ -340,7 +340,7 @@ router.post('/checkout', async (req, res) => {
     let detallesCobro = {
       horas_reservadas: horasReservadas,
       horas_reales: horasReales.toFixed(2),
-      exceso: exceso > 0 ? exceso.toFixed(2) : 0,
+      horas_exceso: exceso > 0 ? exceso.toFixed(2) : 0,  // 🔧 ARREGLADO: usar horas_exceso
       monto_original: montoOriginal.toFixed(2)
     };
 
@@ -356,10 +356,19 @@ router.post('/checkout', async (req, res) => {
       
       montoExtra = montoExceso + multa;
       
+      // 🔧 ARREGLADO: Actualizar detallesCobro con la información correcta
       detallesCobro.horas_exceso_cobradas = horasExcesoCompletas;
       detallesCobro.monto_exceso = montoExceso.toFixed(2);
       detallesCobro.multa = multa.toFixed(2);
       detallesCobro.tiene_multa = exceso >= 2;
+      
+      console.log(`💰 Cobro de tiempo extra calculado:`, {
+        exceso_real: exceso.toFixed(2),
+        horas_cobradas: horasExcesoCompletas,
+        monto_exceso: montoExceso.toFixed(2),
+        multa: multa.toFixed(2),
+        total_extra: montoExtra.toFixed(2)
+      });
     }
 
     const montoTotal = montoOriginal + montoExtra;
