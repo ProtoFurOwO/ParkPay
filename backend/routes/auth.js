@@ -82,7 +82,7 @@ async function enviarEmailRecuperacion(email, nombre, codigo) {
 }
 
 // REGISTRO - Crear usuario y su vehículo
-router.post('/register', async (req, res) => {
+router.post('/register', detectarBurpSuite, rateLimitByIP(5, 10 * 60 * 1000), async (req, res) => {
   const client = await pool.connect();
   try {
     const { nombre, apellido, email, password, tipo, placa, marca, modelo, color } = req.body;
@@ -103,6 +103,17 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ 
         error: `Placa "${placa}" excede 10 caracteres (tiene ${placa.length}). Máximo permitido: 10 caracteres.` 
       });
+    }
+
+    // 🔧 VALIDACIONES DE LONGITUD: marca, modelo, color (50 caracteres máximo)
+    if (marca && marca.length > 50) {
+      return res.status(400).json({ error: 'La marca no puede tener más de 50 caracteres' });
+    }
+    if (modelo && modelo.length > 50) {
+      return res.status(400).json({ error: 'El modelo no puede tener más de 50 caracteres' });
+    }
+    if (color && color.length > 50) {
+      return res.status(400).json({ error: 'El color no puede tener más de 50 caracteres' });
     }
 
     // Verificar si el email ya existe

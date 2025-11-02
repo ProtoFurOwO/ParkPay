@@ -376,6 +376,17 @@ router.post('/vehiculos', proteccionAntiBurp, verificarToken, verificarAdmin, as
       });
     }
 
+    // 🔧 VALIDACIONES DE LONGITUD: marca, modelo, color (50 caracteres máximo)
+    if (marca && marca.length > 50) {
+      return res.status(400).json({ error: 'La marca no puede tener más de 50 caracteres' });
+    }
+    if (modelo && modelo.length > 50) {
+      return res.status(400).json({ error: 'El modelo no puede tener más de 50 caracteres' });
+    }
+    if (color && color.length > 50) {
+      return res.status(400).json({ error: 'El color no puede tener más de 50 caracteres' });
+    }
+
     // Validar que el tipo sea válido
     const tiposValidos = ['AUTOMOVIL', 'MOTOCICLETA', 'ELECTRICO'];
     if (!tiposValidos.includes(tipo)) {
@@ -447,6 +458,17 @@ router.put('/vehiculos/:id', verificarToken, verificarAdmin, async (req, res) =>
 
     if (!id_usuario) {
       return res.status(400).json({ error: 'El usuario es requerido' });
+    }
+
+    // 🔧 VALIDACIONES DE LONGITUD: marca, modelo, color (50 caracteres máximo)
+    if (marca && marca.length > 50) {
+      return res.status(400).json({ error: 'La marca no puede tener más de 50 caracteres' });
+    }
+    if (modelo && modelo.length > 50) {
+      return res.status(400).json({ error: 'El modelo no puede tener más de 50 caracteres' });
+    }
+    if (color && color.length > 50) {
+      return res.status(400).json({ error: 'El color no puede tener más de 50 caracteres' });
     }
 
     // Validar tipos de vehículo permitidos
