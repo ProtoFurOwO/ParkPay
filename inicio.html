@@ -751,9 +751,10 @@ button, .btn-cancelar-reserva, .btn-extender-tiempo {
             if (!confirm('¿Estás seguro de cancelar esta reserva?')) return;
             
             try {
-                const token = AuthHelper.getToken();
+                const token = localStorage.getItem('parkpay_token');
                 if (!token) {
-                    AuthHelper.redirectToLogin('Sesión expirada');
+                    alert('❌ Sesión expirada. Por favor, inicia sesión nuevamente.');
+                    window.location.href = 'login.html';
                     return;
                 }
 
@@ -784,9 +785,10 @@ button, .btn-cancelar-reserva, .btn-extender-tiempo {
             if (!confirm('¿Agregar 10 minutos adicionales a la ventana de escaneo?')) return;
             
             try {
-                const token = AuthHelper.getToken();
+                const token = localStorage.getItem('parkpay_token');
                 if (!token) {
-                    AuthHelper.redirectToLogin('Sesión expirada');
+                    alert('❌ Sesión expirada. Por favor, inicia sesión nuevamente.');
+                    window.location.href = 'login.html';
                     return;
                 }
 

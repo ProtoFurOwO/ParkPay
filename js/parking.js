@@ -502,7 +502,6 @@ async function crearReservaInstantanea() {
     
     try {
         console.log('🔄 Creando reserva instantánea...', {
-            id_usuario: usuario.id_usuario,
             id_vehiculo: selectedVehiculo.id_vehiculo,
             id_cajon: selectedCajon.id_cajon,
             duracion_minutos: duracionMinutos,
@@ -510,7 +509,6 @@ async function crearReservaInstantanea() {
         });
 
         const response = await window.authHelper.post('/reservas/instante', {
-            id_usuario: usuario.id_usuario,
             id_vehiculo: selectedVehiculo.id_vehiculo,
             id_cajon: selectedCajon.id_cajon,
             duracion_minutos: duracionMinutos,
@@ -571,7 +569,6 @@ async function crearReservaFutura() {
     
     try {
         console.log('🔄 Creando reserva futura...', {
-            id_usuario: usuario.id_usuario,
             id_vehiculo: selectedVehiculo.id_vehiculo,
             id_cajon: selectedCajon.id_cajon,
             fecha_inicio: fechaInicio.toISOString(),
@@ -586,7 +583,6 @@ async function crearReservaFutura() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                id_usuario: usuario.id_usuario,
                 id_vehiculo: selectedVehiculo.id_vehiculo,
                 id_cajon: selectedCajon.id_cajon,
                 fecha_inicio: fechaInicio.toISOString(),

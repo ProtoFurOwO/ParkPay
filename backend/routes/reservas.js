@@ -41,9 +41,10 @@ router.get('/disponibles', async (req, res) => {
 // Body: { id_usuario, id_vehiculo, id_cajon, duracion_minutos, monto_total }
 router.post('/instante', verificarToken, async (req, res) => {
     try {
-        const { id_usuario, id_vehiculo, id_cajon, duracion_minutos, monto_total } = req.body;
+        const { id_vehiculo, id_cajon, duracion_minutos, monto_total } = req.body;
+        const id_usuario = req.usuario.id_usuario; // Usar el ID del token JWT, no del body
 
-        if (!id_usuario || !id_vehiculo || !id_cajon || !duracion_minutos || !monto_total) {
+        if (!id_vehiculo || !id_cajon || !duracion_minutos || !monto_total) {
             return res.status(400).json({ error: 'Faltan datos requeridos' });
         }
 
@@ -53,10 +54,10 @@ router.post('/instante', verificarToken, async (req, res) => {
             FROM vehiculos v
             JOIN usuarios u ON v.id_usuario = u.id_usuario
             WHERE v.id_vehiculo = $1 AND v.id_usuario = $2
-        `, [id_vehiculo, req.usuario.id_usuario]);
+        `, [id_vehiculo, id_usuario]);
 
         if (vehiculoOwnerCheck.rows.length === 0) {
-            console.warn(`🚨 INTENTO DE SUPLANTACIÓN: Usuario ${req.usuario.id_usuario} intentó usar vehículo ${id_vehiculo} que no le pertenece`);
+            console.warn(`🚨 INTENTO DE SUPLANTACIÓN: Usuario ${id_usuario} intentó usar vehículo ${id_vehiculo} que no le pertenece`);
             return res.status(403).json({ 
                 error: 'No puedes reservar con un vehículo que no te pertenece',
                 codigo: 'VEHICULO_NO_AUTORIZADO'
@@ -156,7 +157,6 @@ router.post('/instante', verificarToken, async (req, res) => {
 router.post('/futura', verificarToken, async (req, res) => {
     try {
         const { 
-            id_usuario, 
             id_vehiculo, 
             id_cajon, 
             fecha_inicio, 
@@ -164,8 +164,9 @@ router.post('/futura', verificarToken, async (req, res) => {
             duracion_minutos, 
             monto_total 
         } = req.body;
+        const id_usuario = req.usuario.id_usuario; // Usar el ID del token JWT, no del body
 
-        if (!id_usuario || !id_vehiculo || !id_cajon || !fecha_inicio || !fecha_fin || !duracion_minutos || !monto_total) {
+        if (!id_vehiculo || !id_cajon || !fecha_inicio || !fecha_fin || !duracion_minutos || !monto_total) {
             return res.status(400).json({ error: 'Faltan datos requeridos' });
         }
 
