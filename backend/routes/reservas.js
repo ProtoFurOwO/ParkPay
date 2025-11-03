@@ -43,10 +43,10 @@ router.post('/instante', verificarToken, async (req, res) => {
     try {
         console.log('🔄 POST /instante - Iniciando proceso...');
         console.log('📦 Body recibido:', req.body);
-        console.log('👤 Usuario del token:', req.usuario);
+        console.log('👤 Usuario del token:', req.user);
         
         const { id_vehiculo, id_cajon, duracion_minutos, monto_total } = req.body;
-        const id_usuario = req.usuario.id_usuario; // Usar el ID del token JWT, no del body
+        const id_usuario = req.user.id_usuario; // Usar el ID del token JWT, no del body
 
         console.log('📝 Datos extraídos:', { id_usuario, id_vehiculo, id_cajon, duracion_minutos, monto_total });
 
@@ -195,7 +195,7 @@ router.post('/futura', verificarToken, async (req, res) => {
             duracion_minutos, 
             monto_total 
         } = req.body;
-        const id_usuario = req.usuario.id_usuario; // Usar el ID del token JWT, no del body
+        const id_usuario = req.user.id_usuario; // Usar el ID del token JWT, no del body
 
         if (!id_vehiculo || !id_cajon || !fecha_inicio || !fecha_fin || !duracion_minutos || !monto_total) {
             return res.status(400).json({ error: 'Faltan datos requeridos' });
