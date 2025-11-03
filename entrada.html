@@ -324,6 +324,29 @@
                            maxlength="10">
                 </div>
 
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; color: #e2e8f0; font-weight: 500; margin-bottom: 8px;">
+                        ⏰ Horas de estacionamiento:
+                    </label>
+                    <select id="horasEstacionamiento" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: #e2e8f0; font-size: 1em;" onchange="actualizarPrecioGuest()">
+                        <option value="1">1 hora - $25.00</option>
+                        <option value="2" selected>2 horas - $50.00</option>
+                        <option value="3">3 horas - $75.00</option>
+                        <option value="4">4 horas - $100.00</option>
+                        <option value="6">6 horas - $150.00</option>
+                        <option value="8">8 horas - $200.00</option>
+                        <option value="12">12 horas - $300.00</option>
+                        <option value="24">24 horas - $600.00</option>
+                        <option value="48">48 horas (2 días) - $1,200.00</option>
+                        <option value="72">72 horas (3 días) - $1,800.00</option>
+                        <option value="120">120 horas (5 días) - $3,000.00</option>
+                        <option value="240">240 horas (10 días) - $6,000.00</option>
+                    </select>
+                    <p style="color: #94a3b8; font-size: 0.85em; margin-top: 5px;">
+                        💰 Precio estimado para automóvil. El precio final depende del tipo de vehículo.
+                    </p>
+                </div>
+
                 <button class="btn btn-primary" onclick="crearTicketGuest()" id="btnCrearTicket">
                     🎫 Obtener Lugar de Estacionamiento
                 </button>
@@ -479,9 +502,37 @@
         }
 
         // 🎫 SISTEMA PARA USUARIOS SIN CUENTA
+        function actualizarPrecioGuest() {
+            const tipoVehiculo = document.getElementById('tipoVehiculo').value;
+            const horas = parseInt(document.getElementById('horasEstacionamiento').value);
+            const select = document.getElementById('horasEstacionamiento');
+            
+            if (!tipoVehiculo || !horas) return;
+
+            // Precios por tipo de vehículo por hora
+            const precios = {
+                'AUTOMOVIL': 25,
+                'MOTO': 15,
+                'ELECTRICO': 20
+            };
+
+            const precioPorHora = precios[tipoVehiculo] || 25;
+            const precioTotal = horas * precioPorHora;
+
+            // Actualizar las opciones del select con precios correctos
+            const opciones = select.children;
+            for (let i = 0; i < opciones.length; i++) {
+                const valor = parseInt(opciones[i].value);
+                const precio = valor * precioPorHora;
+                const dias = valor >= 24 ? ` (${Math.floor(valor/24)} día${valor >= 48 ? 's' : ''})` : '';
+                opciones[i].textContent = `${valor} hora${valor > 1 ? 's' : ''}${dias} - $${precio.toLocaleString()}.00`;
+            }
+        }
+
         async function crearTicketGuest() {
             const tipoVehiculo = document.getElementById('tipoVehiculo').value;
             const placaVehiculo = document.getElementById('placaVehiculo').value.trim().toUpperCase();
+            const horasEstacionamiento = parseInt(document.getElementById('horasEstacionamiento').value);
             const btnCrear = document.getElementById('btnCrearTicket');
 
             // Validaciones
@@ -492,6 +543,11 @@
 
             if (!placaVehiculo || placaVehiculo.length < 3) {
                 alert('❌ Por favor ingresa una placa válida (mínimo 3 caracteres)');
+                return;
+            }
+
+            if (!horasEstacionamiento || horasEstacionamiento < 1) {
+                alert('❌ Por favor selecciona las horas de estacionamiento');
                 return;
             }
 
@@ -511,7 +567,7 @@
                     body: JSON.stringify({
                         tipo_vehiculo: tipoVehiculo,
                         placa: placaVehiculo,
-                        duracion_horas: 2 // Por defecto 2 horas para guests
+                        duracion_horas: horasEstacionamiento
                     })
                 });
 
@@ -614,6 +670,23 @@
                 `;
             }
         }
+
+        // 🔧 INICIALIZACIÓN DE EVENTOS
+        document.addEventListener('DOMContentLoaded', function() {
+            // Event listeners para actualizar precios en tiempo real
+            const tipoVehiculo = document.getElementById('tipoVehiculo');
+            const horasEstacionamiento = document.getElementById('horasEstacionamiento');
+            
+            if (tipoVehiculo) {
+                tipoVehiculo.addEventListener('change', actualizarPrecioGuest);
+            }
+            
+            if (horasEstacionamiento) {
+                horasEstacionamiento.addEventListener('change', actualizarPrecioGuest);
+                // Actualizar precios inicial
+                setTimeout(actualizarPrecioGuest, 100);
+            }
+        });
     </script>
 
     <!-- Librería QR Code (opcional, para mejor visualización) -->

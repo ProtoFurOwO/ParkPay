@@ -644,10 +644,10 @@ router.post('/guest', async (req, res) => {
 
         // 1. Buscar cajón disponible del tipo correcto
         const cajonDisponible = await pool.query(`
-            SELECT c.id_cajon, c.numero_cajon, t.costo_por_hora, t.tipo_vehiculo
+            SELECT c.id_cajon, c.numero_cajon, t.costo_por_hora
             FROM cajonesestacionamiento c
             JOIN tarifas t ON c.id_tarifa = t.id_tarifa
-            WHERE t.tipo_vehiculo = $1 
+            WHERE c.tipo = $1 
             AND c.estado = 'DISPONIBLE'
             AND c.id_cajon NOT IN (
                 SELECT id_cajon FROM tickets WHERE estado = 'ACTIVO'
@@ -710,7 +710,7 @@ router.post('/guest', async (req, res) => {
                 codigo_acceso: ticket.codigo_acceso,
                 numero_cajon: cajon.numero_cajon,
                 placa: ticket.placa_vehiculo,
-                tipo_vehiculo: cajon.tipo_vehiculo,
+                tipo_vehiculo: tipo_vehiculo.toUpperCase(),
                 duracion_horas: duracionFinal,
                 duracion_minutos: duracionMinutos,
                 monto_total: montoTotal,
