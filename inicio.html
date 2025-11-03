@@ -762,7 +762,10 @@ button, .btn-cancelar-reserva, .btn-extender-tiempo {
                     method: 'PUT',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'X-Request-Source': 'parkpay-frontend',
+                        'X-Request-Time': Date.now().toString(),
+                        'X-Request-Nonce': Math.random().toString(36).substring(2, 15)
                     }
                 });
                 
@@ -796,7 +799,10 @@ button, .btn-cancelar-reserva, .btn-extender-tiempo {
                     method: 'PUT',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'X-Request-Source': 'parkpay-frontend',
+                        'X-Request-Time': Date.now().toString(),
+                        'X-Request-Nonce': Math.random().toString(36).substring(2, 15)
                     },
                     body: JSON.stringify({ minutos: 10 })
                 });
