@@ -56,20 +56,34 @@ router.post('/instante', verificarToken, async (req, res) => {
         }
 
         // 🛡️ VALIDACIÓN DE SEGURIDAD 1: Verificar que el vehículo pertenece al usuario autenticado
+        console.log('🔍 Verificando vehículo:', { id_vehiculo, id_usuario });
+        
         const vehiculoOwnerCheck = await pool.query(`
-            SELECT v.id_vehiculo, v.placa, u.nombre, u.apellido
+            SELECT v.id_vehiculo, v.placa, v.id_usuario as owner_id
             FROM vehiculos v
-            JOIN usuarios u ON v.id_usuario = u.id_usuario
-            WHERE v.id_vehiculo = $1 AND v.id_usuario = $2
-        `, [id_vehiculo, id_usuario]);
+            WHERE v.id_vehiculo = $1
+        `, [id_vehiculo]);
+
+        console.log('📋 Resultado consulta vehículo:', vehiculoOwnerCheck.rows);
 
         if (vehiculoOwnerCheck.rows.length === 0) {
-            console.warn(`🚨 INTENTO DE SUPLANTACIÓN: Usuario ${id_usuario} intentó usar vehículo ${id_vehiculo} que no le pertenece`);
+            console.warn(`❌ Vehículo ${id_vehiculo} no encontrado`);
+            return res.status(404).json({ 
+                error: 'Vehículo no encontrado',
+                codigo: 'VEHICULO_NO_ENCONTRADO'
+            });
+        }
+
+        const vehiculo = vehiculoOwnerCheck.rows[0];
+        if (vehiculo.owner_id !== id_usuario) {
+            console.warn(`🚨 INTENTO DE SUPLANTACIÓN: Usuario ${id_usuario} intentó usar vehículo ${id_vehiculo} que pertenece a ${vehiculo.owner_id}`);
             return res.status(403).json({ 
                 error: 'No puedes reservar con un vehículo que no te pertenece',
                 codigo: 'VEHICULO_NO_AUTORIZADO'
             });
         }
+
+        console.log('✅ Validación de vehículo exitosa');
 
         // 🛡️ VALIDACIÓN DE SEGURIDAD 2: Limitar duración máxima (10 días = 240 horas = 14400 minutos)
         const MAX_DURACION_MINUTOS = 14400; // 10 días
@@ -188,19 +202,34 @@ router.post('/futura', verificarToken, async (req, res) => {
         }
 
         // 🛡️ VALIDACIÓN DE PROPIEDAD DEL VEHÍCULO - ANTI TAMPERING
+        console.log('🔍 Verificando vehículo futura:', { id_vehiculo, id_usuario });
+        
         const vehiculoVerif = await pool.query(
-            'SELECT id_vehiculo FROM vehiculos WHERE id_vehiculo = $1 AND id_usuario = $2',
-            [id_vehiculo, id_usuario]
+            'SELECT id_vehiculo, id_usuario as owner_id FROM vehiculos WHERE id_vehiculo = $1',
+            [id_vehiculo]
         );
 
+        console.log('📋 Resultado consulta vehículo futura:', vehiculoVerif.rows);
+
         if (vehiculoVerif.rows.length === 0) {
-            console.warn(`🚨 INTENTO DE USO DE VEHÍCULO AJENO: Usuario ${id_usuario} intentó usar vehículo ${id_vehiculo} que no le pertenece`);
+            console.warn(`❌ Vehículo ${id_vehiculo} no encontrado para reserva futura`);
+            return res.status(404).json({ 
+                error: 'Vehículo no encontrado',
+                codigo: 'VEHICULO_NO_ENCONTRADO'
+            });
+        }
+
+        const vehiculoData = vehiculoVerif.rows[0];
+        if (vehiculoData.owner_id !== id_usuario) {
+            console.warn(`🚨 INTENTO DE USO DE VEHÍCULO AJENO: Usuario ${id_usuario} intentó usar vehículo ${id_vehiculo} que pertenece a ${vehiculoData.owner_id}`);
             return res.status(403).json({ 
                 error: 'No puedes usar un vehículo que no te pertenece',
                 id_vehiculo_solicitado: id_vehiculo,
                 mensaje: 'Selecciona uno de tus vehículos registrados'
             });
         }
+
+        console.log('✅ Validación de vehículo futura exitosa');
 
         // 🛡️ VALIDACIÓN DE DURACIÓN MÁXIMA (10 días = 14,400 minutos)
         const duracionMaxima = 14400; // 10 días
