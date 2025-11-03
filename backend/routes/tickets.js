@@ -650,7 +650,7 @@ router.post('/guest', async (req, res) => {
             WHERE c.tipo = $1 
             AND c.estado = 'Disponible'
             AND c.id_cajon NOT IN (
-                SELECT id_cajon FROM tickets WHERE estado = 'ACTIVO'
+                SELECT id_cajon FROM ticketsestancia WHERE estado = 'ACTIVO'
                 UNION
                 SELECT id_cajon FROM reservasanticipadas 
                 WHERE estado = 'PENDIENTE' AND fecha_fin_reserva > NOW()
@@ -674,27 +674,42 @@ router.post('/guest', async (req, res) => {
         console.log('🅿️ Cajón asignado:', cajon);
         console.log('💰 Cálculo de precio:', { costoPorHora, duracionFinal, montoTotal });
 
-        // 2. Generar código de acceso único
+        // 2. Crear vehículo temporal para guest
+        const vehiculoResult = await pool.query(`
+            INSERT INTO vehiculos (
+                placa, 
+                marca, 
+                modelo, 
+                color, 
+                tipo
+            ) VALUES (
+                $1, 'GUEST', 'GUEST', 'N/A', $2
+            ) RETURNING id_vehiculo
+        `, [placaLimpia, tipo_vehiculo.toUpperCase()]);
+
+        const idVehiculo = vehiculoResult.rows[0].id_vehiculo;
+        console.log('🚗 Vehículo guest creado:', idVehiculo);
+
+        // 3. Generar código de acceso único
         const codigoAcceso = generarCodigoAccesoGuest();
 
-        // 3. Crear ticket en base de datos (sin id_usuario para guests)
+        // 4. Crear ticket en base de datos
         const ticketResult = await pool.query(`
-            INSERT INTO tickets (
+            INSERT INTO ticketsestancia (
                 id_cajon, 
-                placa_vehiculo, 
+                id_vehiculo,
                 codigo_acceso, 
-                duracion_comprada_minutos, 
-                monto_total,
+                monto_cobrado,
                 fecha_hora_entrada,
                 estado
             ) VALUES (
-                $1, $2, $3, $4, $5, NOW(), 'ACTIVO'
+                $1, $2, $3, $4, NOW(), 'ACTIVO'
             ) RETURNING *
-        `, [cajon.id_cajon, placaLimpia, codigoAcceso, duracionMinutos, montoTotal]);
+        `, [cajon.id_cajon, idVehiculo, codigoAcceso, montoTotal]);
 
         const ticket = ticketResult.rows[0];
 
-        // 4. Marcar cajón como ocupado
+        // 5. Marcar cajón como ocupado
         await pool.query(
             'UPDATE cajonesestacionamiento SET estado = $1 WHERE id_cajon = $2',
             ['Ocupado', cajon.id_cajon]
@@ -702,14 +717,14 @@ router.post('/guest', async (req, res) => {
 
         console.log('✅ Ticket de huésped creado exitosamente:', ticket.id_ticket);
 
-        // 5. Respuesta exitosa
+        // 6. Respuesta exitosa
         res.status(201).json({
             message: 'Ticket de huésped creado exitosamente',
             ticket: {
                 id_ticket: ticket.id_ticket,
                 codigo_acceso: ticket.codigo_acceso,
                 numero_cajon: cajon.numero_cajon,
-                placa: ticket.placa_vehiculo,
+                placa: placaLimpia,
                 tipo_vehiculo: tipo_vehiculo.toUpperCase(),
                 duracion_horas: duracionFinal,
                 duracion_minutos: duracionMinutos,
