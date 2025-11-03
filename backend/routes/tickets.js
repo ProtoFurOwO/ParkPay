@@ -648,7 +648,7 @@ router.post('/guest', async (req, res) => {
             FROM cajonesestacionamiento c
             JOIN tarifas t ON c.id_tarifa = t.id_tarifa
             WHERE c.tipo = $1 
-            AND c.estado = 'DISPONIBLE'
+            AND c.estado = 'Disponible'
             AND c.id_cajon NOT IN (
                 SELECT id_cajon FROM tickets WHERE estado = 'ACTIVO'
                 UNION
@@ -697,7 +697,7 @@ router.post('/guest', async (req, res) => {
         // 4. Marcar cajón como ocupado
         await pool.query(
             'UPDATE cajonesestacionamiento SET estado = $1 WHERE id_cajon = $2',
-            ['OCUPADO', cajon.id_cajon]
+            ['Ocupado', cajon.id_cajon]
         );
 
         console.log('✅ Ticket de huésped creado exitosamente:', ticket.id_ticket);
