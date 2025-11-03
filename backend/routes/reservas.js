@@ -47,6 +47,31 @@ router.post('/instante', verificarToken, async (req, res) => {
             return res.status(400).json({ error: 'Faltan datos requeridos' });
         }
 
+        // 🛡️ VALIDACIÓN DE SEGURIDAD 1: Verificar que el vehículo pertenece al usuario autenticado
+        const vehiculoOwnerCheck = await pool.query(`
+            SELECT v.id_vehiculo, v.placa, u.nombre, u.apellido
+            FROM vehiculos v
+            JOIN usuarios u ON v.id_usuario = u.id_usuario
+            WHERE v.id_vehiculo = $1 AND v.id_usuario = $2
+        `, [id_vehiculo, req.usuario.id_usuario]);
+
+        if (vehiculoOwnerCheck.rows.length === 0) {
+            console.warn(`🚨 INTENTO DE SUPLANTACIÓN: Usuario ${req.usuario.id_usuario} intentó usar vehículo ${id_vehiculo} que no le pertenece`);
+            return res.status(403).json({ 
+                error: 'No puedes reservar con un vehículo que no te pertenece',
+                codigo: 'VEHICULO_NO_AUTORIZADO'
+            });
+        }
+
+        // 🛡️ VALIDACIÓN DE SEGURIDAD 2: Limitar duración máxima (10 días = 240 horas = 14400 minutos)
+        const MAX_DURACION_MINUTOS = 14400; // 10 días
+        let duracionFinal = duracion_minutos;
+        
+        if (duracion_minutos > MAX_DURACION_MINUTOS) {
+            console.warn(`⚠️ Duración excesiva detectada: ${duracion_minutos} minutos. Limitando a ${MAX_DURACION_MINUTOS} minutos (10 días)`);
+            duracionFinal = MAX_DURACION_MINUTOS;
+        }
+
         // 🛡️ VALIDACIÓN DE PRECIO - ANTI BURP SUITE
         // NO confiar en el monto que envía el frontend - obtener tarifa real de BD
         
@@ -64,7 +89,7 @@ router.post('/instante', verificarToken, async (req, res) => {
 
         const cajonInfo = tarifaResult.rows[0];
         const tarifaPorHora = parseFloat(cajonInfo.costo_por_hora);
-        const horas = Math.ceil(duracion_minutos / 60);
+        const horas = Math.ceil(duracionFinal / 60);
         const montoReal = horas * tarifaPorHora;
 
         // Verificar que el monto enviado sea correcto (tolerancia de ±1 peso)
@@ -98,7 +123,7 @@ router.post('/instante', verificarToken, async (req, res) => {
                 NOW() + INTERVAL '30 minutes', 
                 $4, $5
             ) RETURNING *`,
-            [id_usuario, id_vehiculo, id_cajon, duracion_minutos, montoSeguro]
+            [id_usuario, id_vehiculo, id_cajon, duracionFinal, montoSeguro]
         );
 
         const reserva = result.rows[0];
@@ -144,6 +169,46 @@ router.post('/futura', verificarToken, async (req, res) => {
             return res.status(400).json({ error: 'Faltan datos requeridos' });
         }
 
+        // 🛡️ VALIDACIÓN DE PROPIEDAD DEL VEHÍCULO - ANTI TAMPERING
+        const vehiculoVerif = await pool.query(
+            'SELECT id_vehiculo FROM vehiculos WHERE id_vehiculo = $1 AND id_usuario = $2',
+            [id_vehiculo, id_usuario]
+        );
+
+        if (vehiculoVerif.rows.length === 0) {
+            console.warn(`🚨 INTENTO DE USO DE VEHÍCULO AJENO: Usuario ${id_usuario} intentó usar vehículo ${id_vehiculo} que no le pertenece`);
+            return res.status(403).json({ 
+                error: 'No puedes usar un vehículo que no te pertenece',
+                id_vehiculo_solicitado: id_vehiculo,
+                mensaje: 'Selecciona uno de tus vehículos registrados'
+            });
+        }
+
+        // 🛡️ VALIDACIÓN DE DURACIÓN MÁXIMA (10 días = 14,400 minutos)
+        const duracionMaxima = 14400; // 10 días
+        let duracionFinal = duracion_minutos;
+
+        if (duracion_minutos > duracionMaxima) {
+            console.warn(`🚨 INTENTO DE RESERVA EXCESIVA: Usuario ${id_usuario} intentó reservar ${duracion_minutos} minutos (máximo: ${duracionMaxima})`);
+            duracionFinal = duracionMaxima;
+        }
+
+        // 🛡️ VALIDACIÓN DE FECHA FUTURA MÁXIMA (3 meses = 90 días)
+        const inicioDate = new Date(fecha_inicio);
+        const ahora = new Date();
+        const maxFechaFutura = new Date();
+        maxFechaFutura.setDate(maxFechaFutura.getDate() + 90); // 3 meses
+
+        if (inicioDate > maxFechaFutura) {
+            console.warn(`🚨 INTENTO DE RESERVA EXCESIVAMENTE FUTURA: Usuario ${id_usuario} intentó reservar para ${fecha_inicio} (máximo: ${maxFechaFutura.toISOString()})`);
+            return res.status(400).json({ 
+                error: 'No puedes reservar con más de 3 meses de anticipación',
+                fecha_solicitada: fecha_inicio,
+                fecha_maxima_permitida: maxFechaFutura.toISOString(),
+                mensaje: 'Selecciona una fecha dentro de los próximos 3 meses'
+            });
+        }
+
         // 🛡️ VALIDACIÓN DE PRECIO - ANTI BURP SUITE PARA RESERVAS FUTURAS
         // Obtener tarifa real del cajón desde la base de datos
         const tarifaResult = await pool.query(`
@@ -159,7 +224,7 @@ router.post('/futura', verificarToken, async (req, res) => {
 
         const cajonInfo = tarifaResult.rows[0];
         const tarifaPorHora = parseFloat(cajonInfo.costo_por_hora);
-        const horas = Math.ceil(duracion_minutos / 60);
+        const horas = Math.ceil(duracionFinal / 60);
         const montoReal = horas * tarifaPorHora;
 
         // Verificar que el monto enviado sea correcto
@@ -176,11 +241,8 @@ router.post('/futura', verificarToken, async (req, res) => {
         // Usar el monto calculado por el servidor
         const montoSeguro = montoReal;
 
-        // Validar que la fecha de inicio sea en el futuro
-        const inicioDate = new Date(fecha_inicio);
-        const now = new Date();
-        
-        if (inicioDate <= now) {
+        // Validar que la fecha de inicio sea en el futuro (ya se validó arriba pero verificamos nuevamente)
+        if (inicioDate <= ahora) {
             return res.status(400).json({ 
                 error: 'La fecha de inicio debe ser en el futuro (mínimo 1 hora desde ahora)' 
             });
@@ -212,7 +274,7 @@ router.post('/futura', verificarToken, async (req, res) => {
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7
             ) RETURNING *`,
-            [id_usuario, id_vehiculo, id_cajon, fecha_inicio, fecha_fin, duracion_minutos, montoSeguro]
+            [id_usuario, id_vehiculo, id_cajon, fecha_inicio, fecha_fin, duracionFinal, montoSeguro]
         );
 
         const reserva = result.rows[0];
