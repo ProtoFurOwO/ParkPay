@@ -598,4 +598,158 @@ router.post('/finalizar', async (req, res) => {
   }
 });
 
+// 🎫 CREAR TICKET PARA USUARIO SIN CUENTA
+router.post('/guest', async (req, res) => {
+    try {
+        console.log('🎫 POST /tickets/guest - Creando ticket para usuario sin cuenta...');
+        console.log('📦 Body recibido:', req.body);
+
+        const { tipo_vehiculo, placa, duracion_horas = 2 } = req.body;
+
+        // Validaciones básicas
+        if (!tipo_vehiculo || !placa) {
+            return res.status(400).json({ 
+                error: 'Faltan datos requeridos',
+                requeridos: ['tipo_vehiculo', 'placa']
+            });
+        }
+
+        // Validar tipo de vehículo
+        const tiposValidos = ['AUTOMOVIL', 'MOTO', 'ELECTRICO'];
+        if (!tiposValidos.includes(tipo_vehiculo.toUpperCase())) {
+            return res.status(400).json({ 
+                error: 'Tipo de vehículo no válido',
+                tipos_validos: tiposValidos
+            });
+        }
+
+        // Validar placa (básico)
+        const placaLimpia = placa.trim().toUpperCase();
+        if (placaLimpia.length < 3 || placaLimpia.length > 10) {
+            return res.status(400).json({ 
+                error: 'Placa debe tener entre 3 y 10 caracteres'
+            });
+        }
+
+        // Limitar duración máxima (24 horas para guests)
+        const duracionFinal = Math.min(Math.max(duracion_horas, 1), 24);
+        const duracionMinutos = duracionFinal * 60;
+
+        console.log('📋 Datos procesados:', { 
+            tipo_vehiculo: tipo_vehiculo.toUpperCase(), 
+            placa: placaLimpia, 
+            duracion_horas: duracionFinal,
+            duracion_minutos: duracionMinutos
+        });
+
+        // 1. Buscar cajón disponible del tipo correcto
+        const cajonDisponible = await pool.query(`
+            SELECT c.id_cajon, c.numero_cajon, t.costo_por_hora, t.tipo_vehiculo
+            FROM cajonesestacionamiento c
+            JOIN tarifas t ON c.id_tarifa = t.id_tarifa
+            WHERE t.tipo_vehiculo = $1 
+            AND c.estado = 'DISPONIBLE'
+            AND c.id_cajon NOT IN (
+                SELECT id_cajon FROM tickets WHERE estado = 'ACTIVO'
+                UNION
+                SELECT id_cajon FROM reservasanticipadas 
+                WHERE estado = 'PENDIENTE' AND fecha_fin_reserva > NOW()
+            )
+            ORDER BY c.numero_cajon
+            LIMIT 1
+        `, [tipo_vehiculo.toUpperCase()]);
+
+        if (cajonDisponible.rows.length === 0) {
+            return res.status(409).json({ 
+                error: 'No hay cajones disponibles',
+                tipo_solicitado: tipo_vehiculo.toUpperCase(),
+                mensaje: 'Intenta más tarde o con otro tipo de vehículo'
+            });
+        }
+
+        const cajon = cajonDisponible.rows[0];
+        const costoPorHora = parseFloat(cajon.costo_por_hora);
+        const montoTotal = duracionFinal * costoPorHora;
+
+        console.log('🅿️ Cajón asignado:', cajon);
+        console.log('💰 Cálculo de precio:', { costoPorHora, duracionFinal, montoTotal });
+
+        // 2. Generar código de acceso único
+        const codigoAcceso = generarCodigoAccesoGuest();
+
+        // 3. Crear ticket en base de datos (sin id_usuario para guests)
+        const ticketResult = await pool.query(`
+            INSERT INTO tickets (
+                id_cajon, 
+                placa_vehiculo, 
+                codigo_acceso, 
+                duracion_comprada_minutos, 
+                monto_total,
+                fecha_hora_entrada,
+                estado
+            ) VALUES (
+                $1, $2, $3, $4, $5, NOW(), 'ACTIVO'
+            ) RETURNING *
+        `, [cajon.id_cajon, placaLimpia, codigoAcceso, duracionMinutos, montoTotal]);
+
+        const ticket = ticketResult.rows[0];
+
+        // 4. Marcar cajón como ocupado
+        await pool.query(
+            'UPDATE cajonesestacionamiento SET estado = $1 WHERE id_cajon = $2',
+            ['OCUPADO', cajon.id_cajon]
+        );
+
+        console.log('✅ Ticket de huésped creado exitosamente:', ticket.id_ticket);
+
+        // 5. Respuesta exitosa
+        res.status(201).json({
+            message: 'Ticket de huésped creado exitosamente',
+            ticket: {
+                id_ticket: ticket.id_ticket,
+                codigo_acceso: ticket.codigo_acceso,
+                numero_cajon: cajon.numero_cajon,
+                placa: ticket.placa_vehiculo,
+                tipo_vehiculo: cajon.tipo_vehiculo,
+                duracion_horas: duracionFinal,
+                duracion_minutos: duracionMinutos,
+                monto_total: montoTotal,
+                costo_por_hora: costoPorHora,
+                fecha_entrada: ticket.fecha_hora_entrada,
+                estado: ticket.estado,
+                tipo: 'GUEST'
+            },
+            instrucciones: [
+                'Toma una foto de este ticket',
+                `Dirígete al cajón ${cajon.numero_cajon}`,
+                'Guarda el código QR y el código de respaldo',
+                'Para salir, escanea el QR en la salida'
+            ]
+        });
+
+    } catch (error) {
+        console.error('💥 Error al crear ticket de huésped:', error);
+        console.error('📍 Stack trace:', error.stack);
+        
+        res.status(500).json({ 
+            error: 'Error interno del servidor',
+            mensaje: 'No se pudo crear el ticket',
+            details: error.message
+        });
+    }
+});
+
+// 🔧 FUNCIÓN AUXILIAR: Generar código de acceso único para guests
+function generarCodigoAccesoGuest() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let codigo = '';
+    
+    // Generar código de 8 caracteres
+    for (let i = 0; i < 8; i++) {
+        codigo += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    return codigo;
+}
+
 module.exports = router;
