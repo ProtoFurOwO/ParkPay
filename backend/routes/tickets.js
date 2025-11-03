@@ -674,26 +674,30 @@ router.post('/guest', async (req, res) => {
         console.log('🅿️ Cajón asignado:', cajon);
         console.log('💰 Cálculo de precio:', { costoPorHora, duracionFinal, montoTotal });
 
-        // 2. Crear vehículo temporal para guest
+        // 2. Obtener o crear usuario GUEST
+        let idUsuarioGuest = await obtenerUsuarioGuest();
+        
+        // 3. Crear vehículo temporal para guest
         const vehiculoResult = await pool.query(`
             INSERT INTO vehiculos (
+                id_usuario,
                 placa, 
                 marca, 
                 modelo, 
                 color, 
                 tipo
             ) VALUES (
-                $1, 'GUEST', 'GUEST', 'N/A', $2
+                $1, $2, 'GUEST', 'GUEST', 'N/A', $3
             ) RETURNING id_vehiculo
-        `, [placaLimpia, tipo_vehiculo.toUpperCase()]);
+        `, [idUsuarioGuest, placaLimpia, tipo_vehiculo.toUpperCase()]);
 
         const idVehiculo = vehiculoResult.rows[0].id_vehiculo;
         console.log('🚗 Vehículo guest creado:', idVehiculo);
 
-        // 3. Generar código de acceso único
+        // 4. Generar código de acceso único
         const codigoAcceso = generarCodigoAccesoGuest();
 
-        // 4. Crear ticket en base de datos
+        // 5. Crear ticket en base de datos
         const ticketResult = await pool.query(`
             INSERT INTO ticketsestancia (
                 id_cajon, 
@@ -709,7 +713,7 @@ router.post('/guest', async (req, res) => {
 
         const ticket = ticketResult.rows[0];
 
-        // 5. Marcar cajón como ocupado
+        // 6. Marcar cajón como ocupado
         await pool.query(
             'UPDATE cajonesestacionamiento SET estado = $1 WHERE id_cajon = $2',
             ['Ocupado', cajon.id_cajon]
@@ -717,7 +721,7 @@ router.post('/guest', async (req, res) => {
 
         console.log('✅ Ticket de huésped creado exitosamente:', ticket.id_ticket);
 
-        // 6. Respuesta exitosa
+        // 7. Respuesta exitosa
         res.status(201).json({
             message: 'Ticket de huésped creado exitosamente',
             ticket: {
@@ -764,7 +768,36 @@ function generarCodigoAccesoGuest() {
         codigo += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     
-    return codigo;
+    return 'GUEST-' + codigo;
+}
+
+// 🔧 FUNCIÓN AUXILIAR: Obtener ID del usuario GUEST
+async function obtenerUsuarioGuest() {
+    try {
+        const result = await pool.query(`
+            SELECT id_usuario FROM usuarios WHERE email = 'guest@parkpay.system'
+        `);
+        
+        if (result.rows.length > 0) {
+            return result.rows[0].id_usuario;
+        }
+        
+        // Si no existe, crearlo
+        const nuevoGuest = await pool.query(`
+            INSERT INTO usuarios (
+                nombre, apellido, email, password_hash, fecha_registro
+            ) VALUES (
+                'GUEST', 'USER', 'guest@parkpay.system', 'NO_PASSWORD_REQUIRED', NOW()
+            ) RETURNING id_usuario
+        `);
+        
+        console.log('✨ Usuario GUEST creado automáticamente:', nuevoGuest.rows[0].id_usuario);
+        return nuevoGuest.rows[0].id_usuario;
+        
+    } catch (error) {
+        console.error('💥 Error obteniendo usuario GUEST:', error);
+        throw error;
+    }
 }
 
 module.exports = router;
