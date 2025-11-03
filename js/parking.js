@@ -335,8 +335,8 @@ async function confirmBooking() {
     
     const hours = parseInt(document.getElementById('hoursInput').value);
     
-    if (hours < 1 || hours > 24) {
-        showMessage('Las horas deben estar entre 1 y 24', 'error');
+    if (hours < 1 || hours > 240) {
+        showMessage('Las horas deben estar entre 1 y 240 (máximo 10 días)', 'error');
         return;
     }
     
@@ -492,8 +492,8 @@ async function crearReservaInstantanea() {
     
     const hours = parseInt(document.getElementById('hoursInput').value);
     
-    if (hours < 1 || hours > 24) {
-        showMessage('Las horas deben estar entre 1 y 24', 'error');
+    if (hours < 1 || hours > 240) {
+        showMessage('Las horas deben estar entre 1 y 240 (máximo 10 días)', 'error');
         return;
     }
     
@@ -556,8 +556,8 @@ async function crearReservaFutura() {
     
     const hours = parseInt(document.getElementById('hoursInput').value);
     
-    if (hours < 1 || hours > 24) {
-        showMessage('Las horas deben estar entre 1 y 24', 'error');
+    if (hours < 1 || hours > 240) {
+        showMessage('Las horas deben estar entre 1 y 240 (máximo 10 días)', 'error');
         return;
     }
     

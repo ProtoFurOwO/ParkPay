@@ -751,9 +751,18 @@ button, .btn-cancelar-reserva, .btn-extender-tiempo {
             if (!confirm('¿Estás seguro de cancelar esta reserva?')) return;
             
             try {
+                const token = AuthHelper.getToken();
+                if (!token) {
+                    AuthHelper.redirectToLogin('Sesión expirada');
+                    return;
+                }
+
                 const response = await fetch(`${API_URL}/reservas/${idReserva}/cancelar`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
                 
                 const data = await response.json();
@@ -775,9 +784,18 @@ button, .btn-cancelar-reserva, .btn-extender-tiempo {
             if (!confirm('¿Agregar 10 minutos adicionales a la ventana de escaneo?')) return;
             
             try {
+                const token = AuthHelper.getToken();
+                if (!token) {
+                    AuthHelper.redirectToLogin('Sesión expirada');
+                    return;
+                }
+
                 const response = await fetch(`${API_URL}/reservas/${idReserva}/extender`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({ minutos: 10 })
                 });
                 
