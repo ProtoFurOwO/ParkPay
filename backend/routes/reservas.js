@@ -41,10 +41,17 @@ router.get('/disponibles', async (req, res) => {
 // Body: { id_usuario, id_vehiculo, id_cajon, duracion_minutos, monto_total }
 router.post('/instante', verificarToken, async (req, res) => {
     try {
+        console.log('🔄 POST /instante - Iniciando proceso...');
+        console.log('📦 Body recibido:', req.body);
+        console.log('👤 Usuario del token:', req.usuario);
+        
         const { id_vehiculo, id_cajon, duracion_minutos, monto_total } = req.body;
         const id_usuario = req.usuario.id_usuario; // Usar el ID del token JWT, no del body
 
+        console.log('📝 Datos extraídos:', { id_usuario, id_vehiculo, id_cajon, duracion_minutos, monto_total });
+
         if (!id_vehiculo || !id_cajon || !duracion_minutos || !monto_total) {
+            console.log('❌ Faltan datos requeridos');
             return res.status(400).json({ error: 'Faltan datos requeridos' });
         }
 
@@ -143,8 +150,18 @@ router.post('/instante', verificarToken, async (req, res) => {
             instrucciones: 'Tienes 30 minutos para escanear el QR en la entrada'
         });
     } catch (error) {
-        console.error('Error al crear reserva instantánea:', error);
-        res.status(500).json({ error: 'Error al crear reserva' });
+        console.error('💥 Error al crear reserva instantánea:', error);
+        console.error('📍 Stack trace:', error.stack);
+        console.error('📄 Detalles del error:', {
+            message: error.message,
+            code: error.code,
+            detail: error.detail
+        });
+        res.status(500).json({ 
+            error: 'Error al crear reserva',
+            details: error.message,
+            codigo: error.code
+        });
     }
 });
 
