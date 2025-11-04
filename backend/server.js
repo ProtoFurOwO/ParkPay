@@ -95,15 +95,15 @@ const reservasRoutes = require('./routes/reservas');
 const healthRoutes = require('./routes/health');
 const gananciasRoutes = require('./routes/ganancias');
 
-app.use('/api/auth', loginLimiter, authRoutes); // Rate limiting para login
+app.use('/api/auth', authRoutes); // Rate limiting para login
 app.use('/api/cajones', cajonesRoutes);
 app.use('/api/tickets', ticketsRoutes);
 app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/sync', syncRoutes);
-app.use('/api/admin', adminLimiter, adminRoutes); // Rate limiting para admin
+app.use('/api/admin', adminRoutes); // Rate limiting para admin
 app.use('/api/reservas', reservasRoutes);
 app.use('/api/health', healthRoutes);
-app.use('/api/ganancias', adminLimiter, gananciasRoutes); // Rate limiting para ganancias
+app.use('/api/ganancias', gananciasRoutes); // Rate limiting para ganancias
 
 // Ruta de prueba
 app.get('/', (req, res) => {
