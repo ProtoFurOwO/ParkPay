@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entrada - ParkPay</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -469,17 +470,32 @@
                         <strong>${Math.floor(data.ticket.tiempo_estimado / 60)} horas</strong>
                     </div>
                 </div>
-                <p style="text-align: center; margin-top: 15px; font-size: 14px; opacity: 0.9;">
-                    La pluma se abrirá automáticamente
-                </p>
+                <div style="text-align: center; margin-top: 20px;">
+                    <p style="font-size: 16px; color: #10b981; font-weight: bold;">
+                        🚪 La pluma se abrirá automáticamente
+                    </p>
+                    <p style="font-size: 14px; opacity: 0.9; margin-top: 10px;">
+                        Regresando al inicio en <span id="countdown">5</span> segundos...
+                    </p>
+                </div>
             `;
 
-            // Simular apertura de pluma y redirección
-            setTimeout(() => {
-                if (confirm('¿Ir al inicio para ver tu ticket activo?')) {
-                    window.location.href = 'inicio.html';
+            // Simular kiosco: reiniciar automáticamente después de 5 segundos
+            let countdown = 5;
+            const countdownElement = document.getElementById('countdown');
+            
+            const timer = setInterval(() => {
+                countdown--;
+                if (countdownElement) {
+                    countdownElement.textContent = countdown;
                 }
-            }, 3000);
+                
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    // Reiniciar la página para simular kiosco
+                    location.reload();
+                }
+            }, 1000);
         }
 
         function mostrarError(mensaje) {
@@ -495,10 +511,31 @@
                 <p style="text-align: center; margin-top: 15px; font-size: 16px;">
                     ${mensaje}
                 </p>
-                <button class="btn btn-secondary" style="width: 100%; margin-top: 15px;" onclick="location.reload()">
-                    🔄 Intentar de Nuevo
-                </button>
+                <div style="text-align: center; margin-top: 20px;">
+                    <p style="font-size: 14px; opacity: 0.9;">
+                        Regresando al inicio en <span id="errorCountdown">8</span> segundos...
+                    </p>
+                    <button class="btn btn-secondary" style="width: 100%; margin-top: 15px;" onclick="location.reload()">
+                        🔄 Intentar de Nuevo
+                    </button>
+                </div>
             `;
+
+            // Auto-reinicio después de 8 segundos en caso de error
+            let countdown = 8;
+            const countdownElement = document.getElementById('errorCountdown');
+            
+            const timer = setInterval(() => {
+                countdown--;
+                if (countdownElement) {
+                    countdownElement.textContent = countdown;
+                }
+                
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    location.reload();
+                }
+            }, 1000);
         }
 
         // 🎫 SISTEMA PARA USUARIOS SIN CUENTA
@@ -600,8 +637,10 @@
                         🎫 ¡Ticket Generado!
                     </div>
                     
-                    <div class="guest-qr-code">
-                        <div id="qr-code-guest"></div>
+                    <div class="guest-qr-code" style="background: white; padding: 15px; border-radius: 15px; margin: 20px 0; text-align: center;">
+                        <p style="color: #1e40af; font-weight: bold; margin-bottom: 10px;">Tu Código de Acceso</p>
+                        <div id="qr-code-guest" style="display: flex; justify-content: center;"></div>
+                        <p style="color: #374151; font-size: 0.9em; margin-top: 10px;">${ticket.codigo_acceso || backupCode}</p>
                     </div>
                     
                     <div style="color: #ecfdf5; margin: 15px 0;">
@@ -611,17 +650,19 @@
                         <p><strong>💰 Costo:</strong> $${ticket.monto_total || '50.00'}</p>
                     </div>
 
-                    <div class="backup-code">
-                        <h4>🔑 Código de Respaldo</h4>
-                        <div class="code-display">${backupCode}</div>
+                    <div class="backup-code" style="background: rgba(245, 158, 11, 0.2); padding: 15px; border-radius: 10px; margin: 15px 0;">
+                        <h4 style="color: #f59e0b;">🔑 Código de Respaldo</h4>
+                        <div class="code-display" style="background: #374151; color: #fff; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 1.2em; letter-spacing: 2px; text-align: center; margin: 10px 0;">
+                            ${backupCode}
+                        </div>
                         <p style="color: #fbbf24; font-size: 0.9em; margin-top: 8px;">
                             Usa este código si no funciona el QR
                         </p>
                     </div>
 
-                    <div class="instructions">
-                        <h4>📋 Instrucciones importantes:</h4>
-                        <ul>
+                    <div class="instructions" style="background: rgba(16, 185, 129, 0.2); padding: 15px; border-radius: 10px; margin: 15px 0;">
+                        <h4 style="color: #10b981;">📋 Instrucciones importantes:</h4>
+                        <ul style="margin-left: 20px; color: #ecfdf5;">
                             <li>📱 <strong>Toma una foto</strong> de este ticket completo</li>
                             <li>🚗 Dirígete al cajón <strong>${ticket.numero_cajon || 'asignado'}</strong></li>
                             <li>📸 Para salir, escanea el QR o usa el código de respaldo</li>
@@ -636,8 +677,24 @@
                 </div>
             `;
 
-            // Generar QR code
-            generateQRCode(ticket.codigo_acceso || backupCode, 'qr-code-guest');
+            // Generar QR code usando QRCode.js
+            const codigoParaQR = ticket.codigo_acceso || backupCode;
+            QRCode.toCanvas(document.getElementById('qr-code-guest'), codigoParaQR, {
+                width: 200,
+                height: 200,
+                color: {
+                    dark: '#1e40af',
+                    light: '#ffffff'
+                }
+            }, function (error) {
+                if (error) {
+                    console.error('Error generando QR:', error);
+                    document.getElementById('qr-code-guest').innerHTML = 
+                        `<div style="color: red;">Error generando QR</div>`;
+                } else {
+                    console.log('QR generado exitosamente');
+                }
+            });
         }
 
         function generateBackupCode() {
@@ -649,26 +706,41 @@
             return result;
         }
 
-        function generateQRCode(text, elementId) {
-            // Usar QRCode.js library si está disponible, si no, mostrar texto
-            const qrContainer = document.getElementById(elementId);
-            if (typeof QRCode !== 'undefined') {
-                new QRCode(qrContainer, {
-                    text: text,
-                    width: 200,
-                    height: 200,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                });
-            } else {
-                // Fallback: mostrar el código como texto
-                qrContainer.innerHTML = `
-                    <div style="padding: 20px; background: #f3f4f6; border: 2px dashed #6b7280; border-radius: 8px;">
-                        <p style="color: #374151; font-weight: bold; margin-bottom: 10px;">Código QR:</p>
-                        <p style="font-family: monospace; font-size: 1.2em; color: #1f2937; word-break: break-all;">${text}</p>
-                    </div>
-                `;
+        // Función auxiliar para generar QR codes usando QRCode.js
+        function crearQRCode(texto, contenedorId, opciones = {}) {
+            const contenedor = document.getElementById(contenedorId);
+            if (!contenedor) {
+                console.error(`Contenedor ${contenedorId} no encontrado`);
+                return;
             }
+
+            // Limpiar contenedor
+            contenedor.innerHTML = '';
+
+            // Configuración por defecto
+            const config = {
+                width: opciones.width || 200,
+                height: opciones.height || 200,
+                color: {
+                    dark: opciones.colorDark || '#1e40af',
+                    light: opciones.colorLight || '#ffffff'
+                }
+            };
+
+            // Generar QR usando QRCode.js
+            QRCode.toCanvas(contenedor, texto, config, function (error) {
+                if (error) {
+                    console.error('Error generando QR:', error);
+                    contenedor.innerHTML = `
+                        <div style="padding: 20px; background: #fee2e2; border: 2px dashed #dc2626; border-radius: 8px; text-align: center;">
+                            <p style="color: #dc2626; font-weight: bold;">Error generando QR</p>
+                            <p style="font-family: monospace; color: #374151; margin-top: 10px;">${texto}</p>
+                        </div>
+                    `;
+                } else {
+                    console.log('✅ QR generado exitosamente para:', texto);
+                }
+            });
         }
 
         // 🔧 INICIALIZACIÓN DE EVENTOS
