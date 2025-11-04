@@ -1344,3 +1344,212 @@ function validarPlacaIndividual(input) {
 document.addEventListener('DOMContentLoaded', initInlineFormHandlers);
 // Also call immediately in case DOM is already parsed and the script loaded at the end
 try { initInlineFormHandlers(); } catch (e) { /* ignore */ }
+
+// ═══════════════════════════════════════════════════════════════
+// 📊 SISTEMA DE GANANCIAS
+// ═══════════════════════════════════════════════════════════════
+
+let chartGanancias = null;
+let chartVehiculos = null;
+
+// Cargar resumen de ganancias
+async function cargarResumenGanancias() {
+    try {
+        const response = await secureRequest(`${API_URL}/ganancias`, {
+            method: 'GET'
+        });
+        const data = await response.json();
+        
+        // Actualizar cards de resumen
+        document.getElementById('gananciaHoy').textContent = `$${data.hoy.ganancias.toFixed(2)}`;
+        document.getElementById('gananciaSemana').textContent = `$${data.semana.ganancias.toFixed(2)}`;
+        document.getElementById('gananciaMes').textContent = `$${data.mes.ganancias.toFixed(2)}`;
+        document.getElementById('gananciaTotal').textContent = `$${data.total.ganancias.toFixed(2)}`;
+        
+    } catch (error) {
+        console.error('Error al cargar resumen de ganancias:', error);
+        showMessage('Error al cargar resumen de ganancias', 'error');
+    }
+}
+
+// Cargar datos de ganancias por período
+async function cargarGanancias() {
+    const periodo = document.getElementById('periodoGanancias').value;
+    
+    try {
+        const response = await secureRequest(`${API_URL}/ganancias/${periodo}`, {
+            method: 'GET'
+        });
+        const data = await response.json();
+        
+        // Actualizar gráficas
+        actualizarGraficaGanancias(data.data, periodo);
+        actualizarGraficaVehiculos(data.data);
+        
+        // Actualizar tabla
+        actualizarTablaGanancias(data.data, periodo);
+        
+    } catch (error) {
+        console.error('Error al cargar ganancias:', error);
+        showMessage('Error al cargar datos de ganancias', 'error');
+    }
+}
+
+// Actualizar gráfica de ganancias
+function actualizarGraficaGanancias(data, periodo) {
+    const ctx = document.getElementById('chartGanancias').getContext('2d');
+    
+    // Destruir gráfica anterior si existe
+    if (chartGanancias) {
+        chartGanancias.destroy();
+    }
+    
+    const labels = data.map(item => item.fecha_formateada);
+    const ganancias = data.map(item => item.ganancia_total);
+    
+    chartGanancias = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Ganancias ($)',
+                data: ganancias,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + value.toFixed(0);
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Actualizar gráfica de vehículos
+function actualizarGraficaVehiculos(data) {
+    const ctx = document.getElementById('chartVehiculos').getContext('2d');
+    
+    // Destruir gráfica anterior si existe
+    if (chartVehiculos) {
+        chartVehiculos.destroy();
+    }
+    
+    // Sumar totales por tipo de vehículo
+    const totales = data.reduce((acc, item) => {
+        acc.autos += item.vehiculos.autos;
+        acc.motos += item.vehiculos.motos;
+        acc.electricos += item.vehiculos.electricos;
+        return acc;
+    }, { autos: 0, motos: 0, electricos: 0 });
+    
+    chartVehiculos = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Automóviles', 'Motocicletas', 'Eléctricos'],
+            datasets: [{
+                data: [totales.autos, totales.motos, totales.electricos],
+                backgroundColor: [
+                    '#3b82f6',
+                    '#f59e0b',
+                    '#10b981'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Actualizar tabla de ganancias
+function actualizarTablaGanancias(data, periodo) {
+    const tbody = document.querySelector('#tablaGanancias tbody');
+    tbody.innerHTML = '';
+    
+    data.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${item.fecha_formateada}</td>
+            <td>${item.total_tickets}</td>
+            <td class="money">$${item.ganancia_total.toFixed(2)}</td>
+            <td class="money">$${item.ganancia_promedio.toFixed(2)}</td>
+            <td>${item.vehiculos.autos}</td>
+            <td>${item.vehiculos.motos}</td>
+            <td>${item.vehiculos.electricos}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Exportar ganancias
+async function exportarGanancias() {
+    const periodo = document.getElementById('periodoGanancias').value;
+    
+    try {
+        const response = await secureRequest(`${API_URL}/ganancias/${periodo}`, {
+            method: 'GET'
+        });
+        const data = await response.json();
+        
+        // Crear CSV
+        let csv = 'Período,Tickets,Ganancias,Promedio,Autos,Motos,Eléctricos\n';
+        data.data.forEach(item => {
+            csv += `"${item.fecha_formateada}",${item.total_tickets},${item.ganancia_total.toFixed(2)},${item.ganancia_promedio.toFixed(2)},${item.vehiculos.autos},${item.vehiculos.motos},${item.vehiculos.electricos}\n`;
+        });
+        
+        // Descargar archivo
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ganancias_${periodo}_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        showMessage('Reporte exportado exitosamente', 'success');
+        
+    } catch (error) {
+        console.error('Error al exportar ganancias:', error);
+        showMessage('Error al exportar reporte', 'error');
+    }
+}
+
+// Modificar función showTab para cargar ganancias cuando se selecciona
+const originalShowTab = showTab;
+showTab = function(tabName) {
+    originalShowTab(tabName);
+    
+    if (tabName === 'ganancias') {
+        cargarResumenGanancias();
+        cargarGanancias();
+    }
+};

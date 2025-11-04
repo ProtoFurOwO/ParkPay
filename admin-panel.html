@@ -418,6 +418,43 @@
             }
         }
         
+        /* --- Estilos para Gráficas de Ganancias --- */
+        .chart-container {
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .chart-container h3 {
+            margin: 0 0 1rem 0;
+            color: var(--color-text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .chart-container canvas {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        #periodoGanancias {
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+            background: var(--color-bg-body);
+            color: var(--color-text-primary);
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive para gráficas */
+        @media (max-width: 1024px) {
+            .chart-container {
+                grid-column: 1 / -1;
+            }
+        }
+        
     </style>
 </head>
 <body>
@@ -447,6 +484,11 @@
             <button class="tab-btn" onclick="showTab('tickets')">
                 <span class="btn-icon">🎫</span>
                 <span class="btn-text">Tickets</span>
+            </button>
+            
+            <button class="tab-btn" onclick="showTab('ganancias')">
+                <span class="btn-icon">📊</span>
+                <span class="btn-text">Ganancias</span>
             </button>
             <button class="tab-btn" onclick="showTab('tarifas')">
                 <span class="btn-icon">💵</span>
@@ -760,6 +802,84 @@
                 </div>
             </div>
 
+            <!-- 📊 TAB DE GANANCIAS -->
+            <div id="tab-ganancias" class="tab-content">
+                <div class="content-header">
+                    <h2>📊 Análisis de Ganancias</h2>
+                    <div class="actions">
+                        <select id="periodoGanancias" onchange="cargarGanancias()">
+                            <option value="dia">Por Día (30 días)</option>
+                            <option value="semana">Por Semana (12 semanas)</option>
+                            <option value="mes">Por Mes (12 meses)</option>
+                        </select>
+                        <button onclick="exportarGanancias()" class="btn btn-info">📥 Exportar</button>
+                    </div>
+                </div>
+
+                <!-- Resumen rápido -->
+                <div class="stats-container" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <span class="stat-icon">💰</span>
+                        <div>
+                            <h3 id="gananciaHoy">$0.00</h3>
+                            <p>Hoy</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">📅</span>
+                        <div>
+                            <h3 id="gananciaSemana">$0.00</h3>
+                            <p>Esta Semana</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">📊</span>
+                        <div>
+                            <h3 id="gananciaMes">$0.00</h3>
+                            <p>Este Mes</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">🏆</span>
+                        <div>
+                            <h3 id="gananciaTotal">$0.00</h3>
+                            <p>Total Histórico</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráficas -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                    <div class="chart-container">
+                        <h3>💰 Ganancias por Período</h3>
+                        <canvas id="chartGanancias" width="400" height="200"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>🚗 Tickets por Tipo de Vehículo</h3>
+                        <canvas id="chartVehiculos" width="400" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Tabla detallada -->
+                <div class="table-container">
+                    <h3>📋 Detalles por Período</h3>
+                    <table id="tablaGanancias">
+                        <thead>
+                            <tr>
+                                <th>Período</th>
+                                <th>Tickets</th>
+                                <th>Ganancias</th>
+                                <th>Promedio</th>
+                                <th>Autos</th>
+                                <th>Motos</th>
+                                <th>Eléctricos</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
         </section>
 
             <div id="modalContainer">
@@ -868,7 +988,10 @@
 
             <div id="messageBox" class="message-box" style="display: none;"></div>
 
-            <!-- 🔐 JWT Authentication Helper -->
+            <!-- � Chart.js para gráficas -->
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            
+            <!-- �🔐 JWT Authentication Helper -->
             <script src="js/auth-helper.js?v=2.0"></script>
             <!--<script src="js/admin-panel-v2.js"></script> -->
             <script src="js/admin-panel.js?v=2.0"></script>
