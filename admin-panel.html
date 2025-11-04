@@ -852,11 +852,15 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
                     <div class="chart-container">
                         <h3>💰 Ganancias por Período</h3>
-                        <canvas id="chartGanancias" width="400" height="200"></canvas>
+                        <div id="contenedorChartGanancias" style="position: relative; width: 100%; height: 400px;">
+                            <canvas id="chartGanancias" width="800" height="400" style="width: 100%; height: 400px; background: transparent;"></canvas>
+                        </div>
                     </div>
                     <div class="chart-container">
                         <h3>🚗 Tickets por Tipo de Vehículo</h3>
-                        <canvas id="chartVehiculos" width="400" height="200"></canvas>
+                        <div id="contenedorChartVehiculos" style="position: relative; width: 100%; height: 400px;">
+                            <canvas id="chartVehiculos" width="800" height="400" style="width: 100%; height: 400px; background: transparent;"></canvas>
+                        </div>
                     </div>
                 </div>
 
