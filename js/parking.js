@@ -192,28 +192,45 @@ function createSpotElement(cajon) {
     // Verificar si el cajón es compatible con el vehículo del usuario
     const esCompatible = esCajonCompatible(cajon.tipo, tipoVehiculoUsuario);
     
+    // Usar el estado real (que considera reservas próximas) en lugar del estado base
+    const estadoReal = cajon.estado_real || cajon.estado;
+    
     // Determinar el estado visual del cajón
     let estadoClase = 'available';
     let esSeleccionable = false;
+    let tituloTooltip = `Cajón ${cajon.numero_cajon} - ${cajon.tipo}`;
     
-    if (cajon.estado === 'Ocupado') {
+    if (estadoReal === 'Ocupado') {
         estadoClase = 'occupied';
-    } else if (cajon.estado === 'Mantenimiento') {
+        tituloTooltip += ' - Ocupado';
+    } else if (estadoReal === 'Mantenimiento') {
         estadoClase = 'occupied';
-    } else if (cajon.estado === 'Disponible') {
+        tituloTooltip += ' - En Mantenimiento';
+    } else if (estadoReal === 'Reservado') {
+        estadoClase = 'occupied';
+        if (cajon.reserva_proxima) {
+            const minutos = Math.floor(cajon.reserva_proxima.minutos_restantes);
+            tituloTooltip += ` - Reservado (${minutos}min restantes)`;
+        } else {
+            tituloTooltip += ' - Reservado';
+        }
+    } else if (estadoReal === 'Disponible') {
         if (esCompatible) {
             estadoClase = 'available';
             esSeleccionable = true;
+            tituloTooltip += ' - Disponible';
         } else {
             // Cajón disponible pero NO compatible con el tipo de vehículo
             estadoClase = 'incompatible';
+            tituloTooltip += ' - No compatible con tu vehículo';
         }
     }
     
     spot.className = `spot ${estadoClase}`;
     spot.dataset.cajonId = cajon.id_cajon;
-    spot.dataset.estado = cajon.estado;
+    spot.dataset.estado = estadoReal;
     spot.dataset.tipo = cajon.tipo;
+    spot.title = tituloTooltip;
     
     // Tipo de cajón (ícono)
     let tipoIcon = '🚗';

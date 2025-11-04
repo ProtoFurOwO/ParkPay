@@ -64,28 +64,86 @@ async function liberarCajonesVencidos() {
   }
 }
 
-// Obtener todos los cajones con su estado y tarifa
-router.get('/', verificarToken, async (req, res) => {
+// ═══════════════════════════════════════════════════════════════
+// FUNCIÓN AUXILIAR: Verificar estado real de cajones considerando reservas próximas
+// ═══════════════════════════════════════════════════════════════
+async function obtenerEstadoRealCajones() {
   try {
-    // Primero liberar cajones vencidos
-    await liberarCajonesVencidos();
-
     const result = await pool.query(`
       SELECT 
         c.id_cajon,
         c.numero_cajon,
         c.ubicacion_piso,
         c.tipo,
-        c.estado,
+        c.estado as estado_base,
         t.id_tarifa,
         t.descripcion as tarifa_descripcion,
-        t.costo_por_hora
+        t.costo_por_hora,
+        -- Verificar si hay reserva próxima a vencer (menos de 1 hora)
+        CASE 
+          WHEN EXISTS (
+            SELECT 1 FROM reservasanticipadas r 
+            WHERE r.id_cajon = c.id_cajon 
+            AND r.estado = 'PENDIENTE'
+            AND r.fecha_fin_ventana >= NOW()
+            AND r.fecha_fin_ventana <= NOW() + INTERVAL '1 hour'
+          ) THEN 'Reservado'
+          WHEN EXISTS (
+            SELECT 1 FROM reservasanticipadas r 
+            WHERE r.id_cajon = c.id_cajon 
+            AND r.estado = 'PENDIENTE'
+            AND r.fecha_fin_ventana > NOW()
+          ) THEN c.estado
+          ELSE c.estado
+        END as estado_real,
+        -- Información de la reserva próxima si existe
+        (
+          SELECT json_build_object(
+            'codigo_acceso', r.codigo_acceso,
+            'fin_ventana', r.fecha_fin_ventana,
+            'minutos_restantes', EXTRACT(EPOCH FROM (r.fecha_fin_ventana - NOW())) / 60
+          )
+          FROM reservasanticipadas r 
+          WHERE r.id_cajon = c.id_cajon 
+          AND r.estado = 'PENDIENTE'
+          AND r.fecha_fin_ventana >= NOW()
+          AND r.fecha_fin_ventana <= NOW() + INTERVAL '1 hour'
+          LIMIT 1
+        ) as reserva_proxima
       FROM CajonesEstacionamiento c
       INNER JOIN Tarifas t ON c.id_tarifa = t.id_tarifa
       ORDER BY c.ubicacion_piso, c.numero_cajon
     `);
+    
+    return result.rows;
+  } catch (error) {
+    console.error('❌ Error al obtener estado real de cajones:', error);
+    throw error;
+  }
+}
 
-    res.json(result.rows);
+// Obtener todos los cajones con su estado y tarifa
+router.get('/', verificarToken, async (req, res) => {
+  try {
+    console.log('🔍 Obteniendo cajones con estado real considerando reservas próximas...');
+    
+    // Primero liberar cajones vencidos
+    await liberarCajonesVencidos();
+
+    // Obtener estado real de cajones considerando reservas próximas
+    const cajones = await obtenerEstadoRealCajones();
+
+    // Log para debugging
+    const cajonesConReservaProxima = cajones.filter(c => c.reserva_proxima);
+    if (cajonesConReservaProxima.length > 0) {
+      console.log(`⚠️ ${cajonesConReservaProxima.length} cajones con reservas próximas a vencer (<1h):`);
+      cajonesConReservaProxima.forEach(c => {
+        const minutos = Math.floor(c.reserva_proxima.minutos_restantes);
+        console.log(`   📍 Cajón ${c.numero_cajon}: ${minutos}min restantes (${c.reserva_proxima.codigo_acceso})`);
+      });
+    }
+
+    res.json(cajones);
   } catch (error) {
     console.error('Error al obtener cajones:', error);
     res.status(500).json({ error: 'Error al obtener cajones' });
@@ -95,28 +153,24 @@ router.get('/', verificarToken, async (req, res) => {
 // Obtener cajones por piso
 router.get('/piso/:piso', async (req, res) => {
   try {
+    console.log('🔍 Obteniendo cajones por piso con estado real...');
+    
     // Liberar cajones vencidos antes de consultar
     await liberarCajonesVencidos();
 
     const { piso } = req.params;
 
-    const result = await pool.query(`
-      SELECT 
-        c.id_cajon,
-        c.numero_cajon,
-        c.ubicacion_piso,
-        c.tipo,
-        c.estado,
-        t.id_tarifa,
-        t.descripcion as tarifa_descripcion,
-        t.costo_por_hora
-      FROM CajonesEstacionamiento c
-      INNER JOIN Tarifas t ON c.id_tarifa = t.id_tarifa
-      WHERE c.ubicacion_piso = $1
-      ORDER BY c.numero_cajon
-    `, [piso]);
+    // Obtener todos los cajones con estado real y filtrar por piso
+    const todosCajones = await obtenerEstadoRealCajones();
+    const cajonesPiso = todosCajones.filter(c => c.ubicacion_piso === piso);
 
-    res.json(result.rows);
+    // Log para debugging
+    const cajonesConReservaProxima = cajonesPiso.filter(c => c.reserva_proxima);
+    if (cajonesConReservaProxima.length > 0) {
+      console.log(`⚠️ Piso ${piso}: ${cajonesConReservaProxima.length} cajones con reservas próximas a vencer (<1h)`);
+    }
+
+    res.json(cajonesPiso);
   } catch (error) {
     console.error('Error al obtener cajones por piso:', error);
     res.status(500).json({ error: 'Error al obtener cajones' });

@@ -444,13 +444,22 @@ async function loadCajones() {
                 <td><strong>${cajon.numero_cajon}</strong></td>
                 <td>${cajon.ubicacion_piso}</td>
                 <td>${cajon.tipo}</td>
-                <td><span class="status-badge status-${cajon.estado.toLowerCase()}">${cajon.estado}</span></td>
+                <td>
+                    <span class="status-badge status-${(cajon.estado_real || cajon.estado).toLowerCase()}">
+                        ${cajon.estado_real || cajon.estado}
+                    </span>
+                    ${cajon.reserva_proxima ? `
+                        <br><small style="color: #f59e0b;">
+                            ⏰ Reserva: ${Math.floor(cajon.reserva_proxima.minutos_restantes)}min restantes
+                        </small>
+                    ` : ''}
+                </td>
                 <td>${cajon.tarifa_descripcion || 'Sin tarifa'}</td>
                 <td>$${parseFloat(cajon.costo_por_hora).toFixed(2)}</td>
                 <td>
                     <div class="action-buttons">
                         <button class="btn-small btn-edit" onclick="editarCajon(${cajon.id_cajon})">✏️ Editar</button>
-                        <button class="btn-small btn-status" onclick="cambiarEstadoCajon(${cajon.id_cajon}, '${cajon.estado}')">🔄 Estado</button>
+                        <button class="btn-small btn-status" onclick="cambiarEstadoCajon(${cajon.id_cajon}, '${cajon.estado_base || cajon.estado}')">🔄 Estado</button>
                     </div>
                 </td>
             `;
