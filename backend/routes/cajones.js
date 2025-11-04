@@ -85,14 +85,14 @@ async function obtenerEstadoRealCajones() {
             SELECT 1 FROM reservasanticipadas r 
             WHERE r.id_cajon = c.id_cajon 
             AND r.estado = 'PENDIENTE'
-            AND r.fecha_fin_ventana >= NOW()
-            AND r.fecha_fin_ventana <= NOW() + INTERVAL '1 hour'
+            AND r.fecha_fin_reserva >= NOW()
+            AND r.fecha_fin_reserva <= NOW() + INTERVAL '1 hour'
           ) THEN 'Reservado'
           WHEN EXISTS (
             SELECT 1 FROM reservasanticipadas r 
             WHERE r.id_cajon = c.id_cajon 
             AND r.estado = 'PENDIENTE'
-            AND r.fecha_fin_ventana > NOW()
+            AND r.fecha_fin_reserva > NOW()
           ) THEN c.estado
           ELSE c.estado
         END as estado_real,
@@ -100,14 +100,14 @@ async function obtenerEstadoRealCajones() {
         (
           SELECT json_build_object(
             'codigo_acceso', r.codigo_acceso,
-            'fin_ventana', r.fecha_fin_ventana,
-            'minutos_restantes', EXTRACT(EPOCH FROM (r.fecha_fin_ventana - NOW())) / 60
+            'fin_reserva', r.fecha_fin_reserva,
+            'minutos_restantes', EXTRACT(EPOCH FROM (r.fecha_fin_reserva - NOW())) / 60
           )
           FROM reservasanticipadas r 
           WHERE r.id_cajon = c.id_cajon 
           AND r.estado = 'PENDIENTE'
-          AND r.fecha_fin_ventana >= NOW()
-          AND r.fecha_fin_ventana <= NOW() + INTERVAL '1 hour'
+          AND r.fecha_fin_reserva >= NOW()
+          AND r.fecha_fin_reserva <= NOW() + INTERVAL '1 hour'
           LIMIT 1
         ) as reserva_proxima
       FROM CajonesEstacionamiento c
