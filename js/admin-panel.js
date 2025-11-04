@@ -1387,9 +1387,15 @@ async function cargarGanancias() {
         return;
     }
     
+    if (loadingGanancias) {
+        console.warn('⚠️ Ya se están cargando las ganancias, saltando...');
+        return;
+    }
+    
     const periodo = selectElement.value || 'dia';
     
     try {
+        loadingGanancias = true;
         console.log(`📊 Cargando ganancias para período: ${periodo}`);
         
         const response = await secureRequest(`${API_URL}/ganancias/${periodo}`, {
@@ -1415,75 +1421,153 @@ async function cargarGanancias() {
     } catch (error) {
         console.error('Error al cargar ganancias:', error);
         showMessage('Error al cargar datos de ganancias', 'error');
+    } finally {
+        loadingGanancias = false;
     }
+}
+
+// Función para recrear canvas completamente
+function recrearCanvas(canvasId) {
+    const oldCanvas = document.getElementById(canvasId);
+    if (!oldCanvas) return null;
+    
+    const parent = oldCanvas.parentNode;
+    const newCanvas = document.createElement('canvas');
+    
+    // Copiar atributos
+    newCanvas.id = canvasId;
+    newCanvas.width = oldCanvas.width;
+    newCanvas.height = oldCanvas.height;
+    newCanvas.style.cssText = oldCanvas.style.cssText;
+    
+    // Reemplazar el canvas
+    parent.removeChild(oldCanvas);
+    parent.appendChild(newCanvas);
+    
+    return newCanvas;
 }
 
 // Actualizar gráfica de ganancias
 function actualizarGraficaGanancias(data, periodo) {
-    const canvas = document.getElementById('chartGanancias');
-    if (!canvas) return;
+    console.log('🔄 Actualizando gráfica de ganancias...');
     
-    const ctx = canvas.getContext('2d');
-    
-    // Destruir gráfica anterior si existe
-    if (chartGanancias && typeof chartGanancias.destroy === 'function') {
-        chartGanancias.destroy();
+    // Destruir gráfica anterior de manera más agresiva
+    if (chartGanancias) {
+        try {
+            chartGanancias.destroy();
+        } catch (e) {
+            console.warn('Error al destruir gráfica anterior:', e);
+        }
         chartGanancias = null;
     }
     
+    // Recrear el canvas completamente para evitar problemas de memoria
+    const canvas = recrearCanvas('chartGanancias');
+    if (!canvas) {
+        console.error('❌ No se pudo recrear el canvas de ganancias');
+        return;
+    }
+    
+    const ctx = canvas.getContext('2d');
     const labels = data.map(item => item.fecha_formateada);
     const ganancias = data.map(item => item.ganancia_total);
     
-    // Crear nueva gráfica
-    chartGanancias = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Ganancias ($)',
-                data: ganancias,
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                borderWidth: 3,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false, // Deshabilitar animaciones para evitar loops
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return '$' + value.toFixed(0);
+    console.log('📊 Datos para gráfica:', { labels, ganancias });
+    
+    // Esperar un tick antes de crear la nueva gráfica
+    setTimeout(() => {
+        try {
+            // Crear nueva gráfica con configuración más estricta
+            chartGanancias = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Ganancias ($)',
+                        data: ganancias,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 0 // Completamente sin animaciones
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true,
+                            animation: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            grid: {
+                                display: true,
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            display: true,
+                            grid: {
+                                display: true,
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(0);
+                                }
+                            }
                         }
                     }
                 }
-            }
+            });
+            
+            console.log('✅ Gráfica de ganancias creada exitosamente');
+            
+        } catch (error) {
+            console.error('❌ Error al crear gráfica de ganancias:', error);
         }
-    });
+    }, 100);
 }
 
 // Actualizar gráfica de vehículos
 function actualizarGraficaVehiculos(data) {
-    const canvas = document.getElementById('chartVehiculos');
-    if (!canvas) return;
+    console.log('🔄 Actualizando gráfica de vehículos...');
     
-    const ctx = canvas.getContext('2d');
-    
-    // Destruir gráfica anterior si existe
-    if (chartVehiculos && typeof chartVehiculos.destroy === 'function') {
-        chartVehiculos.destroy();
+    // Destruir gráfica anterior de manera más agresiva
+    if (chartVehiculos) {
+        try {
+            chartVehiculos.destroy();
+        } catch (e) {
+            console.warn('Error al destruir gráfica anterior:', e);
+        }
         chartVehiculos = null;
     }
+    
+    // Recrear el canvas completamente para evitar problemas de memoria
+    const canvas = recrearCanvas('chartVehiculos');
+    if (!canvas) {
+        console.error('❌ No se pudo recrear el canvas de vehículos');
+        return;
+    }
+    
+    const ctx = canvas.getContext('2d');
     
     // Sumar totales por tipo de vehículo
     const totales = data.reduce((acc, item) => {
@@ -1493,36 +1577,54 @@ function actualizarGraficaVehiculos(data) {
         return acc;
     }, { autos: 0, motos: 0, electricos: 0 });
     
-    // Crear nueva gráfica
-    chartVehiculos = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Automóviles', 'Motocicletas', 'Eléctricos'],
-            datasets: [{
-                data: [totales.autos, totales.motos, totales.electricos],
-                backgroundColor: [
-                    '#3b82f6',
-                    '#f59e0b',
-                    '#10b981'
-                ],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false, // Deshabilitar animaciones para evitar loops
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        padding: 20,
-                        usePointStyle: true
+    console.log('📊 Datos de vehículos:', totales);
+    
+    // Esperar un tick antes de crear la nueva gráfica
+    setTimeout(() => {
+        try {
+            // Crear nueva gráfica
+            chartVehiculos = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Automóviles', 'Motocicletas', 'Eléctricos'],
+                    datasets: [{
+                        data: [totales.autos, totales.motos, totales.electricos],
+                        backgroundColor: [
+                            '#3b82f6',
+                            '#f59e0b',
+                            '#10b981'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 0 // Completamente sin animaciones
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            enabled: true,
+                            animation: false
+                        }
                     }
                 }
-            }
+            });
+            
+            console.log('✅ Gráfica de vehículos creada exitosamente');
+            
+        } catch (error) {
+            console.error('❌ Error al crear gráfica de vehículos:', error);
         }
-    });
+    }, 100);
 }
 
 // Actualizar tabla de ganancias
