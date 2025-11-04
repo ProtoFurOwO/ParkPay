@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entrada - ParkPay</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -712,50 +712,34 @@
                 </div>
             `;
 
-            // Generar QR code usando QRCode.js con verificación de carga
+            // 🎯 Generar QR code usando la MISMA librería que las reservas
             const codigoParaQR = ticket.codigo_acceso || backupCode;
+            const qrContainer = document.getElementById('qr-code-guest');
             
-            // Esperar a que QRCode esté disponible
-            const generarQR = () => {
-                if (typeof QRCode !== 'undefined') {
-                    QRCode.toCanvas(document.getElementById('qr-code-guest'), codigoParaQR, {
-                        width: 200,
-                        height: 200,
-                        color: {
-                            dark: '#1e40af',
-                            light: '#ffffff'
-                        }
-                    }, function (error) {
-                        if (error) {
-                            console.error('Error generando QR:', error);
-                            document.getElementById('qr-code-guest').innerHTML = 
-                                `<div style="color: #ef4444; padding: 20px; background: #fee2e2; border-radius: 8px;">
-                                    <p><strong>⚠️ Error generando QR</strong></p>
-                                    <p style="font-family: monospace; margin-top: 10px;">${codigoParaQR}</p>
-                                    <p style="font-size: 0.9em; margin-top: 10px;">Usa el código de respaldo debajo</p>
-                                </div>`;
-                        } else {
-                            console.log('✅ QR generado exitosamente para:', codigoParaQR);
-                        }
-                    });
-                } else {
-                    // Fallback si QRCode no está disponible
-                    console.warn('⚠️ QRCode library no disponible, mostrando fallback');
-                    document.getElementById('qr-code-guest').innerHTML = 
-                        `<div style="color: #374151; padding: 20px; background: #f3f4f6; border: 2px dashed #6b7280; border-radius: 8px;">
-                            <p><strong>📱 Código de Acceso</strong></p>
-                            <p style="font-family: monospace; font-size: 1.5em; margin: 15px 0; color: #1e40af;">${codigoParaQR}</p>
-                            <p style="font-size: 0.9em;">Presenta este código en la salida</p>
-                        </div>`;
-                }
-            };
+            // Limpiar contenedor
+            qrContainer.innerHTML = '';
             
-            // Generar QR inmediatamente o esperar un poco si la librería no está lista
-            if (typeof QRCode !== 'undefined') {
-                generarQR();
-            } else {
-                console.log('⏳ Esperando a que se cargue QRCode...');
-                setTimeout(generarQR, 500);
+            try {
+                // Usar exactamente el mismo método que en parking.js
+                new QRCode(qrContainer, {
+                    text: codigoParaQR,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#1e40af",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                console.log('✅ QR generado exitosamente para:', codigoParaQR);
+            } catch (error) {
+                console.error('❌ Error generando QR:', error);
+                // Fallback visual si falla
+                qrContainer.innerHTML = `
+                    <div style="color: #ef4444; padding: 20px; background: #fee2e2; border-radius: 8px; text-align: center;">
+                        <p><strong>⚠️ Error generando QR</strong></p>
+                        <p style="font-family: monospace; margin-top: 10px; font-size: 1.2em;">${codigoParaQR}</p>
+                        <p style="font-size: 0.9em; margin-top: 10px;">Usa el código de respaldo debajo</p>
+                    </div>
+                `;
             }
         }
 
@@ -766,43 +750,6 @@
                 result += chars.charAt(Math.floor(Math.random() * chars.length));
             }
             return result;
-        }
-
-        // Función auxiliar para generar QR codes usando QRCode.js
-        function crearQRCode(texto, contenedorId, opciones = {}) {
-            const contenedor = document.getElementById(contenedorId);
-            if (!contenedor) {
-                console.error(`Contenedor ${contenedorId} no encontrado`);
-                return;
-            }
-
-            // Limpiar contenedor
-            contenedor.innerHTML = '';
-
-            // Configuración por defecto
-            const config = {
-                width: opciones.width || 200,
-                height: opciones.height || 200,
-                color: {
-                    dark: opciones.colorDark || '#1e40af',
-                    light: opciones.colorLight || '#ffffff'
-                }
-            };
-
-            // Generar QR usando QRCode.js
-            QRCode.toCanvas(contenedor, texto, config, function (error) {
-                if (error) {
-                    console.error('Error generando QR:', error);
-                    contenedor.innerHTML = `
-                        <div style="padding: 20px; background: #fee2e2; border: 2px dashed #dc2626; border-radius: 8px; text-align: center;">
-                            <p style="color: #dc2626; font-weight: bold;">Error generando QR</p>
-                            <p style="font-family: monospace; color: #374151; margin-top: 10px;">${texto}</p>
-                        </div>
-                    `;
-                } else {
-                    console.log('✅ QR generado exitosamente para:', texto);
-                }
-            });
         }
 
         // 🔧 INICIALIZACIÓN DE EVENTOS
@@ -821,10 +768,6 @@
                 setTimeout(actualizarPrecioGuest, 100);
             }
         });
-    </script>
-
-    <!-- Librería QR Code (opcional, para mejor visualización) -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     </script>
 </body>
 </html>
