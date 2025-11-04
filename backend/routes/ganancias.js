@@ -35,7 +35,7 @@ router.get('/:periodo', verificarToken, verificarAdmin, async (req, res) => {
                     WHERE t.estado = 'FINALIZADO' 
                     AND t.fecha_hora_entrada >= CURRENT_DATE - INTERVAL '30 days'
                     GROUP BY ${groupBy}
-                    ORDER BY fecha DESC
+                    ORDER BY fecha ASC
                     LIMIT 30
                 `;
                 break;
@@ -57,7 +57,7 @@ router.get('/:periodo', verificarToken, verificarAdmin, async (req, res) => {
                     WHERE t.estado = 'FINALIZADO' 
                     AND t.fecha_hora_entrada >= CURRENT_DATE - INTERVAL '12 weeks'
                     GROUP BY ${groupBy}
-                    ORDER BY fecha DESC
+                    ORDER BY fecha ASC
                     LIMIT 12
                 `;
                 break;
@@ -79,7 +79,7 @@ router.get('/:periodo', verificarToken, verificarAdmin, async (req, res) => {
                     WHERE t.estado = 'FINALIZADO' 
                     AND t.fecha_hora_entrada >= CURRENT_DATE - INTERVAL '12 months'
                     GROUP BY ${groupBy}
-                    ORDER BY fecha DESC
+                    ORDER BY fecha ASC
                     LIMIT 12
                 `;
                 break;
