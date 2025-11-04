@@ -61,7 +61,7 @@ app.use(helmet({
   },
 }));
 
-app.use(generalLimiter); // Rate limiting global
+//app.use(generalLimiter); // Rate limiting global
 
 // 🌐 CONFIGURACIÓN CORS ESPECÍFICA PARA CREDENTIALS
 app.use(cors({
@@ -121,7 +121,7 @@ app.get('/', (req, res) => {
     }
   });
 });
-
+//
 // Health Check endpoint para monitoreo
 app.get('/api/health', async (req, res) => {
   const healthCheck = {
