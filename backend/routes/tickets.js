@@ -615,7 +615,7 @@ router.post('/guest', async (req, res) => {
         }
 
         // Validar tipo de vehículo
-        const tiposValidos = ['AUTOMOVIL', 'MOTO', 'ELECTRICO'];
+        const tiposValidos = ['AUTOMOVIL', 'MOTOCICLETA', 'ELECTRICO'];
         if (!tiposValidos.includes(tipo_vehiculo.toUpperCase())) {
             return res.status(400).json({ 
                 error: 'Tipo de vehículo no válido',

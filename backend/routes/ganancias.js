@@ -28,7 +28,7 @@ router.get('/:periodo', verificarToken, verificarAdmin, async (req, res) => {
                         SUM(t.monto_cobrado) as ganancia_total,
                         AVG(t.monto_cobrado) as ganancia_promedio,
                         COUNT(CASE WHEN v.tipo = 'AUTOMOVIL' THEN 1 END) as autos,
-                        COUNT(CASE WHEN v.tipo = 'MOTO' THEN 1 END) as motos,
+                        COUNT(CASE WHEN v.tipo = 'MOTOCICLETA' THEN 1 END) as motos,
                         COUNT(CASE WHEN v.tipo = 'ELECTRICO' THEN 1 END) as electricos
                     FROM ticketsestancia t
                     JOIN vehiculos v ON t.id_vehiculo = v.id_vehiculo
@@ -50,7 +50,7 @@ router.get('/:periodo', verificarToken, verificarAdmin, async (req, res) => {
                         SUM(t.monto_cobrado) as ganancia_total,
                         AVG(t.monto_cobrado) as ganancia_promedio,
                         COUNT(CASE WHEN v.tipo = 'AUTOMOVIL' THEN 1 END) as autos,
-                        COUNT(CASE WHEN v.tipo = 'MOTO' THEN 1 END) as motos,
+                        COUNT(CASE WHEN v.tipo = 'MOTOCICLETA' THEN 1 END) as motos,
                         COUNT(CASE WHEN v.tipo = 'ELECTRICO' THEN 1 END) as electricos
                     FROM ticketsestancia t
                     JOIN vehiculos v ON t.id_vehiculo = v.id_vehiculo
@@ -72,7 +72,7 @@ router.get('/:periodo', verificarToken, verificarAdmin, async (req, res) => {
                         SUM(t.monto_cobrado) as ganancia_total,
                         AVG(t.monto_cobrado) as ganancia_promedio,
                         COUNT(CASE WHEN v.tipo = 'AUTOMOVIL' THEN 1 END) as autos,
-                        COUNT(CASE WHEN v.tipo = 'MOTO' THEN 1 END) as motos,
+                        COUNT(CASE WHEN v.tipo = 'MOTOCICLETA' THEN 1 END) as motos,
                         COUNT(CASE WHEN v.tipo = 'ELECTRICO' THEN 1 END) as electricos
                     FROM ticketsestancia t
                     JOIN vehiculos v ON t.id_vehiculo = v.id_vehiculo
