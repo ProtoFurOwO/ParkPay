@@ -1351,10 +1351,15 @@ try { initInlineFormHandlers(); } catch (e) { /* ignore */ }
 
 let chartGanancias = null;
 let chartVehiculos = null;
+let gananciasLoaded = false; // Prevenir múltiples cargas
+let loadingGanancias = false; // Prevenir cargas concurrentes
 
 // Cargar resumen de ganancias
 async function cargarResumenGanancias() {
+    if (loadingGanancias) return;
+    
     try {
+        loadingGanancias = true;
         const response = await secureRequest(`${API_URL}/ganancias`, {
             method: 'GET'
         });
@@ -1369,18 +1374,36 @@ async function cargarResumenGanancias() {
     } catch (error) {
         console.error('Error al cargar resumen de ganancias:', error);
         showMessage('Error al cargar resumen de ganancias', 'error');
+    } finally {
+        loadingGanancias = false;
     }
 }
 
 // Cargar datos de ganancias por período
 async function cargarGanancias() {
-    const periodo = document.getElementById('periodoGanancias').value;
+    const selectElement = document.getElementById('periodoGanancias');
+    if (!selectElement) {
+        console.warn('⚠️ Elemento periodoGanancias no encontrado');
+        return;
+    }
+    
+    const periodo = selectElement.value || 'dia';
     
     try {
+        console.log(`📊 Cargando ganancias para período: ${periodo}`);
+        
         const response = await secureRequest(`${API_URL}/ganancias/${periodo}`, {
             method: 'GET'
         });
         const data = await response.json();
+        
+        console.log('📊 Datos recibidos:', data);
+        
+        // Verificar que tengamos datos
+        if (!data.data || !Array.isArray(data.data)) {
+            console.warn('⚠️ No hay datos de ganancias disponibles');
+            return;
+        }
         
         // Actualizar gráficas
         actualizarGraficaGanancias(data.data, periodo);
@@ -1397,16 +1420,21 @@ async function cargarGanancias() {
 
 // Actualizar gráfica de ganancias
 function actualizarGraficaGanancias(data, periodo) {
-    const ctx = document.getElementById('chartGanancias').getContext('2d');
+    const canvas = document.getElementById('chartGanancias');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
     
     // Destruir gráfica anterior si existe
-    if (chartGanancias) {
+    if (chartGanancias && typeof chartGanancias.destroy === 'function') {
         chartGanancias.destroy();
+        chartGanancias = null;
     }
     
     const labels = data.map(item => item.fecha_formateada);
     const ganancias = data.map(item => item.ganancia_total);
     
+    // Crear nueva gráfica
     chartGanancias = new Chart(ctx, {
         type: 'line',
         data: {
@@ -1424,6 +1452,7 @@ function actualizarGraficaGanancias(data, periodo) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: false, // Deshabilitar animaciones para evitar loops
             plugins: {
                 legend: {
                     display: false
@@ -1445,11 +1474,15 @@ function actualizarGraficaGanancias(data, periodo) {
 
 // Actualizar gráfica de vehículos
 function actualizarGraficaVehiculos(data) {
-    const ctx = document.getElementById('chartVehiculos').getContext('2d');
+    const canvas = document.getElementById('chartVehiculos');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
     
     // Destruir gráfica anterior si existe
-    if (chartVehiculos) {
+    if (chartVehiculos && typeof chartVehiculos.destroy === 'function') {
         chartVehiculos.destroy();
+        chartVehiculos = null;
     }
     
     // Sumar totales por tipo de vehículo
@@ -1460,6 +1493,7 @@ function actualizarGraficaVehiculos(data) {
         return acc;
     }, { autos: 0, motos: 0, electricos: 0 });
     
+    // Crear nueva gráfica
     chartVehiculos = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -1477,6 +1511,7 @@ function actualizarGraficaVehiculos(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: false, // Deshabilitar animaciones para evitar loops
             plugins: {
                 legend: {
                     position: 'bottom',
@@ -1544,12 +1579,35 @@ async function exportarGanancias() {
 }
 
 // Modificar función showTab para cargar ganancias cuando se selecciona
-const originalShowTab = showTab;
-showTab = function(tabName) {
-    originalShowTab(tabName);
+const originalShowTab = window.showTab || showTab;
+window.showTab = function(tabName) {
+    if (typeof originalShowTab === 'function') {
+        originalShowTab(tabName);
+    }
     
-    if (tabName === 'ganancias') {
-        cargarResumenGanancias();
-        cargarGanancias();
+    // Cargar ganancias solo una vez al seleccionar la pestaña
+    if (tabName === 'ganancias' && !gananciasLoaded) {
+        console.log('🔄 Cargando datos de ganancias...');
+        gananciasLoaded = true;
+        
+        setTimeout(() => {
+            cargarResumenGanancias();
+            cargarGanancias();
+        }, 100); // Pequeño delay para asegurar que el DOM esté listo
+    }
+    
+    // Reset flag cuando se cambia de pestaña
+    if (tabName !== 'ganancias') {
+        gananciasLoaded = false;
+        
+        // Destruir gráficas cuando no están en uso
+        if (chartGanancias && typeof chartGanancias.destroy === 'function') {
+            chartGanancias.destroy();
+            chartGanancias = null;
+        }
+        if (chartVehiculos && typeof chartVehiculos.destroy === 'function') {
+            chartVehiculos.destroy();
+            chartVehiculos = null;
+        }
     }
 };
