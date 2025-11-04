@@ -1,0 +1,487 @@
+/* --- NUEVAS FUENTES --- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700&display=swap');
+
+/* --- CAMBIO: PALETA DE COLORES UNIFICADA --- */
+/* Esta es la paleta coherente de tu marca */
+:root {
+    --primary-color: #0061c9;   /* Azul vibrante, extraído del fondo del logo */
+    --success-color: #10b981;   /* Verde estándar */
+    --danger-color: #ef4444;    /* Rojo estándar */
+    --warning-color: #facc15;   /* Amarillo de las líneas del logo */
+    --dark-bg: #1e293b;         /* Gris asfalto/azulado (Fondo de contenedores) */
+    --darker-bg: #0f172a;       /* Fondo principal del body */
+    --light-text: #f1f5f9;
+    --gray-text: #94a3b8;
+    --selected-color: #fde047;  /* Amarillo brillante para selección */
+    --selected-text-color: #0f172a; /* Texto oscuro para contrastar con el amarillo */
+    --border-color: #334155;
+    /* (Se elimina --hover-bg, usaremos --border-color en su lugar) */
+}
+
+/* --- CAMBIO: FUENTES GLOBALES --- */
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--darker-bg); /* Fondo principal */
+    color: var(--light-text);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+}
+/* --- FIN CAMBIOS GLOBALES --- */
+
+
+.info-text {
+    background: transparent;
+    border-left: 3px solid var(--warning-color);
+    padding: 12px;
+    margin: 15px 0;
+    border-radius: 4px;
+    color: var(--warning-color);
+    font-family: 'Inter', sans-serif; /* Aseguramos fuente */
+}
+
+/* Admin Panel Layout */
+.admin-panel {
+    min-height: 100vh;
+    /* --- CAMBIO: Variable de fondo principal --- */
+    background: var(--darker-bg); 
+    padding: 0;
+}
+
+.admin-header {
+    /* --- CAMBIO: Variable de fondo de contenedor --- */
+    background: var(--dark-bg);
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header-left h1 {
+    font-size: 1.6rem; 
+    color: var(--light-text);
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.admin-name {
+    color: var(--gray-text);
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif; /* Aseguramos fuente */
+}
+
+/* Stats Cards */
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 30px 40px;
+}
+
+.stat-card {
+    /* --- CAMBIO: Variable de fondo de contenedor --- */
+    background: var(--dark-bg);
+    padding: 25px;
+    border-radius: 8px; 
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border: 1px solid var(--border-color);
+    transition: background 0.2s ease-in-out;
+}
+
+.stat-card:hover {
+    /* --- CAMBIO: Usando --border-color para hover --- */
+    background: var(--border-color);
+    border-color: var(--border-color);
+}
+
+.stat-icon {
+    font-size: 2.5rem; 
+}
+
+.stat-info h3 {
+    font-size: 1.75rem; 
+    color: var(--light-text);
+    margin: 0;
+}
+
+.stat-info p {
+    color: var(--gray-text);
+    margin: 5px 0 0 0;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif; /* Aseguramos fuente */
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 10px;
+    padding: 0 40px;
+    border-bottom: 1px solid var(--border-color); 
+}
+
+.tab-btn {
+    padding: 12px 20px; 
+    background: transparent;
+    border: none;
+    color: var(--gray-text);
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+    /* --- CAMBIO: Fuente de botón --- */
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.tab-btn:hover {
+    color: var(--light-text);
+    background: none; 
+}
+
+.tab-btn.active {
+    color: var(--primary-color); /* --- CAMBIO: Azul del logo --- */
+    border-bottom-color: var(--primary-color);
+}
+
+/* Content Area */
+.admin-content {
+    padding: 30px 40px;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s; 
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.content-header h2 {
+    color: var(--light-text);
+    font-size: 1.6rem;
+}
+
+/* Tables */
+.table-container {
+    /* --- CAMBIO: Variable de fondo de contenedor --- */
+    background: var(--dark-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    /* --- CAMBIO: Usando --border-color para cabecera --- */
+    background: var(--border-color); 
+}
+
+thead th {
+    padding: 12px 15px;
+    text-align: left;
+    color: var(--light-text);
+    font-size: 0.85rem;
+    /* --- CAMBIO: Fuente de cabecera de tabla --- */
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+}
+
+tbody tr:last-child {
+    border-bottom: none; 
+}
+
+tbody tr:hover {
+    /* --- CAMBIO: Usando --border-color para hover --- */
+    background: var(--border-color);
+}
+
+tbody td {
+    padding: 12px 15px;
+    color: var(--light-text);
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif; /* Aseguramos fuente */
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-small {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Botón Editar mejorado */
+.btn-edit {
+    background: var(--primary-color);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-edit:hover {
+    background: #0052aa;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-edit:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Botón Eliminar mejorado */
+.btn-delete {
+    background: var(--danger-color);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-delete:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn-delete:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-status {
+    background: var(--warning-color);
+    color: var(--selected-text-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-finalize {
+    background: var(--success-color);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: capitalize;
+    font-family: 'Inter', sans-serif;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.status-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Status Disponible/Pagado/Finalizado */
+.status-disponible,
+.status-pagado,
+.status-finalizado {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success-color);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* Status Ocupado/Expirado */
+.status-ocupado,
+.status-expirado {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger-color);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Status Mantenimiento/En Proceso */
+.status-mantenimiento,
+.status-en-proceso {
+    background: rgba(250, 204, 21, 0.15);
+    color: var(--warning-color);
+    border-color: rgba(250, 204, 21, 0.3);
+}
+
+.status-mantenimiento,
+.status-pendiente {
+    background: rgba(250, 204, 21, 0.2); /* warning */
+    color: var(--warning-color);
+}
+
+.status-activo {
+    background: rgba(0, 97, 201, 0.2); /* primary */
+    color: var(--primary-color);
+}
+
+.status-cancelado {
+    background: rgba(148, 163, 184, 0.2); /* gray */
+    color: var(--gray-text);
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* --- CAMBIO: Fondo con blur y color de la app --- */
+    background: rgba(15, 23, 42, 0.7); /* --darker-bg con alfa */
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s;
+}
+
+.modal {
+    /* --- CAMBIO: Variable de fondo de contenedor --- */
+    background: var(--dark-bg);
+    border-radius: 8px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); 
+    border: 1px solid var(--border-color);
+}
+
+.modal h2 {
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+/* Vehiculos Badge */
+.vehiculos-badge {
+    /* --- CAMBIO: Adaptado a color primario --- */
+    background: rgba(0, 97, 201, 0.2);
+    color: var(--primary-color);
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif; /* Aseguramos fuente */
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--gray-text);
+}
+
+.empty-state-icon {
+    font-size: 3.5rem;
+    margin-bottom: 15px;
+}
+
+/* Loading Spinner */
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--gray-text);
+}
+
+.loading::after {
+    content: "⏳";
+    font-size: 3rem;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+
+/* Responsive (Sin cambios) */
+@media (max-width: 1024px) {
+    .admin-header,
+    .tabs,
+    .admin-content {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .stats-container {
+        padding: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+
+    .tabs {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .table-container {
+        overflow-x: auto;
+    }
+
+    table {
+        min-width: 800px;
+    }
+}

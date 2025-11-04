@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio - ParkPay</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1e40af">
+    <style>
+        /* --- NUEVAS FUENTES --- */
+/* Importamos las fuentes 'Inter' (para el cuerpo) y 'Montserrat' (para títulos) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@600;700&display=swap');
+
+/* --- PALETA DEL LOGO (COPIADA DE LA PÁGINA ANTERIOR) --- */
+:root {
+    --primary-color: #0061c9;   /* Azul vibrante, extraído del fondo del logo */
+    --success-color: #10b981;   /* Verde estándar */
+    --danger-color: #ef4444;    /* Rojo estándar */
+    --warning-color: #facc15;   /* Amarillo de las líneas del logo */
+    --dark-bg: #1e293b;         /* Gris asfalto/azulado (Fondo de contenedores) */
+    --darker-bg: #0f172a;       /* Fondo principal del body */
+    --light-text: #f1f5f9;
+    --gray-text: #94a3b8;
+    --selected-color: #fde047;  /* Amarillo brillante para selección */
+    --selected-text-color: #0f172a; /* Texto oscuro para contrastar con el amarillo */
+    --border-color: #334155;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    /* --- CAMBIO: Usando variables para el fondo --- */
+    background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
+    min-height: 100vh;
+    /* --- NUEVA FUENTE BASE --- */
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--light-text); /* Color de texto por defecto */
+}
+
+/* --- NUEVA FUENTE PARA TÍTULOS --- */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+}
+
+/* --- NUEVA FUENTE PARA BOTONES --- */
+button, .btn-cancelar-reserva, .btn-extender-tiempo {
+     font-family: 'Montserrat', sans-serif;
+     font-weight: 600;
+     text-transform: uppercase;
+     letter-spacing: 0.5px;
+}
+
+.home-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    padding-bottom: 100px; /* Más espacio para el bottom-nav */
+}
+
+.header-home {
+    color: var(--light-text); /* --- CAMBIO: Variable --- */
+    padding: 20px;
+    text-align: center;
+}
+
+.header-home h1 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.user-greeting {
+    color: var(--gray-text); /* --- CAMBIO: Variable --- */
+    margin-top: 5px;
+}
+
+/* --- CAMBIO: INVERTIMOS LA TARJETA A TEMA OSCURO --- */
+.stats-card {
+    background: var(--dark-bg); /* Fondo oscuro */
+    border-radius: 20px;
+    padding: 25px;
+    margin: 20px 0;
+    border: 1px solid var(--border-color); /* Borde sutil */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+/* --- CAMBIO: Sub-item también oscuro --- */
+.stat-item {
+    background: var(--darker-bg); /* Fondo más oscuro */
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: bold;
+    color: var(--primary-color); /* --- CAMBIO: Azul del logo --- */
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--gray-text); /* --- CAMBIO: Variable --- */
+    text-transform: uppercase;
+}
+
+/* --- CAMBIO: Usando el azul del logo --- */
+.action-card {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #004a9e 100%); /* Azul del logo a más oscuro */
+    border-radius: 20px;
+    padding: 30px;
+    margin: 20px 0;
+    color: var(--light-text);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 97, 201, 0.3); /* Sombra del color azul */
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 97, 201, 0.4);
+}
+
+.action-card h2 {
+    margin: 0 0 10px 0;
+    font-size: 24px;
+}
+
+.action-card p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+.action-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+/* --- CAMBIO: Botones rápidos invertidos a tema oscuro --- */
+.quick-action-btn {
+    background: var(--dark-bg); /* Fondo oscuro */
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center; /* Aseguramos centrado */
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-color); /* Resaltado al hacer hover */
+}
+
+.quick-action-icon {
+    font-size: 36px;
+    margin-bottom: 8px;
+    color: var(--primary-color); /* --- CAMBIO: Icono con color primario --- */
+}
+
+.quick-action-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--light-text); /* --- CAMBIO: Texto claro --- */
+}
+
+/* --- CAMBIO: Barra de navegación invertida a tema oscuro --- */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--dark-bg); /* Fondo oscuro */
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    z-index: 100;
+    border-top: 1px solid var(--border-color); /* Borde superior */
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: var(--gray-text); /* --- CAMBIO: Variable --- */
+    font-size: 12px;
+    padding: 5px 15px;
+    font-family: 'Inter', sans-serif; /* Fuente base para nav */
+}
+
+/* --- CAMBIO: Ítem activo "Llamativo" con AMARILLO --- */
+.nav-item.active {
+    color: var(--selected-color); /* AMARILLO del logo */
+    font-weight: bold;
+}
+
+.nav-icon {
+    font-size: 24px;
+    margin-bottom: 4px;
+}
+
+/* --- CAMBIO: Sección invertida a tema oscuro --- */
+.active-tickets-section {
+    background: var(--dark-bg); /* Fondo oscuro */
+    border-radius: 20px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+}
+
+.active-tickets-section h3 {
+    margin: 0 0 15px 0;
+    color: var(--primary-color); /* --- CAMBIO: Azul del logo --- */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* --- CAMBIO: Usando variable de éxito --- */
+.ticket-active-card {
+    background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%); /* Verde a más oscuro */
+    border-radius: 15px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ticket-active-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.ticket-header-active {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.ticket-code-active {
+    font-size: 16px;
+    font-weight: bold;
+    font-family: 'Montserrat', sans-serif; /* Fuente de título */
+}
+
+.ticket-spot-active {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-family: 'Montserrat', sans-serif; /* Fuente de título */
+}
+
+.ticket-qr-mini {
+    display: flex;
+    justify-content: center;
+    background: white;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 10px 0;
+}
+
+.empty-tickets {
+    text-align: center;
+    padding: 30px;
+    color: var(--gray-text); /* --- CAMBIO: Variable --- */
+}
+
+.empty-tickets-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+/* Estilos para Reservas Pendientes */
+.reservas-section {
+    margin: 20px 0;
+}
+
+/* --- CAMBIO: Usando azul del logo --- */
+.reserva-card {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #004a9e 100%); /* Azul del logo a más oscuro */
+    border-radius: 20px;
+    padding: 20px;
+    color: white;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 20px rgba(0, 97, 201, 0.3); /* Sombra del color azul */
+}
+
+.reserva-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.reserva-tipo-badge {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    font-family: 'Inter', sans-serif;
+}
+
+.reserva-codigo {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-family: 'Montserrat', sans-serif; /* Fuente de título */
+}
+
+.reserva-info {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.reserva-info-item {
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+.reserva-countdown {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    margin: 15px 0;
+}
+
+.countdown-timer {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-family: 'Montserrat', sans-serif; /* Fuente de título */
+}
+
+.countdown-label {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.reserva-qr {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    margin: 15px 0;
+}
+
+.reserva-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+/* --- CAMBIO: Usando variable de peligro --- */
+.btn-cancelar-reserva {
+    flex: 1;
+    background: var(--danger-color); /* Rojo de la variable */
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-cancelar-reserva:hover {
+    background: #dc2626; /* Tono más oscuro del rojo */
+}
+
+.btn-extender-tiempo {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-extender-tiempo:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+    </style>
+</head>
+<body>
+    <div class="home-container">
+        <!-- Header -->
+        <div class="header-home">
+            <div style="display: flex; align-items: center; justify-content: center;"> 
+                <img src="logo.png?v=2" alt="ParkPay Logo" style=" width: auto; max-width: 90%;">
+            </div>
+            <p class="user-greeting">Bienvenido, <span id="userName">Usuario</span></p>
+        </div>
+
+        <!-- Card principal de acción -->
+        <div class="action-card" onclick="window.location.href='estacionamiento.html'">
+            <div class="action-icon">🚗</div>
+            <h2>Estacionar Ahora</h2>
+            <p>Encuentra y reserva tu lugar perfecto</p>
+        </div>
+
+        <!-- Estadísticas rápidas -->
+        <div class="stats-card">
+            <h3 style="margin: 0 0 15px 0; color: #1e40af;">📊 Resumen</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="ticketsActivos">-</div>
+                    <div class="stat-label">Tickets Activos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalVehiculos">-</div>
+                    <div class="stat-label">Vehículos</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reservas Pendientes -->
+        <div class="reservas-section" id="reservasSection" style="display: none;">
+            <h3 style="color: white; margin-bottom: 15px;">
+                📅 Reservas Pendientes
+            </h3>
+            <div id="reservasList"></div>
+        </div>
+
+        <!-- Tickets Activos -->
+        <div class="active-tickets-section" id="activeTicketsSection" style="display: none;">
+            <h3>
+                🎫 Tickets Activos
+                <a href="tickets.html" style="font-size: 14px; color: #3b82f6; text-decoration: none;">Ver todos →</a>
+            </h3>
+            <div id="activeTicketsList"></div>
+        </div>
+
+        <!-- Acciones rápidas -->
+        <div class="quick-actions">
+            <a href="tickets.html" class="quick-action-btn">
+                <div class="quick-action-icon">🎫</div>
+                <div class="quick-action-label">Mis Tickets</div>
+            </a>
+            <a href="perfil.html" class="quick-action-btn">
+                <div class="quick-action-icon">👤</div>
+                <div class="quick-action-label">Mi Perfil</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="inicio.html" class="nav-item active">
+            <div class="nav-icon">🏠</div>
+            <span>Inicio</span>
+        </a>
+        <a href="estacionamiento.html" class="nav-item">
+            <div class="nav-icon">🚗</div>
+            <span>Estacionar</span>
+        </a>
+        <a href="tickets.html" class="nav-item">
+            <div class="nav-icon">🎫</div>
+            <span>Tickets</span>
+        </a>
+        <a href="perfil.html" class="nav-item">
+            <div class="nav-icon">👤</div>
+            <span>Perfil</span>
+        </a>
+    </nav>
+
+    <script>
+        const API_URL = 'https://parkpay-backend-1ti1.onrender.com/api';
+        let usuario = null;
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const usuarioData = localStorage.getItem('usuario');
+            
+            if (!usuarioData) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            usuario = JSON.parse(usuarioData);
+            document.getElementById('userName').textContent = usuario.nombre;
+
+            // Cargar estadísticas
+            await cargarEstadisticas();
+        });
+
+        async function cargarEstadisticas() {
+            try {
+                // Reservas pendientes - 🔐 CON JWT
+                const reservasRes = await window.authHelper.get(`/reservas/usuario/${usuario.id_usuario}`);
+                
+                if (reservasRes.ok) {
+                    const reservasData = await reservasRes.json();
+                    
+                    // Verificar que sea un array
+                    if (Array.isArray(reservasData)) {
+                        const reservasPendientes = reservasData.filter(r => r.estado === 'PENDIENTE');
+                        
+                        // Mostrar reservas pendientes si hay
+                        if (reservasPendientes.length > 0) {
+                            mostrarReservasPendientes(reservasPendientes);
+                        }
+                    }
+                } else {
+                    console.log('No hay reservas disponibles o error en el servidor');
+                }
+
+                // Tickets activos - 🔐 CON JWT
+                const ticketsRes = await window.authHelper.get(`/tickets/usuario/${usuario.id_usuario}`);
+                const tickets = await ticketsRes.json();
+                const ticketsActivos = tickets.filter(t => t.estado === 'ACTIVO');
+                document.getElementById('ticketsActivos').textContent = ticketsActivos.length;
+
+                // Mostrar tickets activos si hay
+                if (ticketsActivos.length > 0) {
+                    mostrarTicketsActivos(ticketsActivos);
+                }
+
+                // Vehículos - 🔐 CON JWT
+                const vehiculosRes = await window.authHelper.get(`/usuarios/${usuario.id_usuario}/vehiculos`);
+                const vehiculos = await vehiculosRes.json();
+                document.getElementById('totalVehiculos').textContent = vehiculos.length;
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function mostrarTicketsActivos(tickets) {
+            const section = document.getElementById('activeTicketsSection');
+            const container = document.getElementById('activeTicketsList');
+
+            section.style.display = 'block';
+
+            container.innerHTML = tickets.map(ticket => `
+                <div class="ticket-active-card" onclick="window.location.href='tickets.html'">
+                    <div class="ticket-header-active">
+                        <div class="ticket-code-active">🎫 ${ticket.codigo_acceso}</div>
+                        <div style="background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px; font-size: 12px;">
+                            ACTIVO
+                        </div>
+                    </div>
+                    <div class="ticket-spot-active">📍 Cajón ${ticket.numero_cajon || 'N/A'}</div>
+                    <div style="font-size: 14px; opacity: 0.9;">🚗 ${ticket.placa || 'N/A'}</div>
+                    <div class="ticket-qr-mini" id="qr-mini-${ticket.id_ticket}">
+                        <div style="color: #64748b; font-size: 12px;">Cargando QR...</div>
+                    </div>
+                    <div style="font-size: 12px; text-align: center; margin-top: 10px; opacity: 0.8;">
+                        Toca para ver detalles
+                    </div>
+                </div>
+            `).join('');
+
+            // Generar QR codes
+            setTimeout(() => {
+                tickets.forEach(ticket => {
+                    const qrContainer = document.getElementById(`qr-mini-${ticket.id_ticket}`);
+                    if (qrContainer) {
+                        qrContainer.innerHTML = '';
+                        new QRCode(qrContainer, {
+                            text: ticket.codigo_acceso,
+                            width: 120,
+                            height: 120,
+                            colorDark: "#1e40af",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+                    }
+                });
+            }, 100);
+        }
+
+        // Mostrar reservas pendientes
+        function mostrarReservasPendientes(reservas) {
+            const section = document.getElementById('reservasSection');
+            const container = document.getElementById('reservasList');
+
+            section.style.display = 'block';
+
+            container.innerHTML = reservas.map(reserva => {
+                const fechaInicio = new Date(reserva.fecha_inicio_reserva);
+                const fechaFin = new Date(reserva.fecha_fin_reserva);
+                const ahora = new Date();
+                
+                // Determinar tipo de reserva
+                const minutosHastaInicio = Math.floor((fechaInicio - ahora) / (1000 * 60));
+                const esInstantanea = minutosHastaInicio <= 30;
+                const tipoBadge = esInstantanea ? '⚡ Instantánea' : '📅 Programada';
+                
+                // Calcular tiempo restante
+                const tiempoRestante = fechaFin - ahora;
+                const minutosRestantes = Math.floor(tiempoRestante / (1000 * 60));
+                const horasRestantes = Math.floor(minutosRestantes / 60);
+                const minsRestantes = minutosRestantes % 60;
+                
+                let countdownText = '';
+                if (ahora >= fechaInicio && ahora <= fechaFin) {
+                    // Dentro de la ventana de escaneo
+                    countdownText = `${horasRestantes}h ${minsRestantes}m restantes para escanear`;
+                } else if (ahora < fechaInicio) {
+                    // Todavía no inicia la ventana
+                    const horasHastaInicio = Math.floor(minutosHastaInicio / 60);
+                    const minsHastaInicio = minutosHastaInicio % 60;
+                    countdownText = `Inicia en ${horasHastaInicio}h ${minsHastaInicio}m`;
+                } else {
+                    countdownText = 'Expirada';
+                }
+
+                return `
+                    <div class="reserva-card">
+                        <div class="reserva-header">
+                            <div class="reserva-tipo-badge">${tipoBadge}</div>
+                            <div style="font-size: 12px;">${reserva.estado}</div>
+                        </div>
+                        
+                        <div class="reserva-codigo">
+                            🎫 ${reserva.codigo_acceso}
+                        </div>
+                        
+                        <div class="reserva-info">
+                            <div class="reserva-info-item">
+                                <span>📍 Cajón:</span>
+                                <strong>${reserva.numero_cajon} - ${reserva.ubicacion_piso}</strong>
+                            </div>
+                            <div class="reserva-info-item">
+                                <span>🚗 Vehículo:</span>
+                                <strong>${reserva.placa}</strong>
+                            </div>
+                            <div class="reserva-info-item">
+                                <span>📅 Llegada:</span>
+                                <strong>${fechaInicio.toLocaleString('es-MX', { dateStyle: 'short', timeStyle: 'short' })}</strong>
+                            </div>
+                            <div class="reserva-info-item">
+                                <span>⏱️ Tiempo comprado:</span>
+                                <strong>${Math.floor(reserva.duracion_comprada_minutos / 60)}h</strong>
+                            </div>
+                            <div class="reserva-info-item">
+                                <span>💵 Total:</span>
+                                <strong>$${parseFloat(reserva.monto_total).toFixed(2)}</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="reserva-countdown" id="countdown-${reserva.id_reserva}">
+                            <div class="countdown-timer">${countdownText}</div>
+                            <div class="countdown-label">Ventana de escaneo</div>
+                        </div>
+                        
+                        <div class="reserva-qr" id="qr-reserva-${reserva.id_reserva}">
+                            <div style="color: #64748b; font-size: 12px;">Cargando QR...</div>
+                        </div>
+                        
+                        <div class="reserva-actions">
+                            <button class="btn-extender-tiempo" onclick="extenderTiempo(${reserva.id_reserva})">
+                                ⏰ +10 min
+                            </button>
+                            <button class="btn-cancelar-reserva" onclick="cancelarReserva(${reserva.id_reserva})">
+                                ❌ Cancelar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Generar QR codes
+            setTimeout(() => {
+                reservas.forEach(reserva => {
+                    const qrContainer = document.getElementById(`qr-reserva-${reserva.id_reserva}`);
+                    if (qrContainer) {
+                        qrContainer.innerHTML = '';
+                        new QRCode(qrContainer, {
+                            text: reserva.codigo_acceso,
+                            width: 150,
+                            height: 150,
+                            colorDark: "#1e40af",
+                            colorLight: "#ffffff",
+                            correctLevel: QRCode.CorrectLevel.H
+                        });
+                    }
+                });
+            }, 100);
+
+            // Actualizar countdowns cada segundo
+            setInterval(() => {
+                reservas.forEach(reserva => {
+                    const fechaInicio = new Date(reserva.fecha_inicio_reserva);
+                    const fechaFin = new Date(reserva.fecha_fin_reserva);
+                    const ahora = new Date();
+                    
+                    const tiempoRestante = fechaFin - ahora;
+                    const minutosRestantes = Math.floor(tiempoRestante / (1000 * 60));
+                    const horasRestantes = Math.floor(minutosRestantes / 60);
+                    const minsRestantes = minutosRestantes % 60;
+                    
+                    const countdownEl = document.getElementById(`countdown-${reserva.id_reserva}`);
+                    if (countdownEl) {
+                        const timerEl = countdownEl.querySelector('.countdown-timer');
+                        if (ahora >= fechaInicio && ahora <= fechaFin) {
+                            timerEl.textContent = `${horasRestantes}h ${minsRestantes}m restantes`;
+                        } else if (ahora < fechaInicio) {
+                            const minutosHastaInicio = Math.floor((fechaInicio - ahora) / (1000 * 60));
+                            const horasHastaInicio = Math.floor(minutosHastaInicio / 60);
+                            const minsHastaInicio = minutosHastaInicio % 60;
+                            timerEl.textContent = `Inicia en ${horasHastaInicio}h ${minsHastaInicio}m`;
+                        } else {
+                            timerEl.textContent = 'Expirada';
+                            countdownEl.style.background = 'rgba(239, 68, 68, 0.3)';
+                        }
+                    }
+                });
+            }, 1000);
+        }
+
+        // Cancelar reserva
+        async function cancelarReserva(idReserva) {
+            if (!confirm('¿Estás seguro de cancelar esta reserva?')) return;
+            
+            try {
+                const token = localStorage.getItem('parkpay_token');
+                if (!token) {
+                    alert('❌ Sesión expirada. Por favor, inicia sesión nuevamente.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const response = await fetch(`${API_URL}/reservas/${idReserva}/cancelar`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'X-Request-Source': 'parkpay-frontend',
+                        'X-Request-Time': Date.now().toString(),
+                        'X-Request-Nonce': Math.random().toString(36).substring(2, 15)
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ Reserva cancelada exitosamente');
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + (data.error || 'No se pudo cancelar la reserva'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error de conexión al servidor');
+            }
+        }
+
+        // Extender tiempo de reserva
+        async function extenderTiempo(idReserva) {
+            if (!confirm('¿Agregar 10 minutos adicionales a la ventana de escaneo?')) return;
+            
+            try {
+                const token = localStorage.getItem('parkpay_token');
+                if (!token) {
+                    alert('❌ Sesión expirada. Por favor, inicia sesión nuevamente.');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                const response = await fetch(`${API_URL}/reservas/${idReserva}/extender`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'X-Request-Source': 'parkpay-frontend',
+                        'X-Request-Time': Date.now().toString(),
+                        'X-Request-Nonce': Math.random().toString(36).substring(2, 15)
+                    },
+                    body: JSON.stringify({ minutos: 10 })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('✅ Se agregaron 10 minutos adicionales');
+                    location.reload();
+                } else {
+                    alert('❌ Error: ' + (data.error || 'No se pudo extender el tiempo'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error de conexión al servidor');
+            }
+        }
+    </script>
+    <script src="js/auth-helper.js"></script>
+</body>
+</html>

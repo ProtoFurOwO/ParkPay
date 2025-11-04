@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - ParkPay</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="css/buttons.css" rel="stylesheet">
+
+    <style>
+        /* --- Paleta de Colores (Modo Oscuro) --- */
+        :root {
+            --color-primary: #22d3ee; /* Cian brillante */
+            --color-primary-hover: #67e8f9;
+            --color-bg-body: #111827;     /* Fondo del cuerpo (Muy oscuro) */
+            --color-bg-surface: #1f2937; /* Fondo de Sidebar y Tarjetas */
+            --color-bg-hover: #374151;   /* Hover en botones y filas de tabla */
+            --color-border: #4b5563;     /* Bordes sutiles */
+            
+            --color-text-primary: #f9fafb;   /* Texto principal (Casi blanco) */
+            --color-text-secondary: #9ca3af; /* Texto silenciado (Gris claro) */
+            --color-text-icon: var(--color-primary);
+
+            --color-success: #22c55e;
+            --color-danger: #ef4444;
+            --color-warning: #f59e0b;
+            
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --border-radius: 0.5rem; /* 8px */
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        /* --- Reset y Globales --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--color-bg-body);
+            color: var(--color-text-primary);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* --- Layout Principal (Sidebar + Contenido) --- */
+        
+        .sidebar {
+            width: 250px;
+            background-color: var(--color-bg-surface);
+            border-right: 1px solid var(--color-border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100%;
+            z-index: 10;
+        }
+
+        .main-content {
+            flex-grow: 1;
+            margin-left: 250px; /* Mismo ancho que la sidebar */
+            padding: 2rem;
+        }
+
+        /* --- Barra Lateral (Sidebar) --- */
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.5rem;
+            color: #fff;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .sidebar-nav {
+            flex-grow: 1;
+            padding-top: 1rem;
+        }
+
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+            padding: 0.9rem 1.5rem;
+            background: none;
+            border: none;
+            border-left: 4px solid transparent; /* Indicador activo */
+            color: var(--color-text-secondary);
+            text-align: left;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .tab-btn .btn-icon {
+            font-size: 1.25rem;
+            transition: color 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            background-color: var(--color-bg-hover);
+            color: var(--color-text-primary);
+        }
+
+        .tab-btn.active {
+            background-color: var(--color-bg-hover);
+            color: var(--color-primary);
+            font-weight: 600;
+            border-left-color: var(--color-primary);
+        }
+
+        /* --- Área de Contenido Principal --- */
+        
+        /* Cabecera (Usuario + Logout) */
+        .admin-header {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 1.5rem;
+            /* Separador sutil del contenido */
+            border-bottom: 1px solid var(--color-border);
+            margin-bottom: 2rem;
+        }
+
+        .admin-name {
+            font-weight: 600;
+            margin-right: 1.5rem;
+            color: var(--color-text-primary);
+        }
+        
+        /* Los estilos de botones han sido movidos a buttons.css */
+
+
+        /* --- Tarjetas de Estadísticas --- */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            background-color: var(--color-bg-surface);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--color-border);
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+            width: 50px;
+            height: 50px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            color: var(--color-text-icon);
+        }
+        
+        .stat-info h3 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .stat-info p {
+            font-size: 1rem;
+            color: var(--color-text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* --- Contenedor de Pestañas (Tablas) --- */
+        .admin-content-wrapper {
+            background-color: var(--color-bg-surface);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--color-border);
+            overflow: hidden; /* Para los bordes redondeados */
+        }
+
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .content-header h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+        }
+
+        /* --- Estilo de Tablas Moderno --- */
+        .table-container {
+            width: 100%;
+            overflow-x: auto; /* Para tablas anchas en móvil */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+            /* Let the table layout be flexible so columns can shrink/wrap when needed */
+            table-layout: auto;
+        }
+
+        th, td {
+            /* Slightly smaller horizontal padding so many columns fit on small screens */
+            padding: 0.9rem 1rem;
+            text-align: left;
+            /* Allow text to wrap instead of forcing a horizontal scrollbar */
+            white-space: normal; /* Previously nowrap */
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        thead th {
+            background-color: var(--color-bg-body); /* Fondo más oscuro para cabecera */
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        tbody tr:last-child th,
+        tbody tr:last-child td {
+            border-bottom: none; /* Sin borde en la última fila */
+        }
+
+        tbody tr {
+            transition: background-color 0.15s ease;
+        }
+        tbody tr:hover {
+            background-color: var(--color-bg-hover);
+        }
+
+        td .btn {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+            margin-right: 0.25rem;
+        }
+
+        /* --- Modales y Mensajes --- */
+        #modalContainer {
+            /* Contenedor dinámico para modales. Mantener posicionamiento relativo
+               para que los modales insertados puedan posicionarse correctamente. */
+            position: relative;
+        }
+
+        /* Modal overlay y tarjetas */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            /* Mostrar por defecto: los modales son insertados via JS en #modalContainer */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            padding: 1rem;
+        }
+
+        /* Ocultar overlays estáticos cuando se usan atributos aria-hidden="true" */
+        .modal-overlay[aria-hidden="true"] {
+            display: none;
+        }
+
+        .modal-card {
+            background: var(--color-bg-surface);
+            color: var(--color-text-primary);
+            width: min(760px, 100%);
+            max-width: 760px;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            padding: 1.25rem;
+            border: 1px solid var(--color-border);
+        }
+
+        .modal-card header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .modal-card h3 { margin: 0; font-size: 1.125rem; }
+
+        .modal-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+
+        .modal-field { display:flex; flex-direction:column; gap:0.35rem; margin-bottom:0.75rem; }
+        .modal-field input, .modal-field select { padding: 0.6rem 0.8rem; border-radius: 8px; border: 1px solid var(--color-border); background: var(--color-bg-body); color: var(--color-text-primary); }
+        .btn-close { background: transparent; border: none; color: var(--color-text-secondary); font-size: 1rem; cursor: pointer; }
+
+        /* Inline create boxes (registro) */
+        .create-box {
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            padding: 1rem;
+            border-radius: 10px;
+            margin: 1rem 2rem 1.5rem 2rem;
+            display: none; /* toggled by JS */
+        }
+        .create-box .row { display:flex; gap:0.75rem; }
+        .create-box .col { flex:1; display:flex; flex-direction:column; }
+        .create-box label { font-size:0.85rem; color:var(--color-text-secondary); margin-bottom:0.35rem; }
+        .create-box input, .create-box select { padding:0.6rem 0.75rem; border-radius:8px; border:1px solid var(--color-border); background:var(--color-bg-body); color:var(--color-text-primary); }
+        .create-box .actions { margin-top:0.75rem; display:flex; gap:0.5rem; }
+
+        /* Mejoras en encabezados de sección */
+        .content-header .actions { display: flex; gap: 0.75rem; align-items: center; }
+        .btn-success { background: linear-gradient(90deg,var(--color-success), #34d399); color: #06281a; box-shadow: 0 6px 12px rgba(34,197,94,0.12); }
+        .btn-success:hover { transform: translateY(-2px); }
+
+        .message-box {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background-color: var(--color-primary);
+            color: var(--color-bg-body);
+            font-weight: 600;
+            border-radius: 6px;
+            box-shadow: var(--shadow-lg);
+            z-index: 100;
+        }
+        
+        /* --- Diseño Responsivo --- */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 220px;
+            }
+            .main-content {
+                margin-left: 220px;
+            }
+            .stats-container {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                position: relative;
+                width: 100%;
+                height: auto;
+            }
+            /* Convierte la nav en una barra horizontal scrolleable */
+            .sidebar-nav {
+                display: flex;
+                flex-direction: row;
+                overflow-x: auto;
+                padding-top: 0;
+            }
+            .tab-btn {
+                flex-shrink: 0; /* Evita que se encojan */
+                border-left: none;
+                border-bottom: 4px solid transparent;
+            }
+             .tab-btn.active {
+                border-left: none;
+                border-bottom-color: var(--color-primary);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 1rem;
+            }
+            .admin-header {
+                margin-bottom: 1rem;
+            }
+            .stats-container {
+                grid-template-columns: 1fr; /* Apila las tarjetas */
+                gap: 1rem;
+                margin-bottom: 1rem;
+            }
+            .tab-content {
+                padding: 0;
+            }
+            .content-header {
+                padding: 1rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            th, td {
+                padding: 1rem;
+            }
+        }
+        
+        /* --- Estilos para Gráficas de Ganancias --- */
+        .chart-container {
+            background: var(--color-bg-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .chart-container h3 {
+            margin: 0 0 1rem 0;
+            color: var(--color-text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .chart-container canvas {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        #periodoGanancias {
+            padding: 0.6rem 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+            background: var(--color-bg-body);
+            color: var(--color-text-primary);
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive para gráficas */
+        @media (max-width: 1024px) {
+            .chart-container {
+                grid-column: 1 / -1;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h1>🔐 DASHBOARD</h1>
+        </div>
+        
+        <div class="sidebar-nav">
+            <button class="tab-btn active" onclick="showTab('usuarios')">
+                <span class="btn-icon">👥</span>
+                <span class="btn-text">Usuarios</span>
+            </button>
+            <button class="tab-btn" onclick="showTab('vehiculos')">
+                <span class="btn-icon">🚗</span>
+                <span class="btn-text">Vehículos</span>
+            </button>
+            <button class="tab-btn" onclick="showTab('cajones')">
+                <span class="btn-icon">🅿️</span>
+                <span class="btn-text">Cajones</span>
+            </button>
+            <button class="tab-btn" onclick="showTab('reservas')">
+                <span class="btn-icon">📅</span>
+                <span class="btn-text">Reservas</span>
+            </button>
+            <button class="tab-btn" onclick="showTab('tickets')">
+                <span class="btn-icon">🎫</span>
+                <span class="btn-text">Tickets</span>
+            </button>
+            
+            <button class="tab-btn" onclick="showTab('ganancias')">
+                <span class="btn-icon">📊</span>
+                <span class="btn-text">Ganancias</span>
+            </button>
+            <button class="tab-btn" onclick="showTab('tarifas')">
+                <span class="btn-icon">💵</span>
+                <span class="btn-text">Tarifas</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        
+        <header class="admin-header">
+            <span id="adminName" class="admin-name">Cargando...</span>
+            <button onclick="logoutAdmin()" class="btn btn-logout">Cerrar Sesión</button>
+        </header>
+
+        <section class="stats-container" id="statsContainer">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-info">
+                    <h3 id="statUsuarios">0</h3>
+                    <p>Usuarios</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🚗</div>
+                <div class="stat-info">
+                    <h3 id="statVehiculos">0</h3>
+                    <p>Vehículos</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🅿️</div>
+                <div class="stat-info">
+                    <h3 id="statCajonesOcupados">0</h3>
+                    <p>Ocupados</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🎫</div>
+                <div class="stat-info">
+                    <h3 id="statTicketsActivos">0</h3>
+                    <p>Tickets Activos</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-info">
+                    <h3 id="statRecaudado">$0</h3>
+                    <p>Recaudado</H3>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-content-wrapper">
+            
+            <div id="tab-usuarios" class="tab-content active">
+                <div class="content-header">
+                    <h2>Gestión de Usuarios</h2>
+                    <div class="actions">
+                        <button onclick="toggleCreateBox('createUserBox')" class="btn btn-success">+ Crear Usuario</button>
+                    </div>
+                </div>
+                <div id="createUserBox" class="create-box" aria-hidden="true">
+                    <form id="createUserInlineForm">
+                        <div class="row">
+                            <div class="col">
+                                <label for="uNombre">Nombre Completo</label>
+                                <input id="uNombre" name="nombre" type="text" placeholder="Juan Pérez" required />
+                            </div>
+                            <div class="col">
+                                <label for="uEmail">Email</label>
+                                <input id="uEmail" name="email" type="email" placeholder="usuario@correo.com" required />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label for="uFecha">Fecha Registro</label>
+                                <input id="uFecha" name="fecha" type="date" />
+                            </div>
+                            <div class="col">
+                                <label for="uPlaca">Placa Vehículo (opc) - Max 10 chars</label>
+                                <input id="uPlaca" name="placa" type="text" placeholder="ABC-123 (max 10)" maxlength="10" onkeyup="validarPlacaIndividual(this)" />
+                                <small id="placaUsuarioValidacion" style="color: #ff6b6b; font-size: 12px; display: none;"></small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label for="uTipoVehiculo">Tipo Vehículo (si hay placa)</label>
+                                <select id="uTipoVehiculo" name="tipo_vehiculo">
+                                    <option value="">Sin vehículo</option>
+                                    <option value="AUTOMOVIL">🚗 Automóvil</option>
+                                    <option value="MOTOCICLETA">🏍️ Motocicleta</option>
+                                    <option value="ELECTRICO">⚡ Eléctrico</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <label for="uMarca">Marca (opc)</label>
+                                <input id="uMarca" name="marca" type="text" placeholder="Toyota, Honda..." maxlength="50" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label for="uPassword">Contraseña</label>
+                                <input id="uPassword" name="password" type="password" placeholder="Mínimo 6 caracteres" minlength="6" required />
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <button class="btn btn-success" type="submit">Guardar Usuario</button>
+                            <button class="btn btn-delete" type="button" onclick="toggleCreateBox('createUserBox',true)">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="table-container">
+                    <table id="tablaUsuarios">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre Completo</th>
+                                <th>Email</th>
+                                <th>Vehículos</th>
+                                <th>Fecha Registro</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-vehiculos" class="tab-content">
+                <div class="content-header">
+                    <h2>Gestión de Vehículos</h2>
+                    <div class="actions">
+                        <button onclick="toggleCreateBox('createVehicleBox')" class="btn btn-success">+ Crear Vehículo</button>
+                    </div>
+                </div>
+                <div id="createVehicleBox" class="create-box" aria-hidden="true">
+                    <form id="createVehicleInlineForm">
+                        <div class="row">
+                            <div class="col">
+                                <label for="vPlaca">Placa</label>
+                                <input id="vPlaca" name="placa" type="text" placeholder="ABC-123 (max 10)" maxlength="10" required onkeyup="validarPlacaIndividual(this)" />
+                                <small id="placaIndividualValidacion" style="color: #ff6b6b; font-size: 12px; display: none;"></small>
+                            </div>
+                            <div class="col">
+                                <label for="vTipo">Tipo</label>
+                                <select id="vTipo" name="tipo" required>
+                                    <option value="AUTOMOVIL">🚗 Automóvil</option>
+                                    <option value="MOTOCICLETA">🏍️ Motocicleta</option>
+                                    <option value="ELECTRICO">⚡ Eléctrico</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label for="vUsuario">Asignar a Usuario</label>
+                                <select id="vUsuario" name="id_usuario" required>
+                                    <option value="">Cargando usuarios...</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <label for="vMarca">Marca</label>
+                                <input id="vMarca" name="marca" type="text" placeholder="Toyota" required />
+                            </div>
+                            <div class="col">
+                                <label for="vModelo">Modelo</label>
+                                <input id="vModelo" name="modelo" type="text" placeholder="Corolla" maxlength="50" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <label for="vColor">Color</label>
+                                <input id="vColor" name="color" type="text" placeholder="Blanco" maxlength="50" />
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <button class="btn btn-success" type="submit" onclick="toggleCreateBox('createVehicleForm',true)">Guardar Vehículo</button>
+                            <button class="btn btn-delete" type="button" onclick="toggleCreateBox('createVehicleBox',true)">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="table-container">
+                    <table id="tablaVehiculos">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Placa</th>
+                                <th>Marca</th>
+                                <th>Modelo</th>
+                                <th>Color</th>
+                                <th>Propietario</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-cajones" class="tab-content">
+                <div class="content-header">
+                    <h2>Gestión de Cajones</h2>
+                </div>
+                <div class="table-container">
+                    <table id="tablaCajones">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Número</th>
+                                <th>Piso</th>
+                                <th>Tipo</th>
+                                <th>Estado</th>
+                                <th>Tarifa</th>
+                                <th>$/Hora</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-reservas" class="tab-content">
+                <div class="content-header">
+                    <h2>Gestión de Reservas</h2>
+                </div>
+                <div class="table-container">
+                    <table id="tablaReservas">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Código</th>
+                                <th>Cliente</th>
+                                <th>Placa</th>
+                                <th>Cajón</th>
+                                <th>Inicio Ventana</th>
+                                <th>Fin Ventana</th>
+                                <th>Duración</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-tickets" class="tab-content">
+                <div class="content-header">
+                    <h2>Gestión de Tickets</h2>
+                </div>
+                <div class="table-container">
+                    <table id="tablaTickets">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Código</th>
+                                <th>Cliente</th>
+                                <th>Placa</th>
+                                <th>Cajón</th>
+                                <th>Entrada</th>
+                                <th>Salida</th>
+                                <th>Monto</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-tarifas" class="tab-content">
+                <div class="content-header">
+                    <h2>Gestión de Tarifas</h2>
+                    <div class="actions">
+                        <button onclick="toggleCreateBox('createTarifaBox')" class="btn btn-success">+ Crear Tarifa</button>
+                    </div>
+                </div>
+                <div id="createTarifaBox" class="create-box" aria-hidden="true">
+                    <form id="createTarifaInlineForm">
+                        <div class="row">
+                            <div class="col">
+                                <label for="tDescripcion">Descripción</label>
+                                <input id="tDescripcion" name="descripcion" type="text" placeholder="Tarifa estándar" required />
+                            </div>
+                            <div class="col">
+                                <label for="tCosto">Costo por Hora</label>
+                                <input id="tCosto" name="costo" type="number" step="0.01" placeholder="25.00" required />
+                            </div>
+                        </div>
+                        <div class="actions">
+                            <button class="btn btn-success" type="submit">Guardar Tarifa</button>
+                            <button class="btn btn-delete" type="button" onclick="toggleCreateBox('createTarifaBox',true)">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="table-container">
+                    <table id="tablaTarifas">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Descripción</th>
+                                <th>Costo por Hora</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 📊 TAB DE GANANCIAS -->
+            <div id="tab-ganancias" class="tab-content">
+                <div class="content-header">
+                    <h2>📊 Análisis de Ganancias</h2>
+                    <div class="actions">
+                        <select id="periodoGanancias" onchange="cargarGanancias()">
+                            <option value="dia">Por Día (30 días)</option>
+                            <option value="semana">Por Semana (12 semanas)</option>
+                            <option value="mes">Por Mes (12 meses)</option>
+                        </select>
+                        <button onclick="exportarGanancias()" class="btn btn-info">📥 Exportar</button>
+                    </div>
+                </div>
+
+                <!-- Resumen rápido -->
+                <div class="stats-container" style="margin-bottom: 2rem;">
+                    <div class="stat-card">
+                        <span class="stat-icon">💰</span>
+                        <div>
+                            <h3 id="gananciaHoy">$0.00</h3>
+                            <p>Hoy</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">📅</span>
+                        <div>
+                            <h3 id="gananciaSemana">$0.00</h3>
+                            <p>Esta Semana</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">📊</span>
+                        <div>
+                            <h3 id="gananciaMes">$0.00</h3>
+                            <p>Este Mes</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">🏆</span>
+                        <div>
+                            <h3 id="gananciaTotal">$0.00</h3>
+                            <p>Total Histórico</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráficas -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                    <div class="chart-container">
+                        <h3>💰 Ganancias por Período</h3>
+                        <div id="contenedorChartGanancias" style="position: relative; width: 100%; height: 400px;">
+                            <canvas id="chartGanancias" width="800" height="400" style="width: 100%; height: 400px; background: transparent;"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>🚗 Tickets por Tipo de Vehículo</h3>
+                        <div id="contenedorChartVehiculos" style="position: relative; width: 100%; height: 400px;">
+                            <canvas id="chartVehiculos" width="800" height="400" style="width: 100%; height: 400px; background: transparent;"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla detallada -->
+                <div class="table-container">
+                    <h3>📋 Detalles por Período</h3>
+                    <table id="tablaGanancias">
+                        <thead>
+                            <tr>
+                                <th>Período</th>
+                                <th>Tickets</th>
+                                <th>Ganancias</th>
+                                <th>Promedio</th>
+                                <th>Autos</th>
+                                <th>Motos</th>
+                                <th>Eléctricos</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+            <div id="modalContainer">
+                <!-- Create Vehicle Modal -->
+                <div id="createVehicleModal" class="modal-overlay" aria-hidden="true">
+                    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="createVehicleTitle">
+                        <header>
+                            <h3 id="createVehicleTitle">+ Crear Vehículo</h3>
+                            <button class="btn btn-close" onclick="closeStaticModal('createVehicleModal')" aria-label="Cerrar">✖</button>
+                        </header>
+
+                        <form id="createVehicleForm">
+                            <div class="modal-field">
+                                <label for="vehPlaca">Placa</label>
+                                <input id="vehPlaca" name="placa" type="text" placeholder="ABC-123 (max 10)" maxlength="10" required onkeyup="validarPlacaIndividual(this)" />
+                                <small id="placaVehValidacion" style="color: #ff6b6b; font-size: 12px; display: none;"></small>
+                            </div>
+                            <div class="modal-field">
+                                <label for="vehMarca">Marca</label>
+                                <input id="vehMarca" name="marca" type="text" placeholder="Toyota" maxlength="50" required />
+                            </div>
+                            <div class="modal-field">
+                                <label for="vehModelo">Modelo</label>
+                                <input id="vehModelo" name="modelo" type="text" placeholder="Corolla" maxlength="50" />
+                            </div>
+                            <div class="modal-field">
+                                <label for="vehColor">Color</label>
+                                <input id="vehColor" name="color" type="text" placeholder="Blanco" maxlength="50" />
+                            </div>
+                            <div class="modal-field">
+                                <label for="vehPropietario">Propietario (Email o Nombre)</label>
+                                <input id="vehPropietario" name="propietario" type="text" placeholder="usuario@correo.com" />
+                            </div>
+
+                            <div class="modal-actions">
+                                <button type="submit" class="btn btn-success" onclick="closeStaticModal('createVehicleModal')">Guardar Vehículo</button>
+                                <button type="button" class="btn btn-delete" onclick="closeStaticModal('createVehicleModal')">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal para Editar Vehículo -->
+            <div id="editVehicleModal" class="modal-overlay" aria-hidden="true">
+                <div class="modal-container">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>✏️ Editar Vehículo</h3>
+                            <button class="btn btn-close" onclick="closeStaticModal('editVehicleModal')" aria-label="Cerrar">✖</button>
+                        </div>
+                        <form id="editVehicleForm" onsubmit="updateVehiculo(event)">
+                            <div class="form-grid">
+                                <div class="field-group">
+                                    <label for="editVPlaca">Placa:</label>
+                                    <input type="text" id="editVPlaca" name="placa" required placeholder="ABC123">
+                                    <div id="editVPlaca-validation" class="validation-message"></div>
+                                </div>
+                                
+                                <div class="field-group">
+                                    <label for="editVMarca">Marca:</label>
+                                    <input type="text" id="editVMarca" name="marca" placeholder="Toyota, Honda, etc." maxlength="50">
+                                    <div id="editVMarca-validation" class="validation-message"></div>
+                                </div>
+                                
+                                <div class="field-group">
+                                    <label for="editVModelo">Modelo:</label>
+                                    <input type="text" id="editVModelo" name="modelo" placeholder="Corolla, Civic, etc." maxlength="50">
+                                    <div id="editVModelo-validation" class="validation-message"></div>
+                                </div>
+                                
+                                <div class="field-group">
+                                    <label for="editVColor">Color:</label>
+                                    <input type="text" id="editVColor" name="color" placeholder="Rojo, Azul, Blanco, etc." maxlength="50">
+                                    <div id="editVColor-validation" class="validation-message"></div>
+                                </div>
+                                
+                                <div class="field-group">
+                                    <label for="editVTipo">Tipo de Vehículo:</label>
+                                    <select id="editVTipo" name="tipo_vehiculo" required>
+                                        <option value="">Seleccionar tipo...</option>
+                                        <option value="AUTOMOVIL">Automóvil</option>
+                                        <option value="MOTOCICLETA">Motocicleta</option>
+                                        <option value="ELECTRICO">Eléctrico</option>
+                                    </select>
+                                    <div id="editVTipo-validation" class="validation-message"></div>
+                                </div>
+                                
+                                <div class="field-group">
+                                    <label for="editVUsuario">Asignar a Usuario:</label>
+                                    <select id="editVUsuario" name="id_usuario" required>
+                                        <option value="">Seleccionar usuario...</option>
+                                    </select>
+                                    <div id="editVUsuario-validation" class="validation-message"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-success" onclick="closeStaticModal('editVehicleModal')">Actualizar Vehículo</button>
+                                <button type="button" class="btn btn-delete" onclick="closeStaticModal('editVehicleModal')">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="messageBox" class="message-box" style="display: none;"></div>
+
+            <!-- � Chart.js para gráficas -->
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            
+            <!-- �🔐 JWT Authentication Helper -->
+            <script src="js/auth-helper.js?v=2.0"></script>
+            <!--<script src="js/admin-panel-v2.js"></script> -->
+            <script src="js/admin-panel.js?v=2.0"></script>
+            <!-- Inline script removed. All modal helpers and inline form handlers moved to js/admin-panel.js -->
+        </body>
+        </html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkPay - Inicio de Sesión</title>
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#1e40af">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ParkPay">
+    <link rel="apple-touch-icon" href="/logo.png">
+</head>
+<body>
+    <div class="container">
+        <div class="auth-box">
+            <div style="text-align: center; margin-bottom: 15px;">
+                <img src="logo.png?v=2" alt="ParkPay Logo" style="width: auto; max-width: 90%;">
+            </div>
+            <p class="subtitle">Sistema de Estacionamiento Inteligente</p>
+
+            <!-- Formulario de Login -->
+            <div id="loginForm" class="form-container active">
+                <h2>Iniciar Sesión</h2>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="loginEmail">Email</label>
+                        <input type="email" id="loginEmail" required placeholder="ejemplo@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Contraseña</label>
+                        <input type="password" id="loginPassword" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Ingresar</button>
+                    <p class="switch-form">
+                        ¿No tienes cuenta? <a href="#" onclick="showRegisterForm()">Regístrate aquí</a>
+                    </p>
+                    <p class="switch-form">
+                        <a href="recuperar.html" style="color: #ffffff; font-size: 0.9em;">🔑 ¿Olvidaste tu contraseña?</a>
+                    </p>
+                </form>
+            </div>
+
+            <!-- Formulario de Registro -->
+            <div id="registerForm" class="form-container">
+                <h2>Crear Cuenta</h2>
+                <form onsubmit="handleRegister(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="regNombre">Nombre</label>
+                            <input type="text" id="regNombre" required placeholder="Juan">
+                        </div>
+                        <div class="form-group">
+                            <label for="regApellido">Apellido</label>
+                            <input type="text" id="regApellido" required placeholder="Pérez">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="regEmail">Email</label>
+                        <input type="email" id="regEmail" required placeholder="ejemplo@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Contraseña</label>
+                        <div style="position: relative;">
+                            <input type="password" id="regPassword" required placeholder="Mínima 6 caracteres">
+                            <button type="button" onclick="togglePasswordVisibility()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.2em;">
+                                👁️
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <h3>Datos de tu Vehículo</h3>
+                    
+                    <div class="form-group">
+                        <label for="regTipoVehiculo">Tipo de Vehículo *</label>
+                        <select id="regTipoVehiculo" required class="form-select">
+                            <option value="">Selecciona el tipo</option>
+                            <option value="AUTOMOVIL">🚗 Automóvil</option>
+                            <option value="MOTOCICLETA">🏍️ Motocicleta</option>
+                            <option value="ELECTRICO">⚡ Eléctrico</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="regPlaca">Placa *</label>
+                        <input type="text" id="regPlaca" required placeholder="ABC-123" maxlength="10" style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="regMarca">Marca</label>
+                            <input type="text" id="regMarca" placeholder="Toyota" maxlength="50">
+                        </div>
+                        <div class="form-group">
+                            <label for="regModelo">Modelo</label>
+                            <input type="text" id="regModelo" placeholder="Corolla" maxlength="50">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="regColor">Color</label>
+                        <input type="text" id="regColor" placeholder="Blanco" maxlength="50">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Registrarse</button>
+                    <p class="switch-form">
+                        ¿Ya tienes cuenta? <a href="#" onclick="showLoginForm()">Inicia sesión aquí</a>
+                    </p>
+                </form>
+            </div>
+
+            <div id="messageBox" class="message-box"></div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/pwa-banner.js"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registrado:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('❌ Error al registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+    <script src="js/auth-helper.js"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - ParkPay</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+    <div class="container">
+        <div class="auth-box">
+            <h1>🔐 Panel de Administración</h1>
+            <p class="subtitle">ParkPay - Sistema de Estacionamiento</p>
+
+            <!-- Formulario de Registro (Primera vez) -->
+            <div id="registerAdminForm" class="form-container" style="display: none;">
+                <h2>Registro Único de Administrador</h2>
+                <p class="info-text">⚠️ Este es el único administrador que se puede registrar</p>
+                
+                <form onsubmit="handleRegisterAdmin(event)">
+                    <div class="form-group">
+                        <label for="regUsername">Nombre de Usuario</label>
+                        <input type="text" id="regUsername" required placeholder="admin123">
+                    </div>
+                    <div class="form-group">
+                        <label for="regNombreCompleto">Nombre Completo</label>
+                        <input type="text" id="regNombreCompleto" required placeholder="Juan Pérez">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Contraseña</label>
+                        <input type="password" id="regPassword" required placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <div class="form-group">
+                        <label for="regPasswordConfirm">Confirmar Contraseña</label>
+                        <input type="password" id="regPasswordConfirm" required placeholder="Repite la contraseña">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Crear Administrador</button>
+                </form>
+            </div>
+
+            <!-- Formulario de Login -->
+            <div id="loginAdminForm" class="form-container" style="display: none;">
+                <h2>Iniciar Sesión como Administrador</h2>
+                
+                <form onsubmit="handleLoginAdmin(event)">
+                    <div class="form-group">
+                        <label for="loginUsername">Usuario</label>
+                        <input type="text" id="loginUsername" required placeholder="admin123">
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Contraseña</label>
+                        <input type="password" id="loginPassword" required placeholder="••••••••">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Ingresar al Panel</button>
+                    <p class="switch-form">
+                        <a href="index.html">← Volver al Login de Clientes</a>
+                    </p>
+                </form>
+            </div>
+
+            <div id="messageBox" class="message-box"></div>
+            
+            <div id="loadingBox" style="text-align: center; padding: 20px;">
+                <p>Verificando...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/admin-auth.js"></script>
+</body>
+</html>

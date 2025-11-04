@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Contraseña - ParkPay</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .recovery-container {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .recovery-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .recovery-header h1 {
+            color: #1e40af;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .recovery-header p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .recovery-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #334155;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .message-box {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .message-box.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 2px solid #10b981;
+            display: block;
+        }
+
+        .message-box.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #ef4444;
+            display: block;
+        }
+
+        .message-box.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 2px solid #3b82f6;
+            display: block;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        .password-requirements {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        .password-requirements ul {
+            margin: 10px 0 0 20px;
+            padding: 0;
+        }
+
+        .password-requirements li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="recovery-container">
+        <div class="recovery-header">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <img src="logo.png?v=2" alt="ParkPay Logo" style="height: clamp(70px, 12vw, 110px); width: auto; max-width: 90%;">
+            </div>
+            <div class="recovery-icon">🔐</div>
+            <h1>Recuperar Contraseña</h1>
+            <p id="stepDescription">Ingresa tu email para recuperar tu cuenta</p>
+        </div>
+
+        <div id="messageBox" class="message-box"></div>
+
+        <!-- PASO 1: Solicitar email -->
+        <div id="step1" class="step active">
+            <form onsubmit="solicitarCodigo(event)">
+                <div class="form-group">
+                    <label for="email">📧 Correo Electrónico</label>
+                    <input type="email" id="email" required placeholder="tu@email.com">
+                </div>
+                <button type="submit" class="btn btn-primary" id="btnSolicitar">
+                    📨 Enviar Código de Recuperación
+                </button>
+            </form>
+        </div>
+
+        <!-- PASO 2: Verificar código -->
+        <div id="step2" class="step">
+            <form onsubmit="verificarCodigo(event)">
+                <div class="form-group">
+                    <label for="codigo">🔢 Código de Verificación</label>
+                    <input type="text" id="codigo" required placeholder="Ej: 123456" maxlength="6">
+                    <small style="color: #64748b;">Revisa tu bandeja de entrada</small>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    ✅ Verificar Código
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="volverAPaso1()">
+                    ← Volver
+                </button>
+            </form>
+        </div>
+
+        <!-- PASO 3: Nueva contraseña -->
+        <div id="step3" class="step">
+            <div class="password-requirements">
+                <strong>📋 Requisitos de la contraseña:</strong>
+                <ul id="password-checklist">
+                    <li id="req-length">⚪ Mínimo 6 caracteres</li>
+                    <li id="req-uppercase">⚪ Al menos 1 letra mayúscula</li>
+                    <li id="req-number">⚪ Al menos 1 número</li>
+                </ul>
+            </div>
+            <form onsubmit="cambiarContraseña(event)">
+                <div class="form-group">
+                    <label for="nuevaPassword">🔒 Nueva Contraseña</label>
+                    <input type="password" id="nuevaPassword" required placeholder="Nueva contraseña" oninput="validarPasswordEnTiempoReal()">
+                </div>
+                <div class="form-group">
+                    <label for="confirmarPassword">🔒 Confirmar Contraseña</label>
+                    <input type="password" id="confirmarPassword" required placeholder="Repite la contraseña" oninput="validarConfirmacion()">
+                </div>
+                <div id="password-feedback" style="margin: 10px 0; font-size: 14px;"></div>
+                <button type="submit" class="btn btn-primary" id="btnCambiarPassword">
+                    🔄 Cambiar Contraseña
+                </button>
+            </form>
+        </div>
+
+        <div class="back-link">
+            <a href="index.html">← Volver al Login</a>
+        </div>
+    </div>
+
+    <script src="js/recuperar.js"></script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkPay - Seleccionar Lugar</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+            .reservation-option {
+                background: var(--dark-bg);
+                border: 2px solid var(--border-color); /* Borde por defecto */
+                border-radius: 15px;
+                padding: 20px;
+                margin-bottom: 15px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                color: var(--light-text);
+            }
+
+            /* Estilos para el texto dentro de la opción */
+            .reservation-option h4 {
+                font-family: 'Montserrat', sans-serif;
+                color: var(--light-text);
+                margin: 0 0 5px 0;
+                font-size: 1.1rem;
+                transition: color 0.3s ease;
+            }
+
+            .reservation-option p {
+                font-family: 'Inter', sans-serif;
+                color: var(--gray-text);
+                font-size: 0.9rem;
+                margin: 0;
+            }
+
+
+            /* --- ESTILOS PROPORCIONADOS (ADAPTADOS) --- */
+
+            input[type="radio"] {
+                display: none; /* Se mantiene igual */
+            }
+
+            /* --- CAMBIO: Estado "Seleccionado" ahora usa el AMARILLO del logo --- */
+            input[type="radio"]:checked + .reservation-option {
+                border-color: var(--selected-color) !important; /* Amarillo brillante */
+                background: rgba(253, 224, 71, 0.05) !important; /* Fondo amarillo muy sutil */
+                transform: scale(1.02);
+                /* Sombra de "glow" amarilla */
+                box-shadow: 0 4px 20px rgba(253, 224, 71, 0.15); 
+            }
+
+            /* --- CAMBIO: Título se vuelve amarillo al seleccionar --- */
+            input[type="radio"]:checked + .reservation-option h4 {
+                color: var(--selected-color);
+            }
+
+            /* --- CAMBIO: Estado "Hover" ahora usa el AZUL del logo --- */
+            .reservation-option:hover {
+                border-color: var(--primary-color) !important; /* Azul del logo */
+                transform: translateY(-2px);
+                /* Sombra de "glow" azul */
+                box-shadow: 0 4px 12px rgba(0, 97, 201, 0.2);
+            }
+            #futureReservationFields {
+                animation: slideDown 0.3s ease-out;
+            }
+
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .bottom-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background: var(--dark-bg); /* Fondo oscuro */
+                box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+                display: flex;
+                justify-content: space-around;
+                padding: 10px 0;
+                z-index: 100;
+                border-top: 1px solid var(--border-color); /* Borde sutil */
+            }
+
+            .nav-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-decoration: none;
+                color: var(--gray-text); /* --- CAMBIO: Variable --- */
+                font-size: 12px;
+                padding: 5px 15px;
+                transition: all 0.3s ease;
+                font-family: 'Inter', sans-serif;
+            }
+            .nav-item.active {
+                color: var(--selected-color); /* AMARILLO del logo */
+                font-weight: bold;
+            }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <img src="logo.png?v=2" alt="ParkPay Logo" style="height: clamp(50px, 8vw, 80px); width: auto; max-width: 200px;">
+                <div class="user-info">
+                    <span id="userName"></span>
+                    <button onclick="logout()" class="btn-logout">Cerrar Sesión</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Panel lateral con información -->
+            <div class="side-panel">
+                <div class="vehicle-info">
+                    <h3>Selecciona tu Vehículo</h3>
+                    <select id="vehicleSelector" onchange="onVehicleChange()" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px; margin-bottom: 15px; background: white; color: #334155;">
+                        <option value="">Cargando vehículos...</option>
+                    </select>
+                    <div id="vehicleDetails"></div>
+                </div>
+
+                <div class="booking-form" id="bookingForm" style="display: none;">
+                    <h3>Detalles de Reserva</h3>
+                    <div class="selected-spot-info" id="selectedSpotInfo"></div>
+                    
+                    <!-- NUEVO: Selector de Tipo de Reserva -->
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #1e40af;">⏰ ¿Cuándo necesitas el lugar?</label>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <label style="flex: 1; cursor: pointer;">
+                                <input type="radio" name="reservationType" value="ahora" checked onchange="onReservationTypeChange()">
+                                <div style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center; transition: all 0.3s;" class="reservation-option">
+                                    <div style="font-size: 32px; margin-bottom: 5px;">⚡</div>
+                                    <div style="font-weight: 600; color: #acbef8;">Ahora mismo</div>
+                                    <div style="font-size: 12px; color: #64748b;">30 min para llegar</div>
+                                </div>
+                            </label>
+                            <label style="flex: 1; cursor: pointer;">
+                                <input type="radio" name="reservationType" value="despues" onchange="onReservationTypeChange()">
+                                <div style="border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center; transition: all 0.3s;" class="reservation-option">
+                                    <div style="font-size: 32px; margin-bottom: 5px;">📅</div>
+                                    <div style="font-weight: 600; color: #acbef8;">Para después</div>
+                                    <div style="font-size: 12px; color: #64748b;">Elegir fecha/hora</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Campo de fecha/hora (solo visible para "después") -->
+                    <div class="form-group" id="futureReservationFields" style="display: none; margin-bottom: 20px;">
+                        <label for="reservationDateTime" style="display: block; margin-bottom: 8px; font-weight: 600; color: #acbef8;">📆 Fecha y Hora de Llegada</label>
+                        <input type="datetime-local" id="reservationDateTime" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 14px;" onchange="calculateCost()">
+                        <p style="font-size: 12px; color: #acbef8; margin-top: 5px;">Puedes escanear el QR desde esta hora hasta 3 horas después</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hoursInput">Horas Estimadas</label>
+                        <input type="number" id="hoursInput" min="1" max="240" value="2" onchange="calculateCost()">
+                    </div>
+
+                    <div class="cost-summary">
+                        <div class="cost-row">
+                            <span>Costo por hora:</span>
+                            <span id="costPerHour">$25.00</span>
+                        </div>
+                        <div class="cost-row">
+                            <span>Horas:</span>
+                            <span id="totalHours">2</span>
+                        </div>
+                        <div class="cost-row total">
+                            <span><strong>Total Estimado:</strong></span>
+                            <span id="totalCost"><strong>$50.00</strong></span>
+                        </div>
+                    </div>
+
+                    <button onclick="confirmBooking()" class="btn btn-success" id="confirmButton">
+                        💳 Pagar y Ocupar Lugar
+                    </button>
+                    <button onclick="cancelBooking()" class="btn btn-secondary">
+                        Cancelar
+                    </button>
+                </div>
+
+                <div class="legend">
+                    <h4>Leyenda</h4>
+                    <div class="legend-item">
+                        <span class="spot-legend available"></span>
+                        <span>Disponible para ti</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="spot-legend occupied"></span>
+                        <span>Ocupado</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="spot-legend selected"></span>
+                        <span>Seleccionado</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="spot-legend incompatible"></span>
+                        <span>No compatible con tu vehículo</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mapa del estacionamiento -->
+            <div class="parking-map">
+                <div class="floor-section">
+                    <h2>Piso A</h2>
+                    <div class="spots-grid" id="pisoA"></div>
+                </div>
+
+                <div class="floor-section">
+                    <h2>Piso B</h2>
+                    <div class="spots-grid" id="pisoB"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="messageBox" class="message-box"></div>
+
+    <!-- Modal de Éxito con QR -->
+    <div id="successModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: white; border-radius: 20px; padding: 30px; max-width: 500px; width: 90%; text-align: center; position: relative;">
+            <button onclick="closeSuccessModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 28px; cursor: pointer; color: #64748b;">×</button>
+            
+            <div style="font-size: 64px; margin-bottom: 15px;">✅</div>
+            <h2 style="color: #10b981; margin-bottom: 10px;">¡Reserva Exitosa!</h2>
+            
+            <div style="background: #f0fdf4; border: 2px solid #10b981; border-radius: 12px; padding: 20px; margin: 20px 0;">
+                <h3 style="color: #1e40af; margin-bottom: 15px;">Tu Código de Acceso</h3>
+                <div id="successQR" style="display: flex; justify-content: center; margin: 15px 0;"></div>
+                <p id="successCode" style="font-size: 20px; font-weight: bold; color: #1e40af; margin: 10px 0;"></p>
+            </div>
+
+            <div style="background: #eff6ff; border-radius: 10px; padding: 15px; margin: 20px 0; text-align: left;">
+                <p style="margin: 8px 0; color: #334155;"><strong style="color: #1e40af;">📍 Lugar:</strong> <span id="successSpot"></span></p>
+                <p style="margin: 8px 0; color: #334155;"><strong style="color: #1e40af;">🚗 Vehículo:</strong> <span id="successVehicle"></span></p>
+                <p style="margin: 8px 0; color: #334155;"><strong style="color: #1e40af;">⏱️ Tiempo:</strong> <span id="successHours"></span> horas</p>
+                <p style="margin: 8px 0; color: #334155;"><strong style="color: #1e40af;">💵 Total:</strong> $<span id="successAmount"></span></p>
+            </div>
+
+            <p style="color: #64748b; font-size: 14px; margin-bottom: 20px;">Presenta este código al salir del estacionamiento</p>
+            
+            <button onclick="closeSuccessModal()" style="background: #1e40af; color: white; border: none; padding: 15px 40px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%;">
+                Ir al Inicio
+            </button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" style="position: fixed; bottom: 0; left: 0; width: 100%; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; justify-content: space-around; padding: 10px 0; z-index: 100;">
+        <a href="inicio.html" class="nav-item" style="display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #64748b; font-size: 12px; padding: 5px 15px;">
+            <div style="font-size: 24px; margin-bottom: 4px;">🏠</div>
+            <span>Inicio</span>
+        </a>
+        <a href="estacionamiento.html" class="nav-item active" style="display: flex; flex-direction: column; align-items: center; text-decoration: none; font-size: 12px; padding: 5px 15px;">
+            <div style="font-size: 24px; margin-bottom: 4px;">🚗</div>
+            <span>Estacionar</span>
+        </a>
+        <a href="tickets.html" class="nav-item" style="display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #64748b; font-size: 12px; padding: 5px 15px;">
+            <div style="font-size: 24px; margin-bottom: 4px;">🎫</div>
+            <span>Tickets</span>
+        </a>
+        <a href="perfil.html" class="nav-item" style="display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #64748b; font-size: 12px; padding: 5px 15px;">
+            <div style="font-size: 24px; margin-bottom: 4px;">👤</div>
+            <span>Perfil</span>
+        </a>
+    </nav>
+
+    <script src="js/auth-helper.js?v=2.0"></script>
+    <script src="js/parking.js?v=2.0"></script>
+</body>
+</html>

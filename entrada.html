@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entrada - ParkPay</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .scanner-container {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #1e40af;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        .gate-icon {
+            font-size: 80px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        #reader {
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .manual-input {
+            margin-top: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            text-transform: uppercase;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #1e40af;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(30, 64, 175, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .result-box {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 15px;
+            display: none;
+        }
+
+        .result-box.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            display: block;
+        }
+
+        .result-box.error {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            display: block;
+        }
+
+        .result-icon {
+            font-size: 64px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .result-message {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .result-details {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .gate-animation {
+            text-align: center;
+            font-size: 100px;
+            margin: 20px 0;
+            animation: gateOpen 2s ease-in-out;
+        }
+
+        @keyframes gateOpen {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0); }
+        }
+
+        .loading {
+            text-align: center;
+            color: #64748b;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #1e40af;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Estilos para formulario de huéspedes */
+        .guest-ticket-display {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 20px;
+            text-align: center;
+            border: 2px solid #10b981;
+        }
+
+        .guest-qr-code {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: inline-block;
+        }
+
+        .backup-code {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 2px dashed #fbbf24;
+        }
+
+        .backup-code h4 {
+            color: #fbbf24;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .code-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #fef3c7;
+            letter-spacing: 3px;
+        }
+
+        .instructions {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .instructions h4 {
+            color: #60a5fa;
+            margin-bottom: 12px;
+        }
+
+        .instructions ul {
+            color: #cbd5e1;
+            text-align: left;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="scanner-container">
+        <div class="header">
+            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
+                <img src="logo.png?v=2" alt="ParkPay Logo" style="height: clamp(60px, 10vw, 100px); width: auto; max-width: 90%;">
+            </div>
+            <p>Escanea tu código QR de reserva</p>
+        </div>
+
+        <div class="gate-icon">🚧</div>
+
+        <!-- Escáner QR -->
+        <div id="reader" style="display: none;"></div>
+        
+        <button class="btn btn-primary" id="btnStartScanner" onclick="iniciarEscaner()">
+            📸 Iniciar Escáner
+        </button>
+
+        <!-- Input Manual -->
+        <div class="manual-input">
+            <p style="text-align: center; color: #64748b; margin-bottom: 15px;">
+                O ingresa el código manualmente:
+            </p>
+            <div class="input-group">
+                <input type="text" id="codigoManual" placeholder="Ej: F7QBOLQY" maxlength="50">
+            </div>
+            <button class="btn btn-primary" onclick="validarCodigoManual()">
+                ✅ Validar Código
+            </button>
+        </div>
+
+        <!-- Resultado -->
+        <div class="result-box" id="resultBox"></div>
+
+        <!-- Sección para usuarios sin cuenta -->
+        <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #334155;">
+            <div style="text-align: center; margin-bottom: 25px;">
+                <h3 style="color: #f1f5f9; font-size: 1.2em; margin-bottom: 10px;">
+                    👤 ¿Sin cuenta?
+                </h3>
+                <p style="color: #94a3b8; font-size: 0.9em;">
+                    ¡Pide tu lugar aquí! Solo necesitamos unos datos básicos
+                </p>
+            </div>
+
+            <div id="guestForm" style="background: rgba(15, 23, 42, 0.6); padding: 25px; border-radius: 15px; border: 1px solid #334155;">
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; color: #e2e8f0; font-weight: 500; margin-bottom: 8px;">
+                        🚗 Tipo de vehículo:
+                    </label>
+                    <select id="tipoVehiculo" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: #e2e8f0; font-size: 1em;">
+                        <option value="">Selecciona tu tipo de vehículo</option>
+                        <option value="AUTOMOVIL">🚗 Automóvil</option>
+                        <option value="MOTOCICLETA">🏍️ MOTOCICLETAcicleta</option>
+                        <option value="ELECTRICO">⚡ Vehículo Eléctrico</option>
+                    </select>
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; color: #e2e8f0; font-weight: 500; margin-bottom: 8px;">
+                        🔢 Placa del vehículo:
+                    </label>
+                    <input type="text" id="placaVehiculo" placeholder="Ej: ABC-123" 
+                           style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: #e2e8f0; font-size: 1em; text-transform: uppercase;"
+                           maxlength="10">
+                </div>
+
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; color: #e2e8f0; font-weight: 500; margin-bottom: 8px;">
+                        ⏰ Horas de estacionamiento:
+                    </label>
+                    <select id="horasEstacionamiento" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #1e293b; color: #e2e8f0; font-size: 1em;" onchange="actualizarPrecioGuest()">
+                        <option value="1">1 hora - $25.00</option>
+                        <option value="2" selected>2 horas - $50.00</option>
+                        <option value="3">3 horas - $75.00</option>
+                        <option value="4">4 horas - $100.00</option>
+                        <option value="6">6 horas - $150.00</option>
+                        <option value="8">8 horas - $200.00</option>
+                        <option value="12">12 horas - $300.00</option>
+                        <option value="24">24 horas - $600.00</option>
+                        <option value="48">48 horas (2 días) - $1,200.00</option>
+                        <option value="72">72 horas (3 días) - $1,800.00</option>
+                        <option value="120">120 horas (5 días) - $3,000.00</option>
+                        <option value="240">240 horas (10 días) - $6,000.00</option>
+                    </select>
+                    <p style="color: #94a3b8; font-size: 0.85em; margin-top: 5px;">
+                        💰 Precio estimado para automóvil. El precio final depende del tipo de vehículo.
+                    </p>
+                </div>
+
+                <button class="btn btn-primary" onclick="crearTicketGuest()" id="btnCrearTicket">
+                    🎫 Obtener Lugar de Estacionamiento
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loadingBox" style="display: none;">
+            <div class="spinner"></div>
+            <p>Validando reserva...</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://parkpay-backend-1ti1.onrender.com/api';
+        let html5QrcodeScanner = null;
+
+        function iniciarEscaner() {
+            const readerDiv = document.getElementById('reader');
+            const btnStart = document.getElementById('btnStartScanner');
+            
+            readerDiv.style.display = 'block';
+            btnStart.style.display = 'none';
+
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader",
+                { fps: 10, qrbox: 250 }
+            );
+
+            html5QrcodeScanner.render(onScanSuccess, onScanError);
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log(`Código escaneado: ${decodedText}`);
+            
+            // Detener el escáner
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.clear();
+            }
+            
+            // Validar el código
+            validarReserva(decodedText);
+        }
+
+        function onScanError(errorMessage) {
+            // Ignorar errores de escaneo continuo
+        }
+
+        async function validarCodigoManual() {
+            const codigo = document.getElementById('codigoManual').value.trim().toUpperCase();
+            
+            if (!codigo) {
+                mostrarError('Por favor ingresa un código');
+                return;
+            }
+            
+            await validarReserva(codigo);
+        }
+
+        async function validarReserva(codigoAcceso) {
+            const loadingBox = document.getElementById('loadingBox');
+            const resultBox = document.getElementById('resultBox');
+            
+            loadingBox.style.display = 'block';
+            resultBox.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_URL}/reservas/escanear`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        codigo_acceso: codigoAcceso
+                    })
+                });
+
+                const data = await response.json();
+                loadingBox.style.display = 'none';
+
+                if (response.ok) {
+                    mostrarExito(data);
+                } else {
+                    mostrarError(data.error || 'Error al validar la reserva');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                loadingBox.style.display = 'none';
+                mostrarError('Error de conexión al servidor');
+            }
+        }
+
+        function mostrarExito(data) {
+            const resultBox = document.getElementById('resultBox');
+            const gateIcon = document.querySelector('.gate-icon');
+            
+            // Animar la pluma
+            gateIcon.innerHTML = '✅';
+            gateIcon.classList.add('gate-animation');
+
+            resultBox.className = 'result-box success';
+            resultBox.innerHTML = `
+                <div class="result-icon">🎉</div>
+                <div class="result-message">¡Bienvenido al Estacionamiento!</div>
+                <div class="result-details">
+                    <div class="detail-item">
+                        <span>🎫 Ticket:</span>
+                        <strong>${data.ticket.codigo_acceso}</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>📍 Cajón:</span>
+                        <strong>${data.cajon.numero_cajon} - ${data.cajon.ubicacion_piso}</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>🚗 Vehículo:</span>
+                        <strong>${data.vehiculo.placa}</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>⏱️ Tiempo:</span>
+                        <strong>${Math.floor(data.ticket.tiempo_estimado / 60)} horas</strong>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <p style="font-size: 16px; color: #10b981; font-weight: bold;">
+                        🚪 La pluma se abrirá automáticamente
+                    </p>
+                    <p style="font-size: 14px; opacity: 0.9; margin-top: 10px;">
+                        Regresando al inicio en <span id="countdown">5</span> segundos...
+                    </p>
+                </div>
+            `;
+
+            // Simular kiosco: reiniciar automáticamente después de 5 segundos
+            let countdown = 5;
+            const countdownElement = document.getElementById('countdown');
+            
+            const timer = setInterval(() => {
+                countdown--;
+                if (countdownElement) {
+                    countdownElement.textContent = countdown;
+                }
+                
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    // Reiniciar la página para simular kiosco
+                    location.reload();
+                }
+            }, 1000);
+        }
+
+        function mostrarError(mensaje) {
+            const resultBox = document.getElementById('resultBox');
+            const gateIcon = document.querySelector('.gate-icon');
+            
+            gateIcon.innerHTML = '🚫';
+            
+            resultBox.className = 'result-box error';
+            resultBox.innerHTML = `
+                <div class="result-icon">❌</div>
+                <div class="result-message">Acceso Denegado</div>
+                <p style="text-align: center; margin-top: 15px; font-size: 16px;">
+                    ${mensaje}
+                </p>
+                <div style="text-align: center; margin-top: 20px;">
+                    <p style="font-size: 14px; opacity: 0.9;">
+                        Regresando al inicio en <span id="errorCountdown">8</span> segundos...
+                    </p>
+                    <button class="btn btn-secondary" style="width: 100%; margin-top: 15px;" onclick="location.reload()">
+                        🔄 Intentar de Nuevo
+                    </button>
+                </div>
+            `;
+
+            // Auto-reinicio después de 8 segundos en caso de error
+            let countdown = 8;
+            const countdownElement = document.getElementById('errorCountdown');
+            
+            const timer = setInterval(() => {
+                countdown--;
+                if (countdownElement) {
+                    countdownElement.textContent = countdown;
+                }
+                
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    location.reload();
+                }
+            }, 1000);
+        }
+
+        // 🎫 SISTEMA PARA USUARIOS SIN CUENTA
+        function actualizarPrecioGuest() {
+            const tipoVehiculo = document.getElementById('tipoVehiculo').value;
+            const horas = parseInt(document.getElementById('horasEstacionamiento').value);
+            const select = document.getElementById('horasEstacionamiento');
+            
+            if (!tipoVehiculo || !horas) return;
+
+            // Precios por tipo de vehículo por hora
+            const precios = {
+                'AUTOMOVIL': 25,
+                'MOTOCICLETA': 15,
+                'ELECTRICO': 20
+            };
+
+            const precioPorHora = precios[tipoVehiculo] || 25;
+            const precioTotal = horas * precioPorHora;
+
+            // Actualizar las opciones del select con precios correctos
+            const opciones = select.children;
+            for (let i = 0; i < opciones.length; i++) {
+                const valor = parseInt(opciones[i].value);
+                const precio = valor * precioPorHora;
+                const dias = valor >= 24 ? ` (${Math.floor(valor/24)} día${valor >= 48 ? 's' : ''})` : '';
+                opciones[i].textContent = `${valor} hora${valor > 1 ? 's' : ''}${dias} - $${precio.toLocaleString()}.00`;
+            }
+        }
+
+        async function crearTicketGuest() {
+            const tipoVehiculo = document.getElementById('tipoVehiculo').value;
+            const placaVehiculo = document.getElementById('placaVehiculo').value.trim().toUpperCase();
+            const horasEstacionamiento = parseInt(document.getElementById('horasEstacionamiento').value);
+            const btnCrear = document.getElementById('btnCrearTicket');
+
+            // Validaciones con errores bonitos
+            if (!tipoVehiculo) {
+                mostrarErrorBonito('🚗 Selecciona tu Vehículo', 'Por favor selecciona el tipo de vehículo que vas a estacionar.');
+                return;
+            }
+
+            if (!placaVehiculo || placaVehiculo.length < 3) {
+                mostrarErrorBonito('📝 Placa Requerida', 'Por favor ingresa una placa válida.\n\nLa placa debe tener al menos 3 caracteres.');
+                return;
+            }
+
+            if (!horasEstacionamiento || horasEstacionamiento < 1) {
+                mostrarErrorBonito('⏰ Tiempo de Estacionamiento', 'Por favor selecciona cuántas horas vas a estacionar tu vehículo.');
+                return;
+            }
+
+            // Mostrar loading
+            btnCrear.disabled = true;
+            btnCrear.innerHTML = '⏳ Creando ticket...';
+
+            try {
+                const response = await fetch(`${API_URL}/tickets/guest`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Request-Source': 'parkpay-frontend',
+                        'X-Request-Time': Date.now().toString(),
+                        'X-Request-Nonce': Math.random().toString(36).substring(2, 15)
+                    },
+                    body: JSON.stringify({
+                        tipo_vehiculo: tipoVehiculo,
+                        placa: placaVehiculo,
+                        duracion_horas: horasEstacionamiento
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    mostrarTicketGuest(data.ticket);
+                } else {
+                    // Manejar diferentes tipos de errores con mensajes bonitos
+                    let mensajeError = '';
+                    let tituloError = '❌ Error';
+                    
+                    if (data.tipo === 'PLACA_DUPLICADA') {
+                        tituloError = '🚗 Placa Ya Registrada';
+                        mensajeError = `La placa "${data.mensaje.split(' ')[2]}" ya existe en el sistema.\n\n¿Es tu vehículo? Si ya tienes un ticket activo, puedes verlo en la sección de tickets.\n\nSi no es tuyo, verifica que hayas escrito correctamente la placa.`;
+                    } else if (data.tipo === 'DATOS_INVALIDOS') {
+                        tituloError = '📝 Datos Incorrectos';
+                        mensajeError = 'Por favor revisa que todos los datos estén correctos y completos.';
+                    } else if (response.status === 409 && data.error.includes('cajones disponibles')) {
+                        tituloError = '🅿️ Sin Cajones Disponibles';
+                        mensajeError = `No hay cajones disponibles para ${data.tipo_solicitado}.\n\nIntenta con otro tipo de vehículo o regresa más tarde.`;
+                    } else {
+                        mensajeError = data.mensaje || data.error || 'Error desconocido al crear el ticket';
+                    }
+                    
+                    mostrarErrorBonito(tituloError, mensajeError);
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                mostrarErrorBonito('🌐 Error de Conexión', 'No se pudo conectar con el servidor.\n\nRevisa tu conexión a internet e intenta nuevamente.');
+            } finally {
+                btnCrear.disabled = false;
+                btnCrear.innerHTML = '🎫 Obtener Lugar de Estacionamiento';
+            }
+        }
+
+        // 🎨 Función para mostrar errores bonitos en lugar de alerts
+        function mostrarErrorBonito(titulo, mensaje) {
+            const guestForm = document.getElementById('guestForm');
+            
+            guestForm.innerHTML = `
+                <div class="error-display" style="text-align: center; padding: 30px;">
+                    <div style="font-size: 4em; margin-bottom: 20px;">😔</div>
+                    <h2 style="color: #ef4444; margin-bottom: 15px;">${titulo}</h2>
+                    <div style="color: #e5e7eb; font-size: 1.1em; line-height: 1.6; margin-bottom: 30px; white-space: pre-line;">
+                        ${mensaje}
+                    </div>
+                    <button class="btn btn-secondary" style="width: 100%;" onclick="location.reload()">
+                        🔄 Intentar Nuevamente
+                    </button>
+                </div>
+            `;
+        }
+
+        function mostrarTicketGuest(ticket) {
+            const guestForm = document.getElementById('guestForm');
+            
+            // Generar código de respaldo aleatorio
+            const backupCode = generateBackupCode();
+            
+            guestForm.innerHTML = `
+                <div class="guest-ticket-display">
+                    <div style="color: white; font-size: 1.4em; font-weight: bold; margin-bottom: 15px;">
+                        🎫 ¡Ticket Generado!
+                    </div>
+                    
+                    <div class="guest-qr-code" style="background: white; padding: 15px; border-radius: 15px; margin: 20px 0; text-align: center;">
+                        <p style="color: #1e40af; font-weight: bold; margin-bottom: 10px;">Tu Código de Acceso</p>
+                        <div id="qr-code-guest" style="display: flex; justify-content: center;"></div>
+                        <p style="color: #374151; font-size: 0.9em; margin-top: 10px;">${ticket.codigo_acceso || backupCode}</p>
+                    </div>
+                    
+                    <div style="color: #ecfdf5; margin: 15px 0;">
+                        <p><strong>📍 Cajón asignado:</strong> ${ticket.numero_cajon || 'A-XX'}</p>
+                        <p><strong>🚗 Vehículo:</strong> ${ticket.placa || 'N/A'}</p>
+                        <p><strong>⏰ Tiempo:</strong> 2 horas incluidas</p>
+                        <p><strong>💰 Costo:</strong> $${ticket.monto_total || '50.00'}</p>
+                    </div>
+
+                    <div class="backup-code" style="background: rgba(245, 158, 11, 0.2); padding: 15px; border-radius: 10px; margin: 15px 0;">
+                        <h4 style="color: #f59e0b;">🔑 Código de Respaldo</h4>
+                        <div class="code-display" style="background: #374151; color: #fff; padding: 10px; border-radius: 8px; font-family: monospace; font-size: 1.2em; letter-spacing: 2px; text-align: center; margin: 10px 0;">
+                            ${backupCode}
+                        </div>
+                        <p style="color: #fbbf24; font-size: 0.9em; margin-top: 8px;">
+                            Usa este código si no funciona el QR
+                        </p>
+                    </div>
+
+                    <div class="instructions" style="background: rgba(16, 185, 129, 0.2); padding: 15px; border-radius: 10px; margin: 15px 0;">
+                        <h4 style="color: #10b981;">📋 Instrucciones importantes:</h4>
+                        <ul style="margin-left: 20px; color: #ecfdf5;">
+                            <li>📱 <strong>Toma una foto</strong> de este ticket completo</li>
+                            <li>🚗 Dirígete al cajón <strong>${ticket.numero_cajon || 'asignado'}</strong></li>
+                            <li>📸 Para salir, escanea el QR o usa el código de respaldo</li>
+                            <li>💳 Pago adicional por tiempo extra en salida</li>
+                            <li>⚠️ Máximo 24 horas de estacionamiento</li>
+                        </ul>
+                    </div>
+
+                    <button class="btn btn-secondary" style="width: 100%; margin-top: 20px;" onclick="location.reload()">
+                        🆕 Generar Otro Ticket
+                    </button>
+                </div>
+            `;
+
+            // 🎯 Generar QR code usando la MISMA librería que las reservas
+            const codigoParaQR = ticket.codigo_acceso || backupCode;
+            const qrContainer = document.getElementById('qr-code-guest');
+            
+            // Limpiar contenedor
+            qrContainer.innerHTML = '';
+            
+            try {
+                // Usar exactamente el mismo método que en parking.js
+                new QRCode(qrContainer, {
+                    text: codigoParaQR,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#1e40af",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                console.log('✅ QR generado exitosamente para:', codigoParaQR);
+            } catch (error) {
+                console.error('❌ Error generando QR:', error);
+                // Fallback visual si falla
+                qrContainer.innerHTML = `
+                    <div style="color: #ef4444; padding: 20px; background: #fee2e2; border-radius: 8px; text-align: center;">
+                        <p><strong>⚠️ Error generando QR</strong></p>
+                        <p style="font-family: monospace; margin-top: 10px; font-size: 1.2em;">${codigoParaQR}</p>
+                        <p style="font-size: 0.9em; margin-top: 10px;">Usa el código de respaldo debajo</p>
+                    </div>
+                `;
+            }
+        }
+
+        function generateBackupCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let result = '';
+            for (let i = 0; i < 8; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // 🔧 INICIALIZACIÓN DE EVENTOS
+        document.addEventListener('DOMContentLoaded', function() {
+            // Event listeners para actualizar precios en tiempo real
+            const tipoVehiculo = document.getElementById('tipoVehiculo');
+            const horasEstacionamiento = document.getElementById('horasEstacionamiento');
+            
+            if (tipoVehiculo) {
+                tipoVehiculo.addEventListener('change', actualizarPrecioGuest);
+            }
+            
+            if (horasEstacionamiento) {
+                horasEstacionamiento.addEventListener('change', actualizarPrecioGuest);
+                // Actualizar precios inicial
+                setTimeout(actualizarPrecioGuest, 100);
+            }
+        });
+    </script>
+</body>
+</html>
