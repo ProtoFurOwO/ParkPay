@@ -148,9 +148,29 @@
         .btn-cancel { background:var(--border-color); color:var(--light-text); border:none; padding:12px; border-radius:10px; font-size:14px; width:100%; cursor:pointer; margin-top:10px; }
         .btn-cancel:hover { background:#475569; }
 
-        #messageBox { position: fixed; top:20px; right:20px; padding:15px 20px; border-radius:8px; color:white; font-weight:bold; z-index:2000; display:none; font-family:'Inter',sans-serif; }
-        #messageBox.success { background:var(--success-color); }
-        #messageBox.error { background:var(--danger-color); }
+        #messageBox { 
+            position: fixed; 
+            top:20px; 
+            right:20px; 
+            padding:15px 20px; 
+            border-radius:8px; 
+            color:white; 
+            font-weight:bold; 
+            z-index:2000; 
+            display:none; 
+            font-family:'Inter',sans-serif;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        #messageBox.success { 
+            background: linear-gradient(135deg, var(--success-color), #059669); 
+            border: 1px solid #10b981;
+        }
+        #messageBox.error { 
+            background: linear-gradient(135deg, var(--danger-color), #dc2626); 
+            border: 1px solid #ef4444;
+        }
 
         /* --- ESTILOS DEL ELEMENTO FALTANTE --- */
         .bottom-nav { position: fixed; bottom:0; left:0; width:100%; background:var(--dark-bg); box-shadow: 0 -2px 10px rgba(0,0,0,0.2); display:flex; justify-content:space-around; padding:10px 0; z-index:100; border-top:1px solid var(--border-color); }

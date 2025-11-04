@@ -325,13 +325,25 @@ async function confirmarSalida() {
             throw new Error(errorData.error || 'Error al finalizar ticket');
         }
 
-        // Mostrar mensaje de éxito
-        showMessage('✅ Salida procesada. ¡Hasta pronto!', 'success');
+        // Mostrar mensaje de éxito con countdown
+        let countdown = 3;
+        const baseMessage = '✅ Salida procesada exitosamente. ¡Hasta pronto!';
+        
+        function updateCountdownMessage() {
+            showMessage(`${baseMessage} Reiniciando en ${countdown}...`, 'success', 1000);
+            countdown--;
+            
+            if (countdown > 0) {
+                setTimeout(updateCountdownMessage, 1000);
+            }
+        }
+        
+        updateCountdownMessage();
 
-        // Redirigir al inicio después de 2 segundos
+        // Reiniciar la página después de 3 segundos para estar listo para otro ticket
         setTimeout(() => {
-            window.location.href = 'inicio.html';
-        }, 2000);
+            location.reload();
+        }, 3000);
 
     } catch (error) {
         console.error('Error:', error);
@@ -355,15 +367,29 @@ function cancelar() {
 }
 
 // Mostrar mensajes
-function showMessage(message, type = 'info') {
+function showMessage(message, type = 'info', duration = 3000) {
     const messageBox = document.getElementById('messageBox');
     messageBox.textContent = message;
     messageBox.className = type;
     messageBox.style.display = 'block';
 
+    // Agregar animación de entrada
+    messageBox.style.opacity = '0';
+    messageBox.style.transform = 'translateX(300px)';
+    
     setTimeout(() => {
-        messageBox.style.display = 'none';
-    }, 3000);
+        messageBox.style.opacity = '1';
+        messageBox.style.transform = 'translateX(0)';
+        messageBox.style.transition = 'all 0.3s ease';
+    }, 10);
+
+    setTimeout(() => {
+        messageBox.style.opacity = '0';
+        messageBox.style.transform = 'translateX(300px)';
+        setTimeout(() => {
+            messageBox.style.display = 'none';
+        }, 300);
+    }, duration);
 }
 
 // Permitir enter para procesar
