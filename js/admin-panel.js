@@ -1379,6 +1379,56 @@ async function cargarResumenGanancias() {
     }
 }
 
+// Función para limpiar completamente todas las instancias de Chart.js
+function limpiarTodasLasGraficas() {
+    console.log('🧹 Limpiando todas las instancias de Chart.js...');
+    
+    try {
+        // Destruir instancias específicas
+        if (chartGanancias) {
+            chartGanancias.destroy();
+            chartGanancias = null;
+        }
+        if (chartVehiculos) {
+            chartVehiculos.destroy();
+            chartVehiculos = null;
+        }
+        
+        // Limpiar todas las instancias registradas en Chart.js
+        if (Chart.instances) {
+            Object.keys(Chart.instances).forEach(key => {
+                try {
+                    Chart.instances[key].destroy();
+                    delete Chart.instances[key];
+                } catch (e) {
+                    console.warn(`Error destruyendo instancia ${key}:`, e);
+                }
+            });
+        }
+        
+        // Limpiar usando el helper de Chart.js si está disponible
+        if (Chart.helpers && Chart.helpers.each) {
+            Chart.helpers.each(Chart.instances, function(instance, id) {
+                try {
+                    instance.destroy();
+                } catch (e) {
+                    console.warn(`Error destruyendo instancia ${id}:`, e);
+                }
+            });
+        }
+        
+        // Forzar garbage collection si está disponible
+        if (window.gc) {
+            window.gc();
+        }
+        
+        console.log('✅ Todas las instancias de Chart.js han sido limpiadas');
+        
+    } catch (error) {
+        console.warn('Error durante la limpieza de gráficas:', error);
+    }
+}
+
 // Cargar datos de ganancias por período
 async function cargarGanancias() {
     const selectElement = document.getElementById('periodoGanancias');
@@ -1396,8 +1446,15 @@ async function cargarGanancias() {
     
     try {
         loadingGanancias = true;
-        console.log(`📊 Cargando ganancias para período: ${periodo}`);
+        console.log('📊 Cargando ganancias para periodo:', periodo);
         
+        // PASO 1: Limpiar completamente todas las gráficas existentes
+        limpiarTodasLasGraficas();
+        
+        // PASO 2: Esperar un momento para asegurar limpieza completa
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // PASO 3: Realizar request de datos
         const response = await secureRequest(`${API_URL}/ganancias/${periodo}`, {
             method: 'GET'
         });
@@ -1411,11 +1468,16 @@ async function cargarGanancias() {
             return;
         }
         
-        // Actualizar gráficas
-        actualizarGraficaGanancias(data.data, periodo);
-        actualizarGraficaVehiculos(data.data);
+        // PASO 4: Actualizar gráficas con delay adicional
+        setTimeout(() => {
+            actualizarGraficaGanancias(data.data, periodo);
+        }, 100);
         
-        // Actualizar tabla
+        setTimeout(() => {
+            actualizarGraficaVehiculos(data.data);
+        }, 200);
+        
+        // PASO 5: Actualizar tabla
         actualizarTablaGanancias(data.data, periodo);
         
     } catch (error) {
@@ -1426,58 +1488,107 @@ async function cargarGanancias() {
     }
 }
 
-// Función para recrear canvas completamente
+// Función para recrear canvas completamente con limpieza agresiva
 function recrearCanvas(canvasId) {
+    // Limpiar todos los charts registrados de Chart.js
+    try {
+        Object.keys(Chart.instances).forEach(key => {
+            const instance = Chart.instances[key];
+            if (instance && instance.canvas && instance.canvas.id === canvasId) {
+                instance.destroy();
+                delete Chart.instances[key];
+            }
+        });
+    } catch (e) {
+        console.warn('Error limpiando instancias de Chart.js:', e);
+    }
+    
     const oldCanvas = document.getElementById(canvasId);
-    if (!oldCanvas) return null;
+    if (!oldCanvas) {
+        console.warn(`Canvas ${canvasId} no encontrado`);
+        return null;
+    }
     
     const parent = oldCanvas.parentNode;
     const newCanvas = document.createElement('canvas');
     
-    // Copiar atributos
+    // Configurar el nuevo canvas con dimensiones fijas
     newCanvas.id = canvasId;
-    newCanvas.width = oldCanvas.width;
-    newCanvas.height = oldCanvas.height;
-    newCanvas.style.cssText = oldCanvas.style.cssText;
+    newCanvas.width = 400;
+    newCanvas.height = 300;
+    newCanvas.style.cssText = 'width: 100%; height: 300px; background: transparent;';
     
-    // Reemplazar el canvas
+    // Limpiar completamente el contexto del canvas anterior
+    try {
+        const oldCtx = oldCanvas.getContext('2d');
+        oldCtx.clearRect(0, 0, oldCanvas.width, oldCanvas.height);
+    } catch (e) {
+        console.warn('Error limpiando contexto anterior:', e);
+    }
+    
+    // Remover y agregar el nuevo canvas
     parent.removeChild(oldCanvas);
     parent.appendChild(newCanvas);
     
+    // Forzar garbage collection
+    if (window.gc) {
+        window.gc();
+    }
+    
+    console.log(`✅ Canvas ${canvasId} recreado exitosamente`);
     return newCanvas;
 }
 
-// Actualizar gráfica de ganancias
+// Actualizar gráfica de ganancias con limpieza ultra-agresiva
 function actualizarGraficaGanancias(data, periodo) {
     console.log('🔄 Actualizando gráfica de ganancias...');
     
-    // Destruir gráfica anterior de manera más agresiva
+    // Destruir gráfica anterior de manera ultra-agresiva
     if (chartGanancias) {
         try {
             chartGanancias.destroy();
+            chartGanancias.data = null;
+            chartGanancias.options = null;
+            chartGanancias = null;
         } catch (e) {
             console.warn('Error al destruir gráfica anterior:', e);
         }
-        chartGanancias = null;
     }
     
-    // Recrear el canvas completamente para evitar problemas de memoria
+    // Limpiar todas las instancias de Chart.js relacionadas
+    try {
+        Chart.helpers.each(Chart.instances, function(instance, id) {
+            if (instance.canvas && instance.canvas.id === 'chartGanancias') {
+                instance.destroy();
+            }
+        });
+    } catch (e) {
+        console.warn('Error limpiando instancias:', e);
+    }
+    
+    // Recrear el canvas completamente
     const canvas = recrearCanvas('chartGanancias');
     if (!canvas) {
         console.error('❌ No se pudo recrear el canvas de ganancias');
         return;
     }
     
-    const ctx = canvas.getContext('2d');
-    const labels = data.map(item => item.fecha_formateada);
-    const ganancias = data.map(item => item.ganancia_total);
-    
-    console.log('📊 Datos para gráfica:', { labels, ganancias });
-    
-    // Esperar un tick antes de crear la nueva gráfica
+    // Forzar delay más largo para asegurar limpieza
     setTimeout(() => {
         try {
-            // Crear nueva gráfica con configuración más estricta
+            const ctx = canvas.getContext('2d');
+            
+            // Limpiar contexto manualmente
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.restore();
+            
+            const labels = data.map(item => item.fecha_formateada);
+            const ganancias = data.map(item => item.ganancia_total);
+            
+            console.log('📊 Datos para gráfica:', { labels, ganancias });
+            
+            // Crear nueva gráfica con configuración ultra-conservadora
             chartGanancias = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -1497,8 +1608,18 @@ function actualizarGraficaGanancias(data, periodo) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: {
-                        duration: 0 // Completamente sin animaciones
+                    animation: false, // Completamente desactivadas
+                    hover: {
+                        animationDuration: 0
+                    },
+                    responsiveAnimationDuration: 0,
+                    elements: {
+                        line: {
+                            tension: 0.4
+                        },
+                        point: {
+                            hoverRadius: 6
+                        }
                     },
                     interaction: {
                         intersect: false,
@@ -1543,46 +1664,64 @@ function actualizarGraficaGanancias(data, periodo) {
         } catch (error) {
             console.error('❌ Error al crear gráfica de ganancias:', error);
         }
-    }, 100);
+    }, 250); // Delay más largo
 }
 
-// Actualizar gráfica de vehículos
+// Actualizar gráfica de vehículos con limpieza ultra-agresiva
 function actualizarGraficaVehiculos(data) {
     console.log('🔄 Actualizando gráfica de vehículos...');
     
-    // Destruir gráfica anterior de manera más agresiva
+    // Destruir gráfica anterior de manera ultra-agresiva
     if (chartVehiculos) {
         try {
             chartVehiculos.destroy();
+            chartVehiculos.data = null;
+            chartVehiculos.options = null;
+            chartVehiculos = null;
         } catch (e) {
             console.warn('Error al destruir gráfica anterior:', e);
         }
-        chartVehiculos = null;
     }
     
-    // Recrear el canvas completamente para evitar problemas de memoria
+    // Limpiar todas las instancias de Chart.js relacionadas
+    try {
+        Chart.helpers.each(Chart.instances, function(instance, id) {
+            if (instance.canvas && instance.canvas.id === 'chartVehiculos') {
+                instance.destroy();
+            }
+        });
+    } catch (e) {
+        console.warn('Error limpiando instancias:', e);
+    }
+    
+    // Recrear el canvas completamente
     const canvas = recrearCanvas('chartVehiculos');
     if (!canvas) {
         console.error('❌ No se pudo recrear el canvas de vehículos');
         return;
     }
     
-    const ctx = canvas.getContext('2d');
-    
-    // Sumar totales por tipo de vehículo
-    const totales = data.reduce((acc, item) => {
-        acc.autos += item.vehiculos.autos;
-        acc.motos += item.vehiculos.motos;
-        acc.electricos += item.vehiculos.electricos;
-        return acc;
-    }, { autos: 0, motos: 0, electricos: 0 });
-    
-    console.log('📊 Datos de vehículos:', totales);
-    
-    // Esperar un tick antes de crear la nueva gráfica
+    // Forzar delay más largo para asegurar limpieza
     setTimeout(() => {
         try {
-            // Crear nueva gráfica
+            const ctx = canvas.getContext('2d');
+            
+            // Limpiar contexto manualmente
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.restore();
+            
+            // Sumar totales por tipo de vehículo
+            const totales = data.reduce((acc, item) => {
+                acc.autos += item.vehiculos.autos;
+                acc.motos += item.vehiculos.motos;
+                acc.electricos += item.vehiculos.electricos;
+                return acc;
+            }, { autos: 0, motos: 0, electricos: 0 });
+            
+            console.log('📊 Datos de vehículos:', totales);
+            
+            // Crear nueva gráfica con configuración ultra-conservadora
             chartVehiculos = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -1598,6 +1737,50 @@ function actualizarGraficaVehiculos(data) {
                     }]
                 },
                 options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false, // Completamente desactivadas
+                    hover: {
+                        animationDuration: 0
+                    },
+                    responsiveAnimationDuration: 0,
+                    elements: {
+                        arc: {
+                            borderWidth: 0
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            enabled: true,
+                            animation: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            console.log('✅ Gráfica de vehículos creada exitosamente');
+            
+        } catch (error) {
+            console.error('❌ Error al crear gráfica de vehículos:', error);
+        }
+    }, 250); // Delay más largo
+}
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: {
