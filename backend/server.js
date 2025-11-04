@@ -14,40 +14,40 @@ app.set('trust proxy', 1); // Confiar en primer proxy (necesario para Render)
 
 // 🛡️ SEGURIDAD ANTI-BURP SUITE
 // Rate limiting general
-const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // Máximo 100 requests por IP cada 15 min
-  message: {
-    error: 'Demasiadas solicitudes',
-    message: 'Rate limit exceeded. Try again later.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+//const generalLimiter = rateLimit({
+  //windowMs: 15 * 60 * 1000, // 15 minutos
+  //max: 100, // Máximo 100 requests por IP cada 15 min
+  //message: {
+    //error: 'Demasiadas solicitudes',
+    //message: 'Rate limit exceeded. Try again later.'
+  //},
+  //standardHeaders: true,
+  //legacyHeaders: false,
+//});
 
 // Rate limiting específico para admin
-const adminLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutos  
-  max: 50, // Máximo 50 requests admin por IP cada 5 min
-  message: {
-    error: 'Rate limit admin excedido',
-    message: 'Too many admin requests. Try again later.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+//const adminLimiter = rateLimit({
+  //windowMs: 5 * 60 * 1000, // 5 minutos  
+  //max: 50, // Máximo 50 requests admin por IP cada 5 min
+  //message: {
+    //error: 'Rate limit admin excedido',
+    //message: 'Too many admin requests. Try again later.'
+  //},
+  //standardHeaders: true,
+  //legacyHeaders: false,
+//});
 
 // Rate limiting para login (anti brute force)
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5, // Máximo 5 intentos de login por IP cada 15 min
-  message: {
-    error: 'Demasiados intentos de login',
-    message: 'Too many login attempts. Try again later.'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+//const loginLimiter = rateLimit({
+  //windowMs: 15 * 60 * 1000, // 15 minutos
+  //max: 5, // Máximo 5 intentos de login por IP cada 15 min
+  //message: {
+    //error: 'Demasiados intentos de login',
+    //message: 'Too many login attempts. Try again later.'
+  //},
+  //standardHeaders: true,
+  //legacyHeaders: false,
+//});
 
 // Middlewares de seguridad
 app.use(helmet({
