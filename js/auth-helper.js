@@ -11,9 +11,11 @@ class AuthHelper {
 
     // Detectar ambiente (local vs producción)
     getApiUrl() {
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        // Solo usar localhost si realmente estamos en desarrollo local
+        if (window.location.hostname === 'localhost' && window.location.port === '5500') {
             return 'http://localhost:3000/api';
         }
+        // Siempre usar producción en cualquier otro caso (incluido Vercel)
         return 'https://parkpay-backend-1ti1.onrender.com/api';
     }
 
@@ -25,8 +27,6 @@ class AuthHelper {
     // Obtener token JWT desde localStorage
     getToken() {
         const token = localStorage.getItem(this.tokenKey);
-        console.log('🔑 GetToken called - tokenKey:', this.tokenKey);
-        console.log('🔑 Token from localStorage:', token ? 'PRESENTE' : 'AUSENTE');
         return token;
     }
 
@@ -56,10 +56,6 @@ class AuthHelper {
     // 🔐 REQUEST SEGURO CON JWT - ANTI BURP SUITE
     async secureRequest(endpoint, options = {}) {
         const token = this.getToken();
-        
-        // 🐛 DEBUG: Log del token
-        console.log('🎫 AuthHelper - Token disponible:', token ? 'SÍ' : 'NO');
-        console.log('🎫 Token (primeros 20 chars):', token ? token.substring(0, 20) + '...' : 'NINGUNO');
         
         if (!token) {
             throw new Error('No hay token de autenticación');
@@ -94,13 +90,10 @@ class AuthHelper {
         }
         
         try {
-            console.log(`🔐 Secure Request: ${options.method || 'GET'} ${endpoint}`);
-            
             const response = await fetch(url, requestConfig);
             
             // Verificar respuesta de autenticación
             if (response.status === 401) {
-                console.warn('🚨 Token expirado o inválido');
                 this.logout();
                 window.location.href = '/index.html';
                 return;
@@ -113,7 +106,6 @@ class AuthHelper {
             return response;
             
         } catch (error) {
-            console.error('❌ Error en request seguro:', error);
             throw error;
         }
     }
@@ -167,14 +159,12 @@ class AuthHelper {
                 localStorage.setItem('usuario', JSON.stringify(data.usuario));
                 localStorage.setItem('vehiculos', JSON.stringify(data.vehiculos || []));
                 
-                console.log('✅ Login exitoso con JWT');
                 return data;
             } else {
                 throw new Error(data.mensaje || 'Error en login');
             }
             
         } catch (error) {
-            console.error('❌ Error en login:', error);
             throw error;
         }
     }
@@ -187,14 +177,11 @@ class AuthHelper {
         // TAMBIÉN limpiar las claves del código existente
         localStorage.removeItem('usuario');
         localStorage.removeItem('vehiculos');
-        
-        console.log('✅ Logout exitoso');
     }
 
     // Middleware para proteger páginas
     protectPage() {
         if (!this.isAuthenticated()) {
-            console.warn('🚨 Acceso no autorizado - Redirigiendo al login');
             window.location.href = '/index.html';
             return false;
         }
@@ -204,7 +191,6 @@ class AuthHelper {
     // Middleware para proteger páginas de admin
     protectAdminPage() {
         if (!this.isAuthenticated()) {
-            console.warn('🚨 No autenticado - Redirigiendo al login');
             window.location.href = '/index.html';
             return false;
         }
@@ -230,10 +216,3 @@ window.logout = () => window.authHelper.logout();
 window.isAuthenticated = () => window.authHelper.isAuthenticated();
 window.getCurrentUser = () => window.authHelper.getCurrentUser();
 window.isAdmin = () => window.authHelper.isAdmin();
-
-// Log de inicialización
-console.log('🔐 AuthHelper inicializado');
-console.log(`🌐 API URL: ${window.authHelper.apiUrl}`);
-console.log('🔑 Funciones globales disponibles: secureRequest, login, logout, isAuthenticated, getCurrentUser, isAdmin');
-console.log(`👤 Autenticado: ${window.authHelper.isAuthenticated()}`);
-console.log(`👑 Admin: ${window.authHelper.isAdmin()}`);

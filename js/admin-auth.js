@@ -1,5 +1,9 @@
-// Configuración de la API - Local para desarrollo
-const API_URL = 'http://localhost:3000/api';
+// Configuración de la API
+const API_URL = 'https://parkpay-backend-1ti1.onrender.com/api';
+
+// Verificar conexión al cargar
+console.log('🔍 Iniciando admin-auth.js...');
+console.log('🌐 API URL configurada:', API_URL);
 
 // Validar contraseña fuerte
 function validarContraseña(password) {
@@ -29,9 +33,17 @@ function validarContraseña(password) {
 
 // Al cargar la página, verificar si ya existe un admin
 window.addEventListener('DOMContentLoaded', async () => {
+    console.log('🔍 Verificando conexión con el servidor...');
+    
     try {
         const response = await fetch(`${API_URL}/admin/check-admin`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        console.log('✅ Conexión exitosa:', data);
         
         document.getElementById('loadingBox').style.display = 'none';
         
@@ -46,9 +58,23 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
         
     } catch (error) {
-        console.error('Error:', error);
-        showMessage('Error de conexión al servidor', 'error');
-        document.getElementById('loadingBox').innerHTML = '<p>Error de conexión</p>';
+        console.error('❌ Error de conexión:', error);
+        console.log('🔍 URL utilizada:', `${API_URL}/admin/check-admin`);
+        
+        const loadingBox = document.getElementById('loadingBox');
+        loadingBox.innerHTML = `
+            <div style="color: #ef4444; text-align: center; padding: 20px;">
+                <h3>Error de conexión</h3>
+                <p>No se pudo conectar con el servidor backend.</p>
+                <p><strong>URL:</strong> ${API_URL}</p>
+                <p><strong>Error:</strong> ${error.message}</p>
+                <button onclick="location.reload()" style="padding: 10px 20px; margin-top: 10px;">
+                    🔄 Reintentar
+                </button>
+            </div>
+        `;
+        
+        showMessage('Error de conexión al servidor. Verifica que el backend esté funcionando.', 'error');
     }
 });
 

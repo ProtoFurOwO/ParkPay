@@ -1,19 +1,7 @@
-// Service Worker para ParkPay PWA
-const CACHE_NAME = 'parkpay-v2'; // ⬅️ CAMBIADO PARA FORZAR ACTUALIZACIÓN
+// Service Worker DESACTIVADO temporalmente para debugging
+const CACHE_NAME = 'parkpay-v3-disabled'; // ⬅️ DESACTIVADO PARA DEBUGGING
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/inicio.html',
-  '/estacionamiento.html',
-  '/entrada.html',
-  '/salida-scanner.html',
-  '/tickets.html',
-  '/perfil.html',
-  '/recuperar.html',
-  '/logo.png',
-  '/css/styles.css',
-  '/js/auth.js',
-  '/js/app.js'
+  // Cache desactivado temporalmente para debugging
 ];
 
 // Instalación - cachear recursos
