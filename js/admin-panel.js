@@ -1,5 +1,5 @@
-// Configuración de la API
-const API_URL = 'https://parkpay-backend-1ti1.onrender.com/api';
+// Configuración de la API - Local para desarrollo
+const API_URL = 'http://localhost:3000/api';
 
 // Variables globales
 let admin = null;
