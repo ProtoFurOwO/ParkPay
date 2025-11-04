@@ -750,10 +750,31 @@ router.post('/guest', async (req, res) => {
         console.error('💥 Error al crear ticket de huésped:', error);
         console.error('📍 Stack trace:', error.stack);
         
+        // Detectar error de placa duplicada
+        if (error.code === '23505' && error.constraint === 'vehiculos_placa_key') {
+            return res.status(409).json({ 
+                error: 'Placa ya registrada',
+                mensaje: `La placa ${req.body.placa} ya está registrada en el sistema`,
+                tipo: 'PLACA_DUPLICADA',
+                sugerencia: 'Verifica que hayas escrito correctamente la placa o contacta al administrador'
+            });
+        }
+        
+        // Otros errores específicos de base de datos
+        if (error.code === '23503') {
+            return res.status(400).json({ 
+                error: 'Error de datos',
+                mensaje: 'Faltan datos requeridos o hay una referencia inválida',
+                tipo: 'DATOS_INVALIDOS'
+            });
+        }
+        
+        // Error genérico
         res.status(500).json({ 
             error: 'Error interno del servidor',
-            mensaje: 'No se pudo crear el ticket',
-            details: error.message
+            mensaje: 'No se pudo crear el ticket. Intenta nuevamente.',
+            tipo: 'ERROR_INTERNO',
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
     }
 });

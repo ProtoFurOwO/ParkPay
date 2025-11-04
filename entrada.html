@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entrada - ParkPay</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -572,19 +572,19 @@
             const horasEstacionamiento = parseInt(document.getElementById('horasEstacionamiento').value);
             const btnCrear = document.getElementById('btnCrearTicket');
 
-            // Validaciones
+            // Validaciones con errores bonitos
             if (!tipoVehiculo) {
-                alert('❌ Por favor selecciona el tipo de vehículo');
+                mostrarErrorBonito('🚗 Selecciona tu Vehículo', 'Por favor selecciona el tipo de vehículo que vas a estacionar.');
                 return;
             }
 
             if (!placaVehiculo || placaVehiculo.length < 3) {
-                alert('❌ Por favor ingresa una placa válida (mínimo 3 caracteres)');
+                mostrarErrorBonito('📝 Placa Requerida', 'Por favor ingresa una placa válida.\n\nLa placa debe tener al menos 3 caracteres.');
                 return;
             }
 
             if (!horasEstacionamiento || horasEstacionamiento < 1) {
-                alert('❌ Por favor selecciona las horas de estacionamiento');
+                mostrarErrorBonito('⏰ Tiempo de Estacionamiento', 'Por favor selecciona cuántas horas vas a estacionar tu vehículo.');
                 return;
             }
 
@@ -613,16 +613,51 @@
                 if (response.ok) {
                     mostrarTicketGuest(data.ticket);
                 } else {
-                    throw new Error(data.error || 'Error al crear ticket');
+                    // Manejar diferentes tipos de errores con mensajes bonitos
+                    let mensajeError = '';
+                    let tituloError = '❌ Error';
+                    
+                    if (data.tipo === 'PLACA_DUPLICADA') {
+                        tituloError = '🚗 Placa Ya Registrada';
+                        mensajeError = `La placa "${data.mensaje.split(' ')[2]}" ya existe en el sistema.\n\n¿Es tu vehículo? Si ya tienes un ticket activo, puedes verlo en la sección de tickets.\n\nSi no es tuyo, verifica que hayas escrito correctamente la placa.`;
+                    } else if (data.tipo === 'DATOS_INVALIDOS') {
+                        tituloError = '📝 Datos Incorrectos';
+                        mensajeError = 'Por favor revisa que todos los datos estén correctos y completos.';
+                    } else if (response.status === 409 && data.error.includes('cajones disponibles')) {
+                        tituloError = '🅿️ Sin Cajones Disponibles';
+                        mensajeError = `No hay cajones disponibles para ${data.tipo_solicitado}.\n\nIntenta con otro tipo de vehículo o regresa más tarde.`;
+                    } else {
+                        mensajeError = data.mensaje || data.error || 'Error desconocido al crear el ticket';
+                    }
+                    
+                    mostrarErrorBonito(tituloError, mensajeError);
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('❌ Error: ' + error.message);
+                mostrarErrorBonito('🌐 Error de Conexión', 'No se pudo conectar con el servidor.\n\nRevisa tu conexión a internet e intenta nuevamente.');
             } finally {
                 btnCrear.disabled = false;
                 btnCrear.innerHTML = '🎫 Obtener Lugar de Estacionamiento';
             }
+        }
+
+        // 🎨 Función para mostrar errores bonitos en lugar de alerts
+        function mostrarErrorBonito(titulo, mensaje) {
+            const guestForm = document.getElementById('guestForm');
+            
+            guestForm.innerHTML = `
+                <div class="error-display" style="text-align: center; padding: 30px;">
+                    <div style="font-size: 4em; margin-bottom: 20px;">😔</div>
+                    <h2 style="color: #ef4444; margin-bottom: 15px;">${titulo}</h2>
+                    <div style="color: #e5e7eb; font-size: 1.1em; line-height: 1.6; margin-bottom: 30px; white-space: pre-line;">
+                        ${mensaje}
+                    </div>
+                    <button class="btn btn-secondary" style="width: 100%;" onclick="location.reload()">
+                        🔄 Intentar Nuevamente
+                    </button>
+                </div>
+            `;
         }
 
         function mostrarTicketGuest(ticket) {
@@ -677,24 +712,51 @@
                 </div>
             `;
 
-            // Generar QR code usando QRCode.js
+            // Generar QR code usando QRCode.js con verificación de carga
             const codigoParaQR = ticket.codigo_acceso || backupCode;
-            QRCode.toCanvas(document.getElementById('qr-code-guest'), codigoParaQR, {
-                width: 200,
-                height: 200,
-                color: {
-                    dark: '#1e40af',
-                    light: '#ffffff'
-                }
-            }, function (error) {
-                if (error) {
-                    console.error('Error generando QR:', error);
-                    document.getElementById('qr-code-guest').innerHTML = 
-                        `<div style="color: red;">Error generando QR</div>`;
+            
+            // Esperar a que QRCode esté disponible
+            const generarQR = () => {
+                if (typeof QRCode !== 'undefined') {
+                    QRCode.toCanvas(document.getElementById('qr-code-guest'), codigoParaQR, {
+                        width: 200,
+                        height: 200,
+                        color: {
+                            dark: '#1e40af',
+                            light: '#ffffff'
+                        }
+                    }, function (error) {
+                        if (error) {
+                            console.error('Error generando QR:', error);
+                            document.getElementById('qr-code-guest').innerHTML = 
+                                `<div style="color: #ef4444; padding: 20px; background: #fee2e2; border-radius: 8px;">
+                                    <p><strong>⚠️ Error generando QR</strong></p>
+                                    <p style="font-family: monospace; margin-top: 10px;">${codigoParaQR}</p>
+                                    <p style="font-size: 0.9em; margin-top: 10px;">Usa el código de respaldo debajo</p>
+                                </div>`;
+                        } else {
+                            console.log('✅ QR generado exitosamente para:', codigoParaQR);
+                        }
+                    });
                 } else {
-                    console.log('QR generado exitosamente');
+                    // Fallback si QRCode no está disponible
+                    console.warn('⚠️ QRCode library no disponible, mostrando fallback');
+                    document.getElementById('qr-code-guest').innerHTML = 
+                        `<div style="color: #374151; padding: 20px; background: #f3f4f6; border: 2px dashed #6b7280; border-radius: 8px;">
+                            <p><strong>📱 Código de Acceso</strong></p>
+                            <p style="font-family: monospace; font-size: 1.5em; margin: 15px 0; color: #1e40af;">${codigoParaQR}</p>
+                            <p style="font-size: 0.9em;">Presenta este código en la salida</p>
+                        </div>`;
                 }
-            });
+            };
+            
+            // Generar QR inmediatamente o esperar un poco si la librería no está lista
+            if (typeof QRCode !== 'undefined') {
+                generarQR();
+            } else {
+                console.log('⏳ Esperando a que se cargue QRCode...');
+                setTimeout(generarQR, 500);
+            }
         }
 
         function generateBackupCode() {
